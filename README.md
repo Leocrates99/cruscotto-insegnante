@@ -78,6 +78,7 @@ Gli script disponibili:
 | `npm run build` | Riconosce i database esistenti, crea i mancanti, allinea schema/relazioni/rollup/formule (additivo, idempotente). |
 | `npm run plan` | Mostra il **diff** tra i file e il workspace, senza toccare nulla. |
 | `npm run migrate` | Applica il diff: crea, **rinomina**, allinea. Con `-- --prune` rimuove anche le proprietà non più previste (distruttivo). |
+| `npm run template` | Prepara lo spazio per essere pubblicato come **template duplicabile**: allinea, popola di esempio e crea la pagina-guida (vedi Ramo 1). |
 | `npm run seed` | Inserisce l'UdA "Euripide" di collaudo (da lanciare una volta). |
 | `npm run verify` | Rilegge i 17 database e stampa un riepilogo di controllo. |
 | `npm run typecheck` | Type-check TypeScript senza eseguire nulla. |
@@ -169,6 +170,52 @@ vedere il diff, poi `npm run migrate`. In team, lo fa la pull request al posto t
 
 ---
 
+## Template duplicabile (Ramo 1)
+
+Il modo più semplice per **condividere** il cruscotto con altri docenti: chi lo riceve
+non tocca codice, token né terminale — clicca *Duplicate* e ha tutto nel suo spazio.
+
+### 1) Prepara lo spazio
+
+```bash
+npm run template          # allinea lo schema, popola di esempio, crea la pagina-guida
+# npm run template -- --refresh   # per rigenerare la pagina-guida
+```
+
+Il comando è idempotente: riconosce ciò che esiste, non duplica i dati di esempio se già
+presenti, e aggiunge alla pagina-genitore una pagina **«🏠 Inizia da qui»** con istruzioni,
+indice dei 17 database, checklist delle rifiniture e promemoria privacy.
+
+### 2) Pubblica come template (passo solo-UI)
+
+Nell'app Notion, sulla **pagina-genitore** (quella che contiene i 17 database e la guida):
+
+1. in alto a destra **Share → Publish**;
+2. attiva **«Allow duplicate as template»**;
+3. condividi il link pubblico: chi lo apre clicca **Duplicate** e copia l'intero ecosistema.
+
+### Perché le relazioni non si rompono ⚠️
+
+Un template Notion è uno **snapshot** (è l'Opzione 2 del §6 del prospetto). Il punto critico:
+**duplica sempre la pagina-genitore INTERA**, mai un singolo database. Duplicando il
+contenitore con dentro tutti i 17 database, Notion **rimappa le relazioni** ai database
+copiati, e così rollup e formule continuano a calcolare. Duplicando un database isolato, le
+sue relazioni verso gli altri si spezzerebbero.
+
+### Ramo 1 vs Ramo 2 — quando usare cosa
+
+| | **Ramo 1 — Template** | **Ramo 2 — Infrastructure-as-Code** |
+|---|---|---|
+| A cosa serve | **condividere** una copia con altri | **mantenere vivo** e aggiornare il tuo |
+| Per chi riceve | zero codice, un clic | (è per te) |
+| Natura | snapshot congelato | sorgente di verità versionata |
+| Aggiornamenti | si ri-pubblica | `push` → la CI allinea |
+
+Non sono alternativi: puoi gestire il **tuo** spazio col Ramo 2 e, quando vuoi, generare un
+**template** col Ramo 1 da regalare ai colleghi.
+
+---
+
 ## Struttura del repository
 
 ```
@@ -183,9 +230,10 @@ src/
     addRollupsFormulas.ts # passata 3: rollup e formule
     discover.ts       # riconosce i database esistenti nello spazio (idempotenza in CI)
     pipeline.ts       # allineamento: base/relazioni/rollup, rinomine, prune, plan
+    homepage.ts       # pagina-guida «Inizia da qui» per il template (Ramo 1)
     state.ts          # manifest di idempotenza
   seed/euripide.ts    # dati di esempio (§4.4)
-  build.ts migrate.ts seedRun.ts verify.ts
+  build.ts migrate.ts template.ts seedRun.ts verify.ts
 config/buildOrder.ts  # ordine topologico di creazione (§13.6)
 .github/workflows/notion.yml  # CI: plan sui PR, apply sui push (Ramo 2)
 docs/prospetto.md     # il documento di progettazione completo
