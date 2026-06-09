@@ -75,7 +75,9 @@ Gli script disponibili:
 
 | Comando | Effetto |
 |---|---|
-| `npm run build` | Crea/aggiorna schema, relazioni, rollup, formule (idempotente). |
+| `npm run build` | Riconosce i database esistenti, crea i mancanti, allinea schema/relazioni/rollup/formule (additivo, idempotente). |
+| `npm run plan` | Mostra il **diff** tra i file e il workspace, senza toccare nulla. |
+| `npm run migrate` | Applica il diff: crea, **rinomina**, allinea. Con `-- --prune` rimuove anche le proprietà non più previste (distruttivo). |
 | `npm run seed` | Inserisce l'UdA "Euripide" di collaudo (da lanciare una volta). |
 | `npm run verify` | Rilegge i 17 database e stampa un riepilogo di controllo. |
 | `npm run typecheck` | Type-check TypeScript senza eseguire nulla. |
@@ -124,6 +126,49 @@ confine noto dell'API. Tutto il resto viene creato automaticamente.
 
 ---
 
+## Sistema autonomo (Ramo 2) — Infrastructure-as-Code
+
+Lo schema è codice versionato: lo modifichi nei file di `src/schema/`, fai `push`, e una
+**GitHub Action** allinea il workspace Notion da sola. È lo stesso modello "push → deploy"
+di un sito statico, ma il bersaglio è il tuo Notion invece di una pagina web.
+
+### Configurazione (una tantum)
+
+1. Crea un repository su GitHub e fai `push` di questa cartella.
+2. In **Settings → Secrets and variables → Actions → New repository secret** aggiungi:
+   - `NOTION_TOKEN` — il secret dell'integrazione;
+   - `NOTION_PARENT_PAGE_ID` — l'ID della pagina-genitore condivisa con l'integrazione.
+3. Fatto. Da qui in poi:
+   - apri una **pull request** → la Action esegue **`plan`** e ti mostra in chiaro cosa
+     cambierebbe (sola lettura, nessuna modifica al workspace);
+   - fai **merge / push su `main`** → la Action esegue **`migrate`** e applica lo schema;
+   - dalla scheda **Actions → Run workflow** puoi lanciarlo a mano, con la spunta *prune*
+     se vuoi anche rimuovere le proprietà non più previste.
+
+### Perché non duplica nulla (discovery)
+
+Il file di stato `notion-state.json` è locale e non versionato, quindi in CI non esiste.
+Per non ricreare database già presenti, all'avvio `build`/`migrate` **riconoscono i
+database esistenti** leggendo i figli della pagina-genitore e abbinandoli per titolo agli
+schemi: ricostruiscono lo stato dal workspace vivo. Risultato: la stessa Action è sicura
+sia sul primo run (spazio vuoto → crea tutto) sia sui successivi (allinea soltanto).
+
+> ⚠️ Non rinominare i **titoli dei database** direttamente nell'app: il riconoscimento è
+> per titolo, e un titolo cambiato verrebbe visto come un database nuovo (doppione).
+
+### Far evolvere lo schema (migrazioni)
+
+| Tipo di modifica | Cosa fare |
+|---|---|
+| Aggiungere un campo / un'opzione / un rollup | Modifica lo schema, `push`. Viene aggiunto (additivo). |
+| **Rinominare** una proprietà | Aggiorna il nome **e** dichiara la rinomina, così non si crea un doppione e i dati restano: `renames: [{ from: "Durata", to: "Durata (ore)" }]` nel file del DB. |
+| **Rimuovere** una proprietà | Toglila dallo schema; comparirà come *orfana* in `plan`. Si elimina solo eseguendo `migrate -- --prune` (o la Action con *prune*). |
+
+Il flusso consigliato prima di ogni modifica importante: `npm run plan` in locale per
+vedere il diff, poi `npm run migrate`. In team, lo fa la pull request al posto tuo.
+
+---
+
 ## Struttura del repository
 
 ```
@@ -136,10 +181,13 @@ src/
     createDatabase.ts # passata 1: database + proprietà base
     addRelations.ts   # passata 2: relazioni (duali una volta sola)
     addRollupsFormulas.ts # passata 3: rollup e formule
+    discover.ts       # riconosce i database esistenti nello spazio (idempotenza in CI)
+    pipeline.ts       # allineamento: base/relazioni/rollup, rinomine, prune, plan
     state.ts          # manifest di idempotenza
   seed/euripide.ts    # dati di esempio (§4.4)
-  build.ts seedRun.ts verify.ts
+  build.ts migrate.ts seedRun.ts verify.ts
 config/buildOrder.ts  # ordine topologico di creazione (§13.6)
+.github/workflows/notion.yml  # CI: plan sui PR, apply sui push (Ramo 2)
 docs/prospetto.md     # il documento di progettazione completo
 ```
 

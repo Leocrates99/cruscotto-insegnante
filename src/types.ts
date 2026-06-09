@@ -116,6 +116,13 @@ export interface SchemaDef {
   relations?: RelationDef[];
   rollups?: RollupDef[];
   formulas?: FormulaDef[];
+  /**
+   * Rinomine di proprietà da applicare in migrazione (vecchio nome → nuovo nome).
+   * Senza questo, rinominare la chiave di una proprietà nello schema creerebbe una
+   * proprietà nuova e lascerebbe orfana la vecchia (con i suoi dati). Esempio:
+   *   renames: [{ from: "Durata", to: "Durata (ore)" }]
+   */
+  renames?: Array<{ from: string; to: string }>;
 }
 
 /** Voce del manifest di idempotenza per un database. */

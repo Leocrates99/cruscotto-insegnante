@@ -6,6 +6,8 @@
   "private": true,
   "scripts": {
     "build": "tsx src/build.ts",
+    "plan": "tsx src/migrate.ts --plan",
+    "migrate": "tsx src/migrate.ts",
     "seed": "tsx src/seedRun.ts",
     "verify": "tsx src/verify.ts",
     "typecheck": "tsc --noEmit"

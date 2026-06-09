@@ -1,0 +1,75 @@
+name: Sincronizza schema Notion
+
+# Infrastructure-as-Code per il cruscotto del docente.
+#   • pull request → "plan": mostra cosa cambierebbe (sola lettura)
+#   • push su main → "migrate": applica lo schema al workspace Notion
+#   • avvio manuale → "migrate", con opzione di prune (distruttivo)
+#
+# Richiede due Secret del repository (Settings → Secrets and variables → Actions):
+#   NOTION_TOKEN            il secret dell'integrazione
+#   NOTION_PARENT_PAGE_ID   l'ID della pagina-genitore condivisa con l'integrazione
+
+on:
+  push:
+    branches: [main]
+    paths: ["src/**", "config/**", "package.json", "package-lock.json", ".github/workflows/notion.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["src/**", "config/**", "package.json", "package-lock.json"]
+  workflow_dispatch:
+    inputs:
+      prune:
+        description: "Rimuovi anche le proprietà non più previste (distruttivo)"
+        type: boolean
+        default: false
+
+# Mai due allineamenti in parallelo sullo stesso workspace.
+concurrency:
+  group: notion-schema
+  cancel-in-progress: false
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+
+  plan:
+    if: github.event_name == 'pull_request'
+    needs: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Plan (diff, sola lettura)
+        run: npm run plan
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_PARENT_PAGE_ID: ${{ secrets.NOTION_PARENT_PAGE_ID }}
+
+  apply:
+    if: github.event_name != 'pull_request'
+    needs: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Apply (allinea lo schema)
+        run: npm run migrate ${{ (github.event_name == 'workflow_dispatch' && inputs.prune) && '-- --prune' || '' }}
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_PARENT_PAGE_ID: ${{ secrets.NOTION_PARENT_PAGE_ID }}

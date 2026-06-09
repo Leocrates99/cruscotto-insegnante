@@ -1,0 +1,6 @@
+# Normalizza i fine-riga: nel repo restano LF, in checkout si adattano alla piattaforma.
+# Silenzia gli avvisi "LF will be replaced by CRLF" su Windows.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary
