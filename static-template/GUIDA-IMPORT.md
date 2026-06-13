@@ -30,10 +30,15 @@ Infine ricrea i rollup e le formule come descritto nel `README` del progetto (se
 È fattibile ma lungo: ha senso solo se vuoi restare del tutto fuori dal codice.
 
 ### B) Import + un comando (consigliata)
-1. Importa questi CSV **dentro la pagina-genitore** del progetto (vedi README).
-2. Lancia una volta **`npm run build`**: riconosce i 17 database già importati (per titolo)
+1. Importa questi CSV **dentro la pagina-genitore** del progetto, in modo che i 17 database
+   risultino **figli diretti** di quella pagina (se Notion li annida in una sotto-pagina
+   "import", spostali nella pagina-genitore).
+2. **Non rinominare** i database: i loro titoli devono restare identici ai nomi dei file
+   (è così che vengono riconosciuti).
+3. Lancia una volta **`npm run build`**: riconosce i database già importati (per titolo)
    e **aggiunge da solo relazioni, rollup e formule**. In pochi minuti il modello è completo
-   e identico a quello costruito via codice.
+   e identico a quello costruito via codice. (Le colonne-relazione testuali restano: puoi
+   ripopolarle come vere relazioni, oppure cancellarle perché `build` crea quelle giuste.)
 
 > Se invece vuoi una copia **già completa e cliccabile** senza toccare nulla, usa il
 > **template duplicabile** (Ramo 1 del README): è l'unico modo in cui Notion preserva

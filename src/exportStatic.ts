@@ -59,10 +59,15 @@ Infine ricrea i rollup e le formule come descritto nel \`README\` del progetto (
 È fattibile ma lungo: ha senso solo se vuoi restare del tutto fuori dal codice.
 
 ### B) Import + un comando (consigliata)
-1. Importa questi CSV **dentro la pagina-genitore** del progetto (vedi README).
-2. Lancia una volta **\`npm run build\`**: riconosce i 17 database già importati (per titolo)
+1. Importa questi CSV **dentro la pagina-genitore** del progetto, in modo che i 17 database
+   risultino **figli diretti** di quella pagina (se Notion li annida in una sotto-pagina
+   "import", spostali nella pagina-genitore).
+2. **Non rinominare** i database: i loro titoli devono restare identici ai nomi dei file
+   (è così che vengono riconosciuti).
+3. Lancia una volta **\`npm run build\`**: riconosce i database già importati (per titolo)
    e **aggiunge da solo relazioni, rollup e formule**. In pochi minuti il modello è completo
-   e identico a quello costruito via codice.
+   e identico a quello costruito via codice. (Le colonne-relazione testuali restano: puoi
+   ripopolarle come vere relazioni, oppure cancellarle perché \`build\` crea quelle giuste.)
 
 > Se invece vuoi una copia **già completa e cliccabile** senza toccare nulla, usa il
 > **template duplicabile** (Ramo 1 del README): è l'unico modo in cui Notion preserva
@@ -85,12 +90,14 @@ function main(): void {
   if (existsSync(OUT)) rmSync(OUT, { recursive: true, force: true });
   mkdirSync(OUT, { recursive: true });
 
-  buildOrder.forEach((key, i) => {
+  // Niente prefisso numerico nel nome file: Notion usa il nome del CSV come TITOLO
+  // del database, e i titoli devono combaciare con lo schema perché `npm run build`
+  // (strada B) li riconosca senza creare doppioni.
+  for (const key of buildOrder) {
     const def = schemaByKey[key];
     const csv = toCsv(columnsFor(def), dataset[key] ?? []);
-    const num = String(i + 1).padStart(2, "0");
-    writeFileSync(resolve(OUT, `${num} ${def.title}.csv`), csv, "utf8");
-  });
+    writeFileSync(resolve(OUT, `${def.title}.csv`), csv, "utf8");
+  }
 
   writeFileSync(resolve(OUT, "00 — Inizia da qui.md"), homeMd(), "utf8");
   writeFileSync(resolve(OUT, "GUIDA-IMPORT.md"), guideMd(), "utf8");
