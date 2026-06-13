@@ -1,0 +1,47 @@
+name: Automazioni cruscotto
+
+# Ramo 3 — automazioni vive.
+#   • cron giornaliero → promemoria scadenze (aggiorna la pagina «📌 Promemoria scadenze»)
+#   • avvio manuale     → reminders | annuario | rollover, con parametri
+#
+# Usa gli stessi Secret del workflow di schema: NOTION_TOKEN, NOTION_PARENT_PAGE_ID.
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # ogni giorno alle 06:00 UTC (~07:00/08:00 in Italia)
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Automazione da eseguire"
+        type: choice
+        options: [reminders, annuario, rollover]
+        default: reminders
+      anno:
+        description: "annuario: anno da indicizzare · rollover: nuovo anno (es. 2026/2027)"
+        required: false
+      anno_precedente:
+        description: "solo rollover: anno da chiudere/archiviare (es. 2025/2026)"
+        required: false
+
+concurrency:
+  group: notion-automazioni
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Esegui automazione
+        run: npm run automate -- ${{ github.event_name == 'schedule' && 'reminders' || inputs.task }}
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_PARENT_PAGE_ID: ${{ secrets.NOTION_PARENT_PAGE_ID }}
+          ANNO: ${{ inputs.anno }}
+          ANNO_NUOVO: ${{ inputs.anno }}
+          ANNO_PRECEDENTE: ${{ inputs.anno_precedente }}

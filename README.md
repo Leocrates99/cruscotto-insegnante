@@ -79,6 +79,8 @@ Gli script disponibili:
 | `npm run plan` | Mostra il **diff** tra i file e il workspace, senza toccare nulla. |
 | `npm run migrate` | Applica il diff: crea, **rinomina**, allinea. Con `-- --prune` rimuove anche le proprietà non più previste (distruttivo). |
 | `npm run template` | Prepara lo spazio per essere pubblicato come **template duplicabile**: allinea, popola di esempio e crea la pagina-guida (vedi Ramo 1). |
+| `npm run automate -- <task>` | Esegue un'automazione viva: `reminders`, `annuario <anno>`, `rollover <nuovo> [prec]` (vedi Ramo 3). |
+| `npm run reminders` | Scorciatoia per il digest delle scadenze. |
 | `npm run seed` | Inserisce l'UdA "Euripide" di collaudo (da lanciare una volta). |
 | `npm run verify` | Rilegge i 17 database e stampa un riepilogo di controllo. |
 | `npm run typecheck` | Type-check TypeScript senza eseguire nulla. |
@@ -216,6 +218,36 @@ Non sono alternativi: puoi gestire il **tuo** spazio col Ramo 2 e, quando vuoi, 
 
 ---
 
+## Automazioni vive (Ramo 3)
+
+Sopra l'Infrastructure-as-Code, alcune azioni che il sistema svolge **da solo** —
+non solo struttura, ma comportamento. Girano nella GitHub Action
+`.github/workflows/automations.yml`: un **cron giornaliero** per i promemoria e
+l'**avvio manuale** (Actions → Run workflow) per Annuario e rollover.
+
+| Automazione | Comando | Quando | Cosa fa |
+|---|---|---|---|
+| **Promemoria** | `npm run automate -- reminders` | cron giornaliero | Scrive/aggiorna la pagina «📌 Promemoria scadenze»: scadute + in arrivo (finestra `GIORNI`, default 7), leggendo le Scadenze non «fatte». |
+| **Annuario** | `npm run automate -- annuario 2025/2026` | a mano | (Ri)genera l'Annuario dell'anno (§6): programmazioni, progetti, riunioni di quell'anno + nota di bilancio. |
+| **Rollover** | `npm run automate -- rollover 2026/2027 2025/2026` | fine anno, a mano | Crea il nuovo anno e lo imposta «Corrente», marca «archiviata» le programmazioni dell'anno chiuso e ne genera l'Annuario (§6). |
+
+Tutte e tre sono **idempotenti** (le pagine derivate si rigenerano, gli stati si
+reimpostano) e restano dentro il paletto privacy: nessun dato sensibile, nessun voto.
+
+### In CI
+
+- **Cron** (`0 6 * * *`): ogni mattina esegue `reminders` → il tuo «📌 Promemoria
+  scadenze» è sempre aggiornato quando apri Notion.
+- **Run workflow** (manuale): scegli `task` = `annuario` o `rollover` e compila
+  `anno` (ed `anno_precedente` per il rollover).
+
+Richiede gli stessi Secret del Ramo 2 (`NOTION_TOKEN`, `NOTION_PARENT_PAGE_ID`).
+
+> Locale: per provarle senza CI, basta `npm run reminders` oppure
+> `npm run automate -- annuario 2025/2026`.
+
+---
+
 ## Struttura del repository
 
 ```
@@ -230,12 +262,16 @@ src/
     addRollupsFormulas.ts # passata 3: rollup e formule
     discover.ts       # riconosce i database esistenti nello spazio (idempotenza in CI)
     pipeline.ts       # allineamento: base/relazioni/rollup, rinomine, prune, plan
+    blocks.ts         # costruttori di blocchi + helper di pagina (Home, digest, Annuario)
     homepage.ts       # pagina-guida «Inizia da qui» per il template (Ramo 1)
     state.ts          # manifest di idempotenza
+  automations/        # Ramo 3: util.ts, reminders.ts, annuario.ts, rollover.ts
   seed/euripide.ts    # dati di esempio (§4.4)
-  build.ts migrate.ts template.ts seedRun.ts verify.ts
+  build.ts migrate.ts template.ts automate.ts seedRun.ts verify.ts
 config/buildOrder.ts  # ordine topologico di creazione (§13.6)
-.github/workflows/notion.yml  # CI: plan sui PR, apply sui push (Ramo 2)
+.github/workflows/
+  notion.yml          # CI Ramo 2: plan sui PR, apply sui push
+  automations.yml     # CI Ramo 3: cron promemoria + dispatch annuario/rollover
 docs/prospetto.md     # il documento di progettazione completo
 ```
 
