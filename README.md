@@ -81,6 +81,7 @@ Gli script disponibili:
 | `npm run template` | Prepara lo spazio per essere pubblicato come **template duplicabile**: allinea, popola di esempio e crea la pagina-guida (vedi Ramo 1). |
 | `npm run automate -- <task>` | Esegue un'automazione viva: `reminders`, `annuario <anno>`, `rollover <nuovo> [prec]` (vedi Ramo 3). |
 | `npm run reminders` | Scorciatoia per il digest delle scadenze. |
+| `npm run export:static` | Genera la cartella `static-template/` (CSV + guide) da importare in Notion senza codice (vedi Modello statico). |
 | `npm run seed` | Inserisce l'UdA "Euripide" di collaudo (da lanciare una volta). |
 | `npm run verify` | Rilegge i 17 database e stampa un riepilogo di controllo. |
 | `npm run typecheck` | Type-check TypeScript senza eseguire nulla. |
@@ -248,6 +249,34 @@ Richiede gli stessi Secret del Ramo 2 (`NOTION_TOKEN`, `NOTION_PARENT_PAGE_ID`).
 
 ---
 
+## Modello statico (import CSV, senza codice)
+
+Per chi vuole partire **senza terminale né token**: `npm run export:static` genera la
+cartella `static-template/` (già presente nel repo) con un **CSV per ciascuno dei 17
+database** + due guide, e si crea anche `static-template.zip`. In Notion:
+**Import → Markdown & CSV → seleziona la cartella (o lo zip)** → ottieni i 17 database con
+le colonne e i dati di esempio.
+
+### ⚠️ Il limite onesto
+
+L'import CSV di Notion ricrea **tabelle, colonne e righe**, ma **non** relazioni, rollup e
+formule: una colonna che punta a un altro database arriva come **testo**, e i campi
+calcolati (`Copertura %`, `Semaforo`, `Ore pianificate`…) non esistono nei CSV. È un limite
+della funzione *Import* di Notion, non di questi file.
+
+### Due strade per la piena funzionalità
+
+| | Come | Risultato |
+|---|---|---|
+| **A — manuale** | Converti a mano le colonne-relazione (testo → *relation*) e ricrea rollup/formule (§13.8). | Resti del tutto senza codice, ma è lungo. |
+| **B — import + 1 comando** *(consigliata)* | Importa i CSV **dentro la pagina-genitore**, poi lancia una volta `npm run build`: riconosce i database per titolo e **aggiunge da solo relazioni, rollup e formule**. | Completo in pochi minuti. |
+
+> Se vuoi una copia **già completa e cliccabile** in un solo gesto, l'unica via *lossless*
+> è il **template duplicabile** (Ramo 1): Notion preserva tutto solo con *Duplicate*, non
+> con un import di file. Il dettaglio è in `static-template/GUIDA-IMPORT.md`.
+
+---
+
 ## Struttura del repository
 
 ```
@@ -266,9 +295,11 @@ src/
     homepage.ts       # pagina-guida «Inizia da qui» per il template (Ramo 1)
     state.ts          # manifest di idempotenza
   automations/        # Ramo 3: util.ts, reminders.ts, annuario.ts, rollover.ts
+  staticExport/       # Modello statico: csv.ts, data.ts
   seed/euripide.ts    # dati di esempio (§4.4)
-  build.ts migrate.ts template.ts automate.ts seedRun.ts verify.ts
+  build.ts migrate.ts template.ts automate.ts exportStatic.ts seedRun.ts verify.ts
 config/buildOrder.ts  # ordine topologico di creazione (§13.6)
+static-template/      # output importabile: 17 CSV + guide (+ static-template.zip)
 .github/workflows/
   notion.yml          # CI Ramo 2: plan sui PR, apply sui push
   automations.yml     # CI Ramo 3: cron promemoria + dispatch annuario/rollover

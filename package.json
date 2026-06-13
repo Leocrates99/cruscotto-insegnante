@@ -11,6 +11,7 @@
     "template": "tsx src/template.ts",
     "automate": "tsx src/automate.ts",
     "reminders": "tsx src/automate.ts reminders",
+    "export:static": "tsx src/exportStatic.ts",
     "seed": "tsx src/seedRun.ts",
     "verify": "tsx src/verify.ts",
     "typecheck": "tsc --noEmit"
