@@ -312,6 +312,36 @@ completa e i confini di privacy (PEI/PDP e voti restano fuori) sono in
 
 ---
 
+## Cruscotto come sito (local-first, senza Notion)
+
+Nella cartella [`web/`](web/) c'è una **versione sito** del cruscotto, **indipendente da
+Notion**: una SPA (Vite + React) che **riusa lo stesso modello** (`src/schema/*`,
+`src/examples/data.ts`) ma tiene i dati **nel browser** e calcola da sé relazioni, rollup e
+formule. È il "Poetrify" del cruscotto: statica, gratuita su GitHub Pages, pienamente
+funzionante.
+
+```bash
+cd web
+npm install
+npm run dev      # sviluppo, su http://localhost:5173
+npm run build    # build statico in web/dist
+```
+
+- **Dati local-first:** vivono in `localStorage`; **Esporta/Importa JSON** per backup e per
+  spostarli tra dispositivi. *Limite onesto:* i dati sono per-dispositivo, niente sync
+  automatica — esporta un backup ogni tanto.
+- **Funzioni:** «Carica esempio» (le 4 UdA-modello), tabella e form **schema-driven** per
+  tutti i 17 database, vista **UdA** (copertura % e ore) e **Sostenibilità oraria** (semaforo
+  Monte ore vs ore pianificate) — gli stessi calcoli del modello Notion, qui eseguiti dall'app.
+- **Deploy:** la Action `.github/workflows/pages.yml` costruisce `web/` e pubblica su Pages a
+  ogni push. **Passo una-tantum tuo:** *Settings → Pages → Source: "GitHub Actions"*. Il sito
+  sarà su `https://leocrates99.github.io/notion-cruscotto-docente/`.
+
+> È una strada **parallela**: chi preferisce Notion continua con build/template/CSV; chi vuole
+> un sito autonomo usa questo. Stesso modello, due mondi.
+
+---
+
 ## Struttura del repository
 
 ```
@@ -338,6 +368,9 @@ static-template/      # output importabile: 17 CSV + guide + brief-template (+ .
 .github/workflows/
   notion.yml          # CI Ramo 2: plan sui PR, apply sui push
   automations.yml     # CI Ramo 3: cron promemoria + dispatch annuario/rollover
+  pages.yml           # CI Sito: build di web/ e deploy su GitHub Pages
+web/                  # versione SITO local-first (SPA React, riusa il modello)
+  src/store · compute · ui · model
 docs/
   prospetto.md        # il documento di progettazione completo
   sinergia-skill.md   # ponte verso le skill (progettazione-didattica, burocrazia-scolastica)

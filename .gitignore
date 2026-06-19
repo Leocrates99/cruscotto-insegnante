@@ -10,3 +10,6 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
+
+# Config locale degli strumenti di anteprima
+.claude/
