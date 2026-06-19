@@ -7,4 +7,8 @@ Importali in Notion in un colpo solo: **Import → Markdown & CSV → seleziona 
 > ma **non** relazioni, rollup e formule (limite dell'import di Notion). Lì trovi come
 > riattivare la parte "intelligente".
 
-I dati «Euripide» sono un esempio: esploralo e poi eliminalo quando inizi a usarlo davvero.
+I dati di esempio coprono **quattro UdA-modello** (greco, latino, italiano, geostoria, tra
+biennio e triennio): esplorali e poi eliminali quando inizi a usarlo davvero.
+
+Per far dialogare il cruscotto con le skill di Claude (`progettazione-didattica`,
+`burocrazia-scolastica`) usa `brief-template.md` in questa cartella.

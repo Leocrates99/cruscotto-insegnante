@@ -1,5 +1,5 @@
 import type { SchemaDef } from "../types";
-import { MATERIE } from "./_shared";
+import { ANNI_CORSO, CICLI, MATERIE } from "./_shared";
 
 /**
  * Programmazione annuale — un record per abbinamento classe-materia (§4.1).
@@ -14,17 +14,23 @@ export const programmazione: SchemaDef = {
   properties: {
     Titolo: { type: "title" },
     Materia: { type: "select", options: MATERIE },
+    "Anno di corso": { type: "select", options: ANNI_CORSO },
+    Ciclo: { type: "select", options: CICLI },
     "Monte ore": { type: "number" },
     "Finalità generali": { type: "rich_text" },
     "Strumenti di verifica": {
       type: "multi_select",
       options: [
+        { name: "versione", color: "blue" },
         { name: "traduzione", color: "blue" },
         { name: "analisi del testo", color: "purple" },
+        { name: "testo argomentativo", color: "pink" },
+        { name: "tema", color: "pink" },
         { name: "interrogazione orale", color: "green" },
-        { name: "prova strutturata", color: "yellow" },
         { name: "questionario", color: "orange" },
-        { name: "produzione scritta", color: "pink" },
+        { name: "prova strutturata", color: "yellow" },
+        { name: "prova esperta", color: "red" },
+        { name: "mappa concettuale", color: "brown" },
       ],
     },
     Stato: {

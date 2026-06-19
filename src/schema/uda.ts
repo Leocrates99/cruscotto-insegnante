@@ -1,5 +1,5 @@
 import type { SchemaDef } from "../types";
-import { STATO_CICLO } from "./_shared";
+import { ANNI_CORSO, CICLI, STATO_CICLO } from "./_shared";
 
 /**
  * UdA — Unità didattica di apprendimento (§4, §7). Contenitore delle Lezioni.
@@ -16,6 +16,8 @@ export const uda: SchemaDef = {
   properties: {
     Titolo: { type: "title" },
     "Competenza attesa": { type: "rich_text" },
+    "Anno di corso": { type: "select", options: ANNI_CORSO },
+    Ciclo: { type: "select", options: CICLI },
     Stato: { type: "select", options: STATO_CICLO },
     "Data inizio": { type: "date" },
     "Data fine": { type: "date" },

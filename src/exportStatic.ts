@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildOrder } from "../config/buildOrder";
 import { schemaByKey } from "./schema";
 import { columnsFor, toCsv } from "./staticExport/csv";
-import { dataset } from "./staticExport/data";
+import { dataset } from "./examples/data";
 
 // Generatore OFFLINE (nessun token, nessuna API): produce una cartella di CSV +
 // guide, pronta da importare in Notion via «Import → Markdown & CSV».
@@ -22,7 +22,11 @@ Importali in Notion in un colpo solo: **Import → Markdown & CSV → seleziona 
 > ma **non** relazioni, rollup e formule (limite dell'import di Notion). Lì trovi come
 > riattivare la parte "intelligente".
 
-I dati «Euripide» sono un esempio: esploralo e poi eliminalo quando inizi a usarlo davvero.
+I dati di esempio coprono **quattro UdA-modello** (greco, latino, italiano, geostoria, tra
+biennio e triennio): esplorali e poi eliminali quando inizi a usarlo davvero.
+
+Per far dialogare il cruscotto con le skill di Claude (\`progettazione-didattica\`,
+\`burocrazia-scolastica\`) usa \`brief-template.md\` in questa cartella.
 `;
 }
 
@@ -101,8 +105,10 @@ function main(): void {
 
   writeFileSync(resolve(OUT, "00 — Inizia da qui.md"), homeMd(), "utf8");
   writeFileSync(resolve(OUT, "GUIDA-IMPORT.md"), guideMd(), "utf8");
+  // Modulo per il dialogo con le skill (vedi docs/sinergia-skill.md).
+  copyFileSync(resolve(here, "../docs/brief-template.md"), resolve(OUT, "brief-template.md"));
 
-  console.log(`✓ Generati ${buildOrder.length} CSV + 2 guide in: ${OUT}`);
+  console.log(`✓ Generati ${buildOrder.length} CSV + guide (import + brief) in: ${OUT}`);
   console.log("  Importali in Notion con: Import → Markdown & CSV → seleziona la cartella.");
 }
 

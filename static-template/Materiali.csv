@@ -1,3 +1,9 @@
-Titolo,Tipo,Materia,Argomento,Difficoltà,Fonte/autore,Tag,Link al file
-"Euripide, Medea — testo greco con traduzione a fronte",testo,Greco,"tragedia, trimetro giambico, rhesis",alta,Euripide,"tragedia, Euripide, IV classico",https://drive.google.com/
-Scheda metrica — il trimetro giambico,scheda,Greco,"metrica, trimetro giambico",media,materiale d'autore,"metrica, tragedia",
+Titolo,Tipo,Materia,Ciclo,Argomento,Difficoltà,Origine,Fonte/autore,Tag,Link al file
+"Euripide, Medea — testo greco con traduzione a fronte",testo,Greco,Triennio,"tragedia, rhesis",alta,libro di testo,Euripide,"tragedia, Euripide",
+Scheda metrica — il trimetro giambico,scheda,Greco,Triennio,"metrica, trimetro giambico",media,manuale,materiale d'autore,metrica,
+"Cesare, De bello Gallico I — passo con traduzione a fronte",testo,Latino,Biennio,"sintassi, prosa narrativa",media,libro di testo,Cesare,"Cesare, prosa",
+Scheda — l'ablativo assoluto,scheda,Latino,Biennio,ablativo assoluto,bassa,manuale,,sintassi,
+"Leopardi, L'infinito — testo e parafrasi",testo,Italiano,Triennio,"poesia, idillio",media,libro di testo,Leopardi,"Leopardi, poesia",
+Zibaldone — estratti sulla teoria del piacere,antologia,Italiano,Triennio,teoria del piacere,alta,libro di testo,Leopardi,"Leopardi, prosa",
+Carta della Grecia delle poleis,carta/atlante,Geostoria,Biennio,geografia storica,bassa,manuale,,"Grecia, poleis",
+Tucidide — l'elogio funebre di Pericle (estratto),fonte storica,Geostoria,Biennio,democrazia ateniese,media,libro di testo,Tucidide,"Atene, fonte",

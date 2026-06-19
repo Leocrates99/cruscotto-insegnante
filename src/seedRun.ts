@@ -1,12 +1,13 @@
 import "dotenv/config";
 import { describeError } from "./lib/notion";
 import { loadManifest } from "./lib/state";
-import { seedEuripide } from "./seed";
+import { runSeed } from "./examples/seed";
 
 /**
- * Inserisce i dati di esempio (UdA "Euripide"). Richiede che lo schema esista già
- * (esegui prima "npm run build"). È pensato per essere lanciato UNA volta come
- * collaudo: rilanciarlo crea pagine duplicate.
+ * Inserisce i dati di esempio: una UdA-modello per ciascuna materia umanistica
+ * (greco, latino, italiano, geostoria), su biennio e triennio. Richiede che lo
+ * schema esista già (esegui prima "npm run build"). Da lanciare UNA volta:
+ * rilanciarlo crea pagine duplicate.
  */
 async function main() {
   const m = loadManifest();
@@ -15,14 +16,13 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('\n━━ Seed — UdA "Euripide e la crisi del tragico" (§4.4) ━━\n');
-  const { uda } = await seedEuripide();
+  console.log("\n━━ Seed — 4 UdA-modello (greco · latino · italiano · geostoria) ━━\n");
+  const { pages } = await runSeed();
 
-  console.log("\n✅ Seed completato.");
-  console.log("   Apri Notion e controlla che calcolino:");
-  console.log("   • UdA → 'Ore pianificate' = 6 e 'Copertura %' ≈ 60");
-  console.log("   • Programmazione → 'Scostamento' = 93 e 'Semaforo' = '○ margine'\n");
-  console.log(`   (UdA creata: ${uda})\n`);
+  console.log(`\n✅ Seed completato: ${pages} pagine create.`);
+  console.log("   Controlla in Notion, ad esempio sull'UdA «Euripide e la crisi del tragico»:");
+  console.log("   • 'Ore pianificate' = 6 e 'Copertura %' ≈ 60");
+  console.log("   • sulla Programmazione di Greco: 'Semaforo' = '○ margine'.\n");
 }
 
 main().catch((err) => {

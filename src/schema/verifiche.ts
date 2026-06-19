@@ -1,4 +1,5 @@
 import type { SchemaDef } from "../types";
+import { MATERIE } from "./_shared";
 
 /**
  * Verifiche — formative (territorio naturale di Notion) e bozze di sommative.
@@ -13,11 +14,27 @@ export const verifiche: SchemaDef = {
   description: "Verifiche formative e bozze di sommative; mai voti nominativi (§4.3, §9).",
   properties: {
     Titolo: { type: "title" },
+    Materia: { type: "select", options: MATERIE },
     Tipo: {
       type: "select",
       options: [
         { name: "formativa", color: "green" },
         { name: "sommativa-bozza", color: "orange" },
+      ],
+    },
+    Tipologia: {
+      type: "select",
+      options: [
+        { name: "interrogazione orale", color: "green" },
+        { name: "colloquio", color: "green" },
+        { name: "esposizione", color: "green" },
+        { name: "versione", color: "blue" },
+        { name: "analisi del testo (Tip. A)", color: "purple" },
+        { name: "testo argomentativo (Tip. B)", color: "pink" },
+        { name: "tema (Tip. C)", color: "pink" },
+        { name: "questionario", color: "orange" },
+        { name: "prova semistrutturata", color: "yellow" },
+        { name: "prova esperta", color: "red" },
       ],
     },
     Modalità: {

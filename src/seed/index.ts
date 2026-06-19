@@ -1,1 +1,0 @@
-export { seedEuripide } from "./euripide";

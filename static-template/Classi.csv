@@ -1,2 +1,5 @@
-Titolo,Indirizzo,Note
-IV classico,Classico,
+Titolo,Indirizzo,Anno di corso,Ciclo,Note
+I classico,Classico,I,Biennio,
+II classico,Classico,II,Biennio,
+IV classico,Classico,IV,Triennio,
+V classico,Classico,V,Triennio,

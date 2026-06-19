@@ -1,4 +1,5 @@
 import type { SchemaDef } from "../types";
+import { ANNI_CORSO, CICLI } from "./_shared";
 
 /** Classi — dimensione trasversale (programmazione, lezioni, osservazioni). */
 export const classi: SchemaDef = {
@@ -16,6 +17,8 @@ export const classi: SchemaDef = {
         { name: "Scienze umane", color: "orange" },
       ],
     },
+    "Anno di corso": { type: "select", options: ANNI_CORSO },
+    Ciclo: { type: "select", options: CICLI },
     Note: { type: "rich_text" },
   },
 };

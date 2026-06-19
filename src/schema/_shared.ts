@@ -32,3 +32,18 @@ export const LIVELLI_BLOOM: OptionDef[] = [
   { name: "Valutare", color: "purple" },
   { name: "Creare", color: "red" },
 ];
+
+/** Anno di corso (livello del curricolo, I–V), distinto dall'anno scolastico (§6). */
+export const ANNI_CORSO: OptionDef[] = [
+  { name: "I", color: "blue" },
+  { name: "II", color: "blue" },
+  { name: "III", color: "green" },
+  { name: "IV", color: "green" },
+  { name: "V", color: "green" },
+];
+
+/** Ciclo del liceo: il biennio e il triennio hanno obiettivi e strumenti diversi. */
+export const CICLI: OptionDef[] = [
+  { name: "Biennio", color: "yellow" },
+  { name: "Triennio", color: "purple" },
+];

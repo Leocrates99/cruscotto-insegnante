@@ -1,5 +1,5 @@
 import type { SchemaDef } from "../types";
-import { LIVELLI_BLOOM, MATERIE } from "./_shared";
+import { ANNI_CORSO, CICLI, LIVELLI_BLOOM, MATERIE } from "./_shared";
 
 /**
  * Obiettivi — catalogo permanente e anno-neutro di obiettivi cognitivi (§4.2).
@@ -25,7 +25,8 @@ export const obiettivi: SchemaDef = {
     },
     "Livello cognitivo": { type: "select", options: LIVELLI_BLOOM },
     Materia: { type: "select", options: MATERIE },
-    "Classe/anno di corso": { type: "rich_text" },
+    "Anno di corso": { type: "select", options: ANNI_CORSO },
+    Ciclo: { type: "select", options: CICLI },
   },
   // "Verifiche" è la relazione inversa generata da Verifiche."Obiettivi verificati".
   rollups: [{ name: "n. verifiche", relation: "Verifiche", function: "count" }],

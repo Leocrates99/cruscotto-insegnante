@@ -4,7 +4,7 @@ import { loadManifest, saveManifest, getDataSourceId } from "./lib/state";
 import { hydrateManifestFromWorkspace } from "./lib/discover";
 import { reconcile } from "./lib/pipeline";
 import { ensureHomePage } from "./lib/homepage";
-import { seedEuripide } from "./seed";
+import { runSeed } from "./examples/seed";
 import type { Manifest } from "./types";
 
 /**
@@ -46,8 +46,8 @@ async function main() {
 
   console.log("\nDati dimostrativi:");
   if (await udaIsEmpty(manifest)) {
-    console.log("  inserisco l'UdA «Euripide»…");
-    await seedEuripide();
+    console.log("  inserisco le 4 UdA-modello (greco · latino · italiano · geostoria)…");
+    await runSeed();
   } else {
     console.log("  • già presenti: salto (per non duplicare).");
   }

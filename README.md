@@ -277,6 +277,41 @@ della funzione *Import* di Notion, non di questi file.
 
 ---
 
+## Tutte le materie umanistiche (biennio e triennio)
+
+Lo schema copre **italiano, geostoria, latino, greco** su **biennio e triennio**, con opzioni
+tarate per materia:
+
+- dimensione **`Anno di corso`** (I–V) e **`Ciclo`** (Biennio/Triennio) su Classi, Obiettivi,
+  UdA e Programmazione;
+- **Materiali** e **Sapere** con tipi per tutte le materie (analisi del testo, traccia,
+  carta/atlante, fonte storica, linea del tempo, corrente/movimento, evento storico…);
+- **Verifiche** con `Tipologia` allineata alla valutazione liceale (interrogazione, versione,
+  analisi del testo Tip. A, testo argomentativo Tip. B, tema Tip. C, prova esperta…).
+
+I dati di esempio (`npm run seed` o l'export statico) includono **quattro UdA-modello**, una
+per materia: *Euripide* (Greco, IV) · *Cesare e la sintassi* (Latino, II) · *Leopardi e
+l'infinito* (Italiano, V) · *La polis greca* (Geostoria, I). Sorgente unica in
+`src/examples/data.ts`, condivisa da seed e CSV.
+
+## Sinergia con le skill di Claude
+
+Il cruscotto conserva i **dati strutturati**; le skill generano i **testi**:
+`progettazione-didattica` (domande, tracce, lezioni, UdA, programmazione) e
+`burocrazia-scolastica` (verbali, atti). Il dialogo è a doppio senso:
+
+- **Cruscotto → skill:** compili il *brief* ([`docs/brief-template.md`](docs/brief-template.md))
+  con materia, classe, anno/ciclo, obiettivi (Bloom), contenuti e verifiche, e lo incolli in
+  Claude per attivare la skill, già calibrata sulla classe.
+- **skill → cruscotto:** l'output torna come record (lezione → Lezioni; traccia → Materiali
+  `traccia` + Verifiche; UdA → UdA…), tracciato dal campo `Origine`.
+
+Vale identico per il **sistema statico** (il brief si compila a mano dai CSV). La mappa
+completa e i confini di privacy (PEI/PDP e voti restano fuori) sono in
+[`docs/sinergia-skill.md`](docs/sinergia-skill.md).
+
+---
+
 ## Struttura del repository
 
 ```
@@ -295,15 +330,18 @@ src/
     homepage.ts       # pagina-guida «Inizia da qui» per il template (Ramo 1)
     state.ts          # manifest di idempotenza
   automations/        # Ramo 3: util.ts, reminders.ts, annuario.ts, rollover.ts
-  staticExport/       # Modello statico: csv.ts, data.ts
-  seed/euripide.ts    # dati di esempio (§4.4)
+  examples/           # sorgente unica esempi: data.ts (4 UdA-modello) + seed.ts (seeder generico)
+  staticExport/       # Modello statico: csv.ts
   build.ts migrate.ts template.ts automate.ts exportStatic.ts seedRun.ts verify.ts
 config/buildOrder.ts  # ordine topologico di creazione (§13.6)
-static-template/      # output importabile: 17 CSV + guide (+ static-template.zip)
+static-template/      # output importabile: 17 CSV + guide + brief-template (+ .zip)
 .github/workflows/
   notion.yml          # CI Ramo 2: plan sui PR, apply sui push
   automations.yml     # CI Ramo 3: cron promemoria + dispatch annuario/rollover
-docs/prospetto.md     # il documento di progettazione completo
+docs/
+  prospetto.md        # il documento di progettazione completo
+  sinergia-skill.md   # ponte verso le skill (progettazione-didattica, burocrazia-scolastica)
+  brief-template.md   # modulo di brief da compilare per le skill
 ```
 
 Per cambiare lo schema: modifica l'oggetto in `src/schema/<db>.ts` e rilancia

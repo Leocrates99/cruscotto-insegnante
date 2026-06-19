@@ -1,5 +1,5 @@
 import type { SchemaDef } from "../types";
-import { MATERIE } from "./_shared";
+import { CICLI, MATERIE } from "./_shared";
 
 /**
  * Materiali — il serbatoio (M4). Anno-neutro: si riusa negli anni, quindi NON
@@ -18,13 +18,22 @@ export const materiali: SchemaDef = {
       options: [
         { name: "versione", color: "blue" },
         { name: "testo", color: "purple" },
+        { name: "analisi del testo", color: "purple" },
+        { name: "antologia", color: "purple" },
         { name: "esercizio", color: "yellow" },
         { name: "verifica", color: "red" },
+        { name: "traccia", color: "red" },
         { name: "scheda", color: "green" },
+        { name: "mappa concettuale", color: "brown" },
+        { name: "linea del tempo", color: "orange" },
+        { name: "carta/atlante", color: "orange" },
+        { name: "fonte storica", color: "pink" },
+        { name: "presentazione", color: "gray" },
         { name: "laboratorio", color: "orange" },
       ],
     },
     Materia: { type: "select", options: MATERIE },
+    Ciclo: { type: "select", options: CICLI },
     Argomento: { type: "rich_text" },
     Difficoltà: {
       type: "select",
@@ -32,6 +41,15 @@ export const materiali: SchemaDef = {
         { name: "bassa", color: "green" },
         { name: "media", color: "yellow" },
         { name: "alta", color: "red" },
+      ],
+    },
+    Origine: {
+      type: "select",
+      options: [
+        { name: "manuale", color: "default" },
+        { name: "progettazione-didattica", color: "blue" },
+        { name: "libro di testo", color: "green" },
+        { name: "web", color: "gray" },
       ],
     },
     "Fonte/autore": { type: "rich_text" },
