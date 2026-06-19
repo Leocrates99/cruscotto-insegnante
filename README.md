@@ -334,8 +334,9 @@ npm run build    # build statico in web/dist
   tutti i 17 database, vista **UdA** (copertura % e ore) e **Sostenibilità oraria** (semaforo
   Monte ore vs ore pianificate) — gli stessi calcoli del modello Notion, qui eseguiti dall'app.
 - **Deploy:** la Action `.github/workflows/pages.yml` costruisce `web/` e pubblica su Pages a
-  ogni push. **Passo una-tantum tuo:** *Settings → Pages → Source: "GitHub Actions"*. Il sito
-  sarà su `https://leocrates99.github.io/notion-cruscotto-docente/`.
+  ogni push (base relativo, quindi indipendente dal nome del repo). **Passo una-tantum tuo:**
+  *Settings → Pages → Source: "GitHub Actions"*. Il sito sarà su
+  `https://leocrates99.github.io/<nome-repo>/` (per questo repo: `.../cruscotto-insegnante/`).
 
 > È una strada **parallela**: chi preferisce Notion continua con build/template/CSV; chi vuole
 > un sito autonomo usa questo. Stesso modello, due mondi.

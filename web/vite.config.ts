@@ -2,9 +2,10 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
 
-// In sviluppo serve da "/" (anteprima); in build usa il base path di GitHub Pages.
+// In sviluppo serve da "/" (anteprima). In build usa un base RELATIVO ("./"): così il
+// sito funziona su GitHub Pages sotto qualunque nome di repo, senza cablarne uno.
 export default defineConfig(({ command }) => ({
-  base: command === "build" ? "/notion-cruscotto-docente/" : "/",
+  base: command === "build" ? "./" : "/",
   plugins: [react()],
   resolve: {
     alias: {
