@@ -4,12 +4,15 @@ import { exportJson, readJsonFile } from "../store/persistence";
 import { buildSeedState } from "../store/seed";
 import { getTheme, toggleTheme } from "./theme";
 
-export function Toolbar() {
+export function Toolbar({ onToggleNav }: { onToggleNav: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [theme, setThemeState] = useState(getTheme());
 
   return (
     <header className="masthead">
+      <button className="nav-toggle" aria-label="Apri il menu" onClick={onToggleNav}>
+        ☰
+      </button>
       <div className="brand">
         <span className="brand-mark">🏛️</span>
         <div>

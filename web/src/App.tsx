@@ -15,12 +15,14 @@ export type View =
 
 export function App() {
   const [view, setView] = useState<View>({ kind: "home" });
+  const [navOpen, setNavOpen] = useState(false);
 
   return (
     <div className="app">
-      <Toolbar />
+      <Toolbar onToggleNav={() => setNavOpen((o) => !o)} />
       <div className="body">
-        <Nav view={view} onChange={setView} />
+        <Nav view={view} onChange={setView} open={navOpen} onNavigate={() => setNavOpen(false)} />
+        {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
         <main className="main">
           {view.kind === "home" && (
             <HomeView
