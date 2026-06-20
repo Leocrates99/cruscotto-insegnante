@@ -1,14 +1,23 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { clearState, getState, replaceState, type State } from "../store/store";
 import { exportJson, readJsonFile } from "../store/persistence";
 import { buildSeedState } from "../store/seed";
+import { getTheme, toggleTheme } from "./theme";
 
 export function Toolbar() {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [theme, setThemeState] = useState(getTheme());
+
   return (
-    <header className="toolbar">
+    <header className="masthead">
       <div className="brand">
-        🏛️ Cruscotto del docente <small>· sito local-first</small>
+        <span className="brand-mark">🏛️</span>
+        <div>
+          <h1>
+            Cruscotto <strong>del docente</strong>
+          </h1>
+          <div className="brand-sub">officina didattica · sito local-first</div>
+        </div>
       </div>
       <div className="actions">
         <button
@@ -20,8 +29,8 @@ export function Toolbar() {
         >
           Carica esempio
         </button>
-        <button onClick={() => exportJson(getState())}>Esporta JSON</button>
-        <button onClick={() => fileRef.current?.click()}>Importa JSON</button>
+        <button onClick={() => exportJson(getState())}>Esporta</button>
+        <button onClick={() => fileRef.current?.click()}>Importa</button>
         <button
           className="danger"
           onClick={() => {
@@ -29,6 +38,9 @@ export function Toolbar() {
           }}
         >
           Azzera
+        </button>
+        <button className="theme-toggle" title="Tema chiaro / scuro" onClick={() => setThemeState(toggleTheme())}>
+          {theme === "dark" ? "☀️" : "🌙"}
         </button>
         <input
           ref={fileRef}

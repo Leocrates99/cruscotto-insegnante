@@ -4,13 +4,39 @@ import { schemaByKey } from "@model";
 import { records, recordTitle, removeRecord, titleProp, type Rec, type Value } from "../store/store";
 import { useStore } from "../store/useStore";
 import { RecordForm } from "./RecordForm";
+import { materiaColor } from "./materia";
 
-function cellText(prop: BasePropertyDef, v: Value): string {
-  if (v === undefined) return "";
-  if (Array.isArray(v)) return v.join(", ");
-  if (typeof v === "boolean") return v ? "✓" : "";
-  if (prop.type === "url" && typeof v === "string") return v ? "🔗" : "";
-  return String(v);
+function CellValue({ name, prop, value }: { name: string; prop: BasePropertyDef; value: Value }) {
+  if (value === undefined || value === "") return null;
+  if (prop.type === "select" && typeof value === "string") {
+    const color = name === "Materia" ? materiaColor(value) : undefined;
+    return (
+      <span className="chip" style={color ? { color, borderColor: color } : undefined}>
+        {value}
+      </span>
+    );
+  }
+  if (prop.type === "multi_select" && Array.isArray(value)) {
+    return (
+      <span className="chips">
+        {value.map((x) => (
+          <span key={x} className="chip">
+            {x}
+          </span>
+        ))}
+      </span>
+    );
+  }
+  if (typeof value === "boolean") return value ? <span className="check">✓</span> : null;
+  if (prop.type === "url" && typeof value === "string") {
+    return (
+      <a href={value} target="_blank" rel="noreferrer">
+        🔗
+      </a>
+    );
+  }
+  if (Array.isArray(value)) return <>{value.join(", ")}</>;
+  return <>{String(value)}</>;
 }
 
 export function EntityTable({ dbKey, onOpenUda }: { dbKey: DbKey; onOpenUda?: (id: string) => void }) {
@@ -62,7 +88,9 @@ export function EntityTable({ dbKey, onOpenUda }: { dbKey: DbKey; onOpenUda?: (i
               <tr key={rec.id}>
                 <td className="title-cell">{recordTitle(dbKey, rec)}</td>
                 {baseCols.map(([name, p]) => (
-                  <td key={name}>{cellText(p, rec[name])}</td>
+                  <td key={name}>
+                    <CellValue name={name} prop={p} value={rec[name]} />
+                  </td>
                 ))}
                 {rels.map((r) => (
                   <td key={r.name}>{(Array.isArray(rec[r.name]) ? (rec[r.name] as string[]).length : 0) || ""}</td>

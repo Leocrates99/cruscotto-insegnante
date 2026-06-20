@@ -2,6 +2,7 @@ import { records, recordTitle } from "../store/store";
 import { useStore } from "../store/useStore";
 import { programmazioneOre } from "../compute/computed";
 import { txt } from "./util";
+import { materiaColor } from "./materia";
 
 export function ProgrammazioneView() {
   useStore();
@@ -39,7 +40,17 @@ export function ProgrammazioneView() {
               return (
                 <tr key={p.id}>
                   <td className="title-cell">{recordTitle("programmazione", p)}</td>
-                  <td>{txt(p["Materia"])}</td>
+                  <td>
+                    {(() => {
+                      const m = txt(p["Materia"]);
+                      const c = materiaColor(m);
+                      return m ? (
+                        <span className="chip" style={c ? { color: c, borderColor: c } : undefined}>
+                          {m}
+                        </span>
+                      ) : null;
+                    })()}
+                  </td>
                   <td>{o.monte}</td>
                   <td>{o.tot}</td>
                   <td>{o.scostamento}</td>
