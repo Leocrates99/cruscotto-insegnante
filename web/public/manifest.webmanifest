@@ -1,0 +1,17 @@
+{
+  "name": "Cruscotto del docente",
+  "short_name": "Cruscotto",
+  "description": "L'officina didattica del docente: programmazione, UdA, lezioni, obiettivi e verifiche. Local-first, indipendente da Notion.",
+  "lang": "it",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fcfbf8",
+  "theme_color": "#1800ac",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

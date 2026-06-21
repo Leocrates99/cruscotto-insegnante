@@ -333,6 +333,9 @@ npm run build    # build statico in web/dist
 - **Funzioni:** «Carica esempio» (le 4 UdA-modello), tabella e form **schema-driven** per
   tutti i 17 database, vista **UdA** (copertura % e ore) e **Sostenibilità oraria** (semaforo
   Monte ore vs ore pianificate) — gli stessi calcoli del modello Notion, qui eseguiti dall'app.
+- **Installabile (PWA):** da telefono, tablet o desktop puoi *Installa / Aggiungi a schermata
+  Home*: si apre a tutto schermo con icona propria e **funziona offline** (service worker che
+  mette in cache lo shell). Le icone si rigenerano con `npm run icons`.
 - **Deploy:** la Action `.github/workflows/pages.yml` costruisce `web/` e pubblica su Pages a
   ogni push (base relativo, quindi indipendente dal nome del repo). **Passo una-tantum tuo:**
   *Settings → Pages → Source: "GitHub Actions"*. Il sito sarà su
