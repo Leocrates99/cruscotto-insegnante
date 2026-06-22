@@ -330,9 +330,14 @@ npm run build    # build statico in web/dist
 - **Dati local-first:** vivono in `localStorage`; **Esporta/Importa JSON** per backup e per
   spostarli tra dispositivi. *Limite onesto:* i dati sono per-dispositivo, niente sync
   automatica — esporta un backup ogni tanto.
-- **Funzioni:** «Carica esempio» (le 4 UdA-modello), tabella e form **schema-driven** per
-  tutti i 17 database, vista **UdA** (copertura % e ore) e **Sostenibilità oraria** (semaforo
-  Monte ore vs ore pianificate) — gli stessi calcoli del modello Notion, qui eseguiti dall'app.
+- **Viste operative:** **Calendario** (default, eventi datati colorati per materia), **Kanban**
+  per stato con **drag-and-drop**, **Cronoprogramma** (lezioni distese nel tempo per UdA),
+  **Promemoria** scadenze; più Panoramica, dettaglio **UdA** (copertura % e ore) e
+  **Sostenibilità oraria** (semaforo). Navigazione a sezioni (Viste + database raggruppati).
+- **Compilazione:** tabella e form **schema-driven** per i 17 database; il "+ Nuovo" si apre come
+  **pannello laterale** (su PC affianca senza coprire la vista). Per gli **Obiettivi** un menu a
+  **tendina con ricerca** suggerisce voci per materia (catalogo in `src/data/catalog.ts`, da
+  ampliare con le normative). Gli stessi calcoli del modello Notion, eseguiti dall'app.
 - **Installabile (PWA):** da telefono, tablet o desktop puoi *Installa / Aggiungi a schermata
   Home*: si apre a tutto schermo con icona propria e **funziona offline** (service worker che
   mette in cache lo shell). Le icone si rigenerano con `npm run icons`.

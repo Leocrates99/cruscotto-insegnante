@@ -13,5 +13,6 @@ export type {
 } from "@root-src/types";
 
 export { schemas, schemaByKey } from "@root-src/schema";
+export { STATO_CICLO, MATERIE, LIVELLI_BLOOM, ANNI_CORSO, CICLI } from "@root-src/schema/_shared";
 export { buildOrder } from "@root-config/buildOrder";
 export { dataset, REL_SEP } from "@root-src/examples/data";

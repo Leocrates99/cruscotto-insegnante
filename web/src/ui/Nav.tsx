@@ -1,6 +1,25 @@
 import type { DbKey } from "@model";
-import { buildOrder, schemaByKey } from "@model";
+import { schemaByKey } from "@model";
 import type { View } from "../App";
+import { useStore } from "../store/useStore";
+import { reminderCount } from "../compute/events";
+
+const VIEWS: { v: View; label: string; icon: string }[] = [
+  { v: { kind: "calendar" }, label: "Calendario", icon: "📅" },
+  { v: { kind: "kanban" }, label: "Kanban", icon: "🗂️" },
+  { v: { kind: "timeline" }, label: "Cronoprogramma", icon: "📈" },
+  { v: { kind: "promemoria" }, label: "Promemoria", icon: "📌" },
+  { v: { kind: "home" }, label: "Panoramica", icon: "🏠" },
+  { v: { kind: "programmazione" }, label: "Sostenibilità oraria", icon: "📊" },
+];
+
+const GROUPS: { title: string; keys: DbKey[] }[] = [
+  { title: "Pianificazione", keys: ["programmazione", "uda", "lezioni", "obiettivi", "verifiche"] },
+  { title: "Risorse", keys: ["materiali", "sapere"] },
+  { title: "Organizzazione", keys: ["scadenze", "progetti", "task", "riunioni", "osservazioni", "idee"] },
+  { title: "Sviluppo", keys: ["formazione", "letture"] },
+  { title: "Anagrafica", keys: ["anni", "classi"] },
+];
 
 export function Nav({
   view,
@@ -13,29 +32,37 @@ export function Nav({
   open: boolean;
   onNavigate: () => void;
 }) {
-  const isEntity = (k: DbKey) => view.kind === "entity" && view.key === k;
-  // Cambia vista e chiude il drawer (su mobile).
+  useStore();
+  const promCount = reminderCount();
   const go = (v: View) => {
     onChange(v);
     onNavigate();
   };
+  const viewActive = (v: View) => v.kind === view.kind && v.kind !== "entity";
 
   return (
     <nav className={open ? "nav open" : "nav"}>
-      <button className={view.kind === "home" ? "active" : ""} onClick={() => go({ kind: "home" })}>
-        🏠 Panoramica
-      </button>
-      <button
-        className={view.kind === "programmazione" ? "active" : ""}
-        onClick={() => go({ kind: "programmazione" })}
-      >
-        📊 Sostenibilità oraria
-      </button>
-      <div className="nav-sep">Database</div>
-      {buildOrder.map((k) => (
-        <button key={k} className={isEntity(k) ? "active" : ""} onClick={() => go({ kind: "entity", key: k })}>
-          {schemaByKey[k].icon} {schemaByKey[k].title}
+      <div className="nav-sep">Viste</div>
+      {VIEWS.map((it) => (
+        <button key={it.label} className={viewActive(it.v) ? "active" : ""} onClick={() => go(it.v)}>
+          <span>{it.icon} {it.label}</span>
+          {it.v.kind === "promemoria" && promCount > 0 && <span className="badge">{promCount}</span>}
         </button>
+      ))}
+
+      {GROUPS.map((g) => (
+        <div key={g.title}>
+          <div className="nav-sep">{g.title}</div>
+          {g.keys.map((k) => (
+            <button
+              key={k}
+              className={view.kind === "entity" && view.key === k ? "active" : ""}
+              onClick={() => go({ kind: "entity", key: k })}
+            >
+              <span>{schemaByKey[k].icon} {schemaByKey[k].title}</span>
+            </button>
+          ))}
+        </div>
       ))}
     </nav>
   );

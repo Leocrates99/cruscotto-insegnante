@@ -1,13 +1,19 @@
-import { useState } from "react";
-import { getRecord, recordTitle } from "../store/store";
+import type { DbKey } from "@model";
+import { getRecord, recordTitle, type Rec } from "../store/store";
 import { useStore } from "../store/useStore";
 import { obiettivoVerificato, udaCopertura, udaOrePianificate } from "../compute/computed";
-import { RecordForm } from "./RecordForm";
 import { asIds, txt } from "./util";
 
-export function UdaDetail({ id, onBack }: { id: string; onBack: () => void }) {
+export function UdaDetail({
+  id,
+  onBack,
+  onEdit,
+}: {
+  id: string;
+  onBack: () => void;
+  onEdit: (k: DbKey, r?: Rec) => void;
+}) {
   useStore();
-  const [editing, setEditing] = useState(false);
   const uda = getRecord("uda", id);
   if (!uda) {
     return (
@@ -26,7 +32,7 @@ export function UdaDetail({ id, onBack }: { id: string; onBack: () => void }) {
     <section>
       <div className="view-head">
         <button onClick={onBack}>← Indietro</button>
-        <button className="primary" onClick={() => setEditing(true)}>
+        <button className="primary" onClick={() => onEdit("uda", uda)}>
           Modifica UdA
         </button>
       </div>
@@ -82,8 +88,6 @@ export function UdaDetail({ id, onBack }: { id: string; onBack: () => void }) {
         })}
         {lezIds.length === 0 && <li className="muted">Nessuna lezione collegata.</li>}
       </ul>
-
-      {editing && <RecordForm dbKey="uda" rec={uda} onClose={() => setEditing(false)} />}
     </section>
   );
 }

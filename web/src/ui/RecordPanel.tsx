@@ -2,44 +2,87 @@ import { useState } from "react";
 import type { BasePropertyDef, DbKey } from "@model";
 import { schemaByKey } from "@model";
 import { newId, records, recordTitle, upsert, type Rec, type Value } from "../store/store";
+import { SearchSelect } from "./SearchSelect";
+import { obiettiviPerMateria, type ObiettivoSuggerito } from "../data/catalog";
 
 const str = (v: Value): string => (typeof v === "string" ? v : v === undefined ? "" : String(v));
 const asStrArr = (v: Value): string[] => (Array.isArray(v) ? v : []);
 
-/** Form schema-driven: genera gli input dalle proprietà del database. */
-export function RecordForm({ dbKey, rec, onClose }: { dbKey: DbKey; rec?: Rec; onClose: () => void }) {
+/**
+ * Pannello laterale (docked a destra) per creare/modificare un record. Su PC si apre
+ * in parallelo senza coprire la vista; su mobile è un overlay a tutta larghezza.
+ * Per gli Obiettivi il campo "Enunciato" usa una combobox con suggerimenti per materia.
+ */
+export function RecordPanel({ dbKey, rec, onClose }: { dbKey: DbKey; rec?: Rec; onClose: () => void }) {
   const def = schemaByKey[dbKey];
   const [draft, setDraft] = useState<Rec>(() => (rec ? { ...rec } : { id: newId() }));
   const set = (name: string, v: Value) => setDraft((d) => ({ ...d, [name]: v }));
+  const merge = (patch: Record<string, Value>) => setDraft((d) => ({ ...d, ...patch }));
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <h2>
-          {rec ? "Modifica" : "Nuovo"} · {def.icon} {def.title}
-        </h2>
-        <div className="form">
-          {Object.entries(def.properties).map(([name, prop]) => (
-            <Field key={name} name={name} prop={prop} value={draft[name]} onChange={(v) => set(name, v)} />
-          ))}
-          {(def.relations ?? []).map((rel) => (
-            <RelationField
-              key={rel.name}
-              label={rel.name}
-              target={rel.target}
-              value={asStrArr(draft[rel.name])}
-              onChange={(ids) => set(rel.name, ids)}
-            />
-          ))}
+    <>
+      <div className="panel-backdrop" onClick={onClose} />
+      <aside className="side-panel" role="dialog" aria-label={`${rec ? "Modifica" : "Nuovo"} ${def.title}`}>
+        <div className="panel-head">
+          <h2>
+            {rec ? "Modifica" : "Nuovo"} · {def.icon} {def.title}
+          </h2>
+          <button className="icon-btn" onClick={onClose} aria-label="Chiudi">✕</button>
         </div>
-        <div className="modal-actions">
+
+        <div className="panel-body">
+          <div className="form">
+            {Object.entries(def.properties).map(([name, prop]) => {
+              // Obiettivi · Enunciato → combobox con suggerimenti per materia
+              if (dbKey === "obiettivi" && name === "Enunciato") {
+                const materia = str(draft["Materia"]);
+                const list: ObiettivoSuggerito[] = (materia && obiettiviPerMateria[materia]) || [];
+                return (
+                  <label className="field" key={name}>
+                    <span>
+                      {name} {materia ? <em>· suggerimenti {materia}</em> : <em>· scegli prima la Materia</em>}
+                    </span>
+                    <SearchSelect<ObiettivoSuggerito>
+                      value={str(draft[name])}
+                      onChange={(v) => set(name, v)}
+                      placeholder="Scrivi o cerca un obiettivo…"
+                      options={list.map((s) => ({ label: s.enunciato, data: s }))}
+                      onSelect={(opt) => {
+                        const s = opt.data;
+                        if (!s) return;
+                        merge({
+                          Enunciato: s.enunciato,
+                          ...(s.tipo ? { Tipo: s.tipo } : {}),
+                          ...(s.livello ? { "Livello cognitivo": s.livello } : {}),
+                          ...(s.ciclo ? { Ciclo: s.ciclo } : {}),
+                        });
+                      }}
+                    />
+                  </label>
+                );
+              }
+              return <Field key={name} name={name} prop={prop} value={draft[name]} onChange={(v) => set(name, v)} />;
+            })}
+            {(def.relations ?? []).map((rel) => (
+              <RelationField
+                key={rel.name}
+                label={rel.name}
+                target={rel.target}
+                value={asStrArr(draft[rel.name])}
+                onChange={(ids) => set(rel.name, ids)}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="panel-actions">
           <button onClick={onClose}>Annulla</button>
           <button className="primary" onClick={() => { upsert(dbKey, draft); onClose(); }}>
             Salva
           </button>
         </div>
-      </div>
-    </div>
+      </aside>
+    </>
   );
 }
 

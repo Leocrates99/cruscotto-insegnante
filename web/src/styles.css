@@ -219,6 +219,79 @@ td .check { color: var(--success); font-weight: 700; }
 .chk { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.2rem; }
 
+/* ── Controllo segmentato + badge di nav ───────────────────────────────────── */
+.seg { display: inline-flex; gap: 2px; background: var(--parchment); border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: 2px; }
+.seg button { border: none; background: none; padding: 0.35rem 0.7rem; border-radius: 6px; font-size: 0.82rem; color: var(--ink-light); }
+.seg button:hover { background: var(--parchment-dark); color: var(--ink); transform: none; box-shadow: none; }
+.seg button.active { background: var(--accent); color: #fff; }
+.nav button { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.badge { background: var(--danger); color: #fff; border-radius: 99px; font-size: 0.66rem; font-weight: 700; padding: 0.05rem 0.4rem; min-width: 18px; text-align: center; }
+.nav button.active .badge { background: #fff; color: var(--accent); }
+
+/* ── Calendario ────────────────────────────────────────────────────────────── */
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-wd { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); font-weight: 700; padding: 0 0.3rem 0.2rem; }
+.cal-cell { min-height: 92px; background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: 0.3rem; display: flex; flex-direction: column; gap: 0.2rem; }
+.cal-cell.empty { background: transparent; border: none; }
+.cal-cell.today { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.cal-day { font-size: 0.78rem; font-weight: 600; color: var(--ink-muted); }
+.cal-cell.today .cal-day { color: var(--accent); }
+.cal-events { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+.cal-ev { text-align: left; font-size: 0.7rem; padding: 0.12rem 0.35rem; border: 1px solid var(--parchment-dark); border-left: 3px solid var(--accent); border-radius: 4px; background: var(--parchment); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-ev:hover { transform: none; box-shadow: var(--shadow-sm); border-color: var(--accent); }
+.cal-more { font-size: 0.66rem; color: var(--ink-muted); }
+
+/* ── Kanban ────────────────────────────────────────────────────────────────── */
+.kanban { display: flex; gap: 0.7rem; overflow-x: auto; padding-bottom: 0.5rem; align-items: flex-start; }
+.kan-col { flex: 0 0 200px; background: var(--parchment); border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; min-height: 120px; }
+.kan-col-head { display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-muted); padding: 0 0.2rem; }
+.kan-col-head b { background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: 99px; padding: 0 0.45rem; font-size: 0.72rem; }
+.kan-cards { display: flex; flex-direction: column; gap: 0.4rem; min-height: 30px; }
+.kan-card { background: var(--cream); border: 1px solid var(--parchment-dark); border-left: 3px solid var(--gold); border-radius: var(--radius); padding: 0.5rem 0.6rem; font-size: 0.82rem; cursor: grab; transition: var(--transition); }
+.kan-card:hover { box-shadow: var(--shadow-sm); border-color: var(--accent-border); }
+.kan-card.dragging { opacity: 0.45; }
+
+/* ── Cronoprogramma (timeline) ─────────────────────────────────────────────── */
+.timeline { display: flex; flex-direction: column; gap: 0.5rem; }
+.tl-row { display: grid; grid-template-columns: 220px 1fr; gap: 0.6rem; align-items: center; }
+.tl-label { text-align: left; background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: 0.45rem 0.6rem; font-size: 0.82rem; font-weight: 600; }
+.tl-label small { color: var(--ink-muted); font-weight: 400; }
+.tl-track { position: relative; height: 26px; background: var(--parchment); border: 1px solid var(--parchment-dark); border-radius: 99px; }
+.tl-bar { position: absolute; top: 50%; transform: translateY(-50%); height: 8px; background: linear-gradient(90deg, var(--accent), var(--gold)); border-radius: 99px; opacity: 0.5; }
+.tl-dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 11px; height: 11px; border-radius: 50%; background: var(--accent); border: 2px solid var(--cream); }
+
+/* ── Combobox con ricerca ──────────────────────────────────────────────────── */
+.search-select { position: relative; }
+.ss-input { display: flex; gap: 4px; }
+.ss-input input { flex: 1; font: 0.88rem var(--font-ui); padding: 0.5rem 0.65rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.ss-input input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.ss-btn { padding: 0 0.6rem; }
+.ss-list { list-style: none; margin: 4px 0 0; padding: 4px; position: absolute; z-index: 5; left: 0; right: 0; background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: var(--radius); box-shadow: var(--shadow); max-height: 220px; overflow-y: auto; }
+.ss-list li { padding: 0.4rem 0.5rem; border-radius: 6px; font-size: 0.84rem; cursor: pointer; }
+.ss-list li:hover { background: var(--accent-pale); color: var(--accent); }
+.ss-list .ss-empty, .ss-list .ss-empty:hover { color: var(--ink-muted); cursor: default; background: none; }
+
+/* ── Promemoria ────────────────────────────────────────────────────────────── */
+.link-row { text-align: left; width: 100%; background: none; border: none; padding: 0; font: inherit; color: var(--ink); }
+.link-row:hover { color: var(--accent); transform: none; box-shadow: none; }
+.link-row em { color: var(--ink-muted); font-size: 0.78rem; }
+
+/* ── Pannello laterale del form ────────────────────────────────────────────── */
+.icon-btn { width: 32px; height: 32px; padding: 0; border-radius: var(--radius); background: var(--parchment); }
+.side-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 440px; max-width: 100%; z-index: 40; background: var(--cream); border-left: 1px solid var(--parchment-dark); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--parchment-dark); }
+.panel-head h2 { margin: 0; font-size: 1.05rem; }
+.panel-body { flex: 1; overflow-y: auto; padding: 1.1rem; }
+.panel-actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.8rem 1.1rem; border-top: 1px solid var(--parchment-dark); }
+.panel-backdrop { display: none; }
+/* PC: il pannello affianca e il contenuto si restringe (resta visibile, non coperto) */
+@media (min-width: 901px) { .app.panel-open .body { margin-right: 440px; transition: margin-right 0.2s ease; } }
+/* Tablet/mobile: overlay con backdrop */
+@media (max-width: 900px) {
+  .side-panel { width: min(440px, 100%); }
+  .panel-backdrop { display: block; position: fixed; inset: 0; z-index: 39; background: rgba(20, 18, 30, 0.45); }
+}
+
 /* ── Hamburger + backdrop (attivi solo su mobile) ───────────────────────────── */
 .nav-toggle {
   display: none; width: 38px; height: 38px; padding: 0; flex-shrink: 0;
@@ -268,4 +341,8 @@ td .check { color: var(--success); font-weight: 700; }
   .cards { grid-template-columns: 1fr; }
   .counts { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
   .metrics .metric { min-width: 0; }
+  .cal-grid { gap: 3px; }
+  .cal-cell { min-height: 62px; }
+  .tl-row { grid-template-columns: 1fr; }
+  .kan-col { flex-basis: 80vw; }
 }

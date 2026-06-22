@@ -1,9 +1,7 @@
-import { useState } from "react";
 import type { BasePropertyDef, DbKey } from "@model";
 import { schemaByKey } from "@model";
 import { records, recordTitle, removeRecord, titleProp, type Rec, type Value } from "../store/store";
 import { useStore } from "../store/useStore";
-import { RecordForm } from "./RecordForm";
 import { materiaColor } from "./materia";
 
 function CellValue({ name, prop, value }: { name: string; prop: BasePropertyDef; value: Value }) {
@@ -39,10 +37,17 @@ function CellValue({ name, prop, value }: { name: string; prop: BasePropertyDef;
   return <>{String(value)}</>;
 }
 
-export function EntityTable({ dbKey, onOpenUda }: { dbKey: DbKey; onOpenUda?: (id: string) => void }) {
+export function EntityTable({
+  dbKey,
+  onEdit,
+  onOpenUda,
+}: {
+  dbKey: DbKey;
+  onEdit: (k: DbKey, r?: Rec) => void;
+  onOpenUda?: (id: string) => void;
+}) {
   useStore();
   const def = schemaByKey[dbKey];
-  const [editing, setEditing] = useState<{ rec?: Rec } | null>(null);
   const rows = records(dbKey);
   const tcol = titleProp(dbKey);
   const baseCols = Object.entries(def.properties).filter(
@@ -57,7 +62,7 @@ export function EntityTable({ dbKey, onOpenUda }: { dbKey: DbKey; onOpenUda?: (i
         <h1>
           {def.icon} {def.title} <small>({rows.length})</small>
         </h1>
-        <button className="primary" onClick={() => setEditing({})}>
+        <button className="primary" onClick={() => onEdit(dbKey)}>
           + Nuovo
         </button>
       </div>
@@ -97,7 +102,7 @@ export function EntityTable({ dbKey, onOpenUda }: { dbKey: DbKey; onOpenUda?: (i
                 ))}
                 <td className="row-actions">
                   {dbKey === "uda" && onOpenUda && <button onClick={() => onOpenUda(rec.id)}>Dettaglio</button>}
-                  <button onClick={() => setEditing({ rec })}>Modifica</button>
+                  <button onClick={() => onEdit(dbKey, rec)}>Modifica</button>
                   <button
                     className="danger"
                     onClick={() => {
@@ -112,7 +117,6 @@ export function EntityTable({ dbKey, onOpenUda }: { dbKey: DbKey; onOpenUda?: (i
           </tbody>
         </table>
       </div>
-      {editing && <RecordForm dbKey={dbKey} rec={editing.rec} onClose={() => setEditing(null)} />}
     </section>
   );
 }
