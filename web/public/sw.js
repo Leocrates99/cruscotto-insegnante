@@ -2,7 +2,9 @@
 // Strategia: network-first per le navigazioni (HTML aggiornato quando c'è rete),
 // cache-first per gli asset con hash (immutabili). Le risorse cross-origin
 // (es. Google Fonts) non vengono gestite: vanno in rete e degradano sui font di sistema.
-const CACHE = "cruscotto-shell-v1";
+// Alza la versione a ogni cambio importante: l'activate ripulisce le cache vecchie,
+// così i dispositivi che avevano in cache una build precedente la scartano.
+const CACHE = "cruscotto-shell-v2";
 const SHELL = ["./", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
