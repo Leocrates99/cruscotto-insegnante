@@ -1,11 +1,15 @@
 import type { OptionDef } from "../types";
 
-/** Materie del profilo docente (Latino, Greco, Italiano, Geostoria). */
+/**
+ * Materie di default del docente di lettere classiche, con i nomi formali (allineati
+ * al catalogo classi di concorso del sito). Quando il docente compila il profilo, sono
+ * le sue materie a guidare i menù; questa lista resta come fallback prima della profilazione.
+ */
 export const MATERIE: OptionDef[] = [
-  { name: "Latino", color: "orange" },
-  { name: "Greco", color: "blue" },
-  { name: "Italiano", color: "green" },
-  { name: "Geostoria", color: "brown" },
+  { name: "Lingua e letteratura italiana", color: "green" },
+  { name: "Lingua e cultura latina", color: "orange" },
+  { name: "Lingua e cultura greca", color: "blue" },
+  { name: "Storia e geografia (biennio)", color: "brown" },
 ];
 
 /**

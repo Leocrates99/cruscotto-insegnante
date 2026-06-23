@@ -1,6 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DbKey } from "@model";
 import type { Rec, Value } from "./store/store";
+import { getState, subscribe } from "./store/store";
+import { exportJson } from "./store/persistence";
+import { initFileBackup, markExported, maybeAutoSnapshot, scheduleFileBackup, useBackup } from "./store/backup";
+import { useStore } from "./store/useStore";
+import { BackupPanel } from "./ui/BackupPanel";
 import { Nav } from "./ui/Nav";
 import { Toolbar } from "./ui/Toolbar";
 import { HomeView } from "./ui/HomeView";
@@ -39,6 +44,20 @@ export function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [skipped, setSkipped] = useState(false);
   const showOnboarding = showProfile || (!profile.onboarded && !skipped);
+  const [showBackup, setShowBackup] = useState(false);
+  const state = useStore();
+  const backup = useBackup();
+
+  // Reti di sicurezza sul dato: recupera il file collegato e, a ogni modifica,
+  // pianifica lo snapshot locale e la scrittura automatica sul file.
+  useEffect(() => {
+    void initFileBackup();
+    return subscribe(() => { maybeAutoSnapshot(); scheduleFileBackup(); });
+  }, []);
+
+  const hasData = Object.values(state).some((t) => t && Object.keys(t).length > 0);
+  const backupStale = hasData && !backup.fileName && (backup.daysSince === null || backup.daysSince >= 7);
+  const exportNow = () => { exportJson(getState()); markExported(); };
 
   const onEdit = (dbKey: DbKey, rec?: Rec, prefill?: Record<string, Value>) => setEditing({ dbKey, rec, prefill });
   const openUda = (id: string) => setView({ kind: "uda", id });
@@ -46,7 +65,16 @@ export function App() {
 
   return (
     <div className={editing ? "app panel-open" : "app"}>
-      <Toolbar onToggleNav={() => setNavOpen((o) => !o)} onOpenProfile={() => setShowProfile(true)} />
+      <Toolbar onToggleNav={() => setNavOpen((o) => !o)} onOpenProfile={() => setShowProfile(true)} onOpenBackup={() => setShowBackup(true)} />
+      {backupStale && (
+        <div className="backup-banner">
+          <span>⚠️ Nessun backup recente: i dati sono solo in questo browser.</span>
+          <span className="bb-actions">
+            <button onClick={exportNow}>Esporta ora</button>
+            <button className="primary" onClick={() => setShowBackup(true)}>Imposta backup automatico</button>
+          </span>
+        </div>
+      )}
       <div className="body">
         <Nav view={view} onChange={setView} open={navOpen} onNavigate={() => setNavOpen(false)} />
         {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
@@ -69,6 +97,7 @@ export function App() {
         <RecordPanel dbKey={editing.dbKey} rec={editing.rec} prefill={editing.prefill} onClose={() => setEditing(null)} />
       )}
       {showOnboarding && <Onboarding onClose={closeProfile} />}
+      {showBackup && <BackupPanel onClose={() => setShowBackup(false)} />}
     </div>
   );
 }

@@ -3,10 +3,12 @@
 import { getProfile } from "../store/profile";
 
 export const MATERIA_COLORS: Record<string, string> = {
-  Latino: "#a22e37",
-  Greco: "#1800ac",
-  Italiano: "#2f7d5a",
-  Geostoria: "#9c6b3c",
+  "Lingua e cultura latina": "#a22e37",
+  "Lingua e cultura greca": "#1800ac",
+  "Lingua e letteratura italiana": "#2f7d5a",
+  "Storia e geografia (biennio)": "#9c6b3c",
+  "Storia (triennio)": "#9c6b3c",
+  Filosofia: "#7c3aed",
 };
 
 // Palette di riserva per le materie non mappate (profili diversi dalle lettere classiche).
