@@ -315,7 +315,10 @@ td .check { color: var(--success); font-weight: 700; }
 .tg-line { position: absolute; left: 0; right: 0; border-top: 1px solid var(--parchment-dark); opacity: 0.55; }
 .tg-band { position: absolute; left: 2px; right: 2px; background: var(--accent-pale); border-radius: 4px; }
 .tg-band-label { position: absolute; top: 2px; left: 5px; font-size: 0.6rem; font-weight: 700; color: var(--accent); }
-.tg-ev { position: absolute; left: 5px; right: 5px; z-index: 2; }
+.tg-ev { position: absolute; left: 5px; right: 5px; z-index: 2; overflow: hidden; cursor: grab; white-space: normal; line-height: 1.15; }
+.tg-band.over { background: var(--accent-glow); box-shadow: inset 0 0 0 2px var(--accent); }
+.tg-allday-cell.over { background: var(--accent-pale); }
+.tg-allday-cell .cal-ev { cursor: grab; }
 .tg-now { position: absolute; left: 0; right: 0; border-top: 2px solid #e11d2b; z-index: 4; }
 .tg-now-dot { position: absolute; left: -4px; top: -5px; width: 8px; height: 8px; border-radius: 50%; background: #e11d2b; }
 

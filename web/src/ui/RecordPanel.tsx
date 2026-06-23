@@ -5,6 +5,7 @@ import { newId, records, recordTitle, upsert, type Rec, type Value } from "../st
 import { SearchSelect } from "./SearchSelect";
 import { obiettiviPerMateria, type ObiettivoSuggerito } from "../data/catalog";
 import { schoolYearOptions, type SchoolYearOption } from "./schoolYear";
+import { useSettings } from "../store/settings";
 
 const str = (v: Value): string => (typeof v === "string" ? v : v === undefined ? "" : String(v));
 const asStrArr = (v: Value): string[] => (Array.isArray(v) ? v : []);
@@ -29,6 +30,8 @@ export function RecordPanel({
   const [draft, setDraft] = useState<Rec>(() => (rec ? { ...rec } : { id: newId(), ...(prefill ?? {}) }));
   const set = (name: string, v: Value) => setDraft((d) => ({ ...d, [name]: v }));
   const merge = (patch: Record<string, Value>) => setDraft((d) => ({ ...d, ...patch }));
+  const settings = useSettings();
+  const hasDate = Object.values(def.properties).some((p) => p.type === "date");
 
   return (
     <>
@@ -95,6 +98,21 @@ export function RecordPanel({
               }
               return <Field key={name} name={name} prop={prop} value={draft[name]} onChange={(v) => set(name, v)} />;
             })}
+            {settings.timeBands.length > 0 && hasDate && (
+              <label className="field">
+                <span>
+                  Fascia oraria <em>· posiziona l'evento nel calendario</em>
+                </span>
+                <select value={str(draft["Fascia"])} onChange={(e) => set("Fascia", e.target.value || undefined)}>
+                  <option value="">Giornata (nessuna fascia)</option>
+                  {settings.timeBands.map((b) => (
+                    <option key={b.label} value={b.label}>
+                      {b.label} ({b.start}–{b.end})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             {(def.relations ?? []).map((rel) => (
               <RelationField
                 key={rel.name}

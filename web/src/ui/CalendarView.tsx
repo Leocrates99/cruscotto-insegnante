@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { DbKey } from "@model";
-import type { Rec, Value } from "../store/store";
+import { upsert, type Rec, type Value } from "../store/store";
 import type { View } from "../App";
 import { useStore } from "../store/useStore";
 import { collectEvents, type CalEvent } from "../compute/events";
@@ -113,6 +113,8 @@ function MonthGrid({ anchor, byDay, onEdit }: { anchor: Date; byDay: Map<string,
 }
 
 function TimeGrid({ days, byDay, bands, onEdit }: { days: Date[]; byDay: Map<string, CalEvent[]>; bands: TimeBand[]; onEdit: Edit }) {
+  const [dragEv, setDragEv] = useState<CalEvent | null>(null);
+  const [over, setOver] = useState<string | null>(null);
   const HOUR_H = 50;
   let startMin = 7 * 60, endMin = 20 * 60;
   if (bands.length) {
@@ -131,6 +133,19 @@ function TimeGrid({ days, byDay, bands, onEdit }: { days: Date[]; byDay: Map<str
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const cols = { gridTemplateColumns: `58px repeat(${days.length}, minmax(0, 1fr))` } as const;
 
+  // Trascina un evento su una fascia → ne imposta giorno e fascia (o lo riporta in "giornata").
+  const drop = (ds: string, fascia?: string) => {
+    if (!dragEv) return;
+    upsert(dragEv.dbKey, { ...dragEv.rec, [dragEv.prop]: ds, Fascia: fascia });
+    setDragEv(null);
+    setOver(null);
+  };
+  const dragProps = (e: CalEvent) => ({
+    draggable: true as const,
+    onDragStart: () => setDragEv(e),
+    onDragEnd: () => { setDragEv(null); setOver(null); },
+  });
+
   return (
     <div className="tg-wrap">
       <div className="tg-grid" style={cols}>
@@ -147,10 +162,17 @@ function TimeGrid({ days, byDay, bands, onEdit }: { days: Date[]; byDay: Map<str
         {days.map((d, i) => {
           const ds = ymd(d);
           const allday = (byDay.get(ds) ?? []).filter((e) => !(typeof e.rec["Fascia"] === "string" && bandByLabel.has(e.rec["Fascia"] as string)));
+          const key = `${i}:allday`;
           return (
-            <div key={i} className="tg-allday-cell" onClick={() => onEdit("scadenze", undefined, { Data: ds })}>
+            <div
+              key={i}
+              className={over === key ? "tg-allday-cell over" : "tg-allday-cell"}
+              onClick={() => onEdit("scadenze", undefined, { Data: ds })}
+              onDragOver={(ev) => { ev.preventDefault(); setOver(key); }}
+              onDrop={() => drop(ds, undefined)}
+            >
               {allday.map((e, j) => (
-                <button key={j} className="cal-ev" style={e.color ? { borderLeftColor: e.color } : undefined} title={`${e.title} · ${e.prop}`} onClick={(ev) => { ev.stopPropagation(); onEdit(e.dbKey, e.rec); }}>
+                <button key={j} className="cal-ev" {...dragProps(e)} style={e.color ? { borderLeftColor: e.color } : undefined} title={`${e.title} · ${e.prop}`} onClick={(ev) => { ev.stopPropagation(); onEdit(e.dbKey, e.rec); }}>
                   {e.title}
                 </button>
               ))}
@@ -172,16 +194,31 @@ function TimeGrid({ days, byDay, bands, onEdit }: { days: Date[]; byDay: Map<str
               {hours.map((h) => <div key={h} className="tg-line" style={{ top: yOf(h * 60) }} />)}
               {bands.map((b, bi) => {
                 const t = yOf(toMinutes(b.start));
+                const key = `${di}:${b.label}`;
                 return (
-                  <div key={bi} className="tg-band" style={{ top: t, height: yOf(toMinutes(b.end)) - t }} onClick={(ev) => { ev.stopPropagation(); onEdit("scadenze", undefined, { Data: ds, Fascia: b.label }); }}>
+                  <div
+                    key={bi}
+                    className={over === key ? "tg-band over" : "tg-band"}
+                    style={{ top: t, height: yOf(toMinutes(b.end)) - t }}
+                    onClick={(ev) => { ev.stopPropagation(); onEdit("scadenze", undefined, { Data: ds, Fascia: b.label }); }}
+                    onDragOver={(ev) => { ev.preventDefault(); setOver(key); }}
+                    onDrop={(ev) => { ev.stopPropagation(); drop(ds, b.label); }}
+                  >
                     <span className="tg-band-label">{b.label}</span>
                   </div>
                 );
               })}
               {timed.map((e, ei) => {
                 const b = bandByLabel.get(e.rec["Fascia"] as string)!;
+                const t = yOf(toMinutes(b.start));
                 return (
-                  <button key={ei} className="cal-ev tg-ev" style={{ top: yOf(toMinutes(b.start)) + 14, borderLeftColor: e.color }} onClick={(ev) => { ev.stopPropagation(); onEdit(e.dbKey, e.rec); }}>
+                  <button
+                    key={ei}
+                    className="cal-ev tg-ev"
+                    {...dragProps(e)}
+                    style={{ top: t + 2, height: Math.max(16, yOf(toMinutes(b.end)) - t - 6), borderLeftColor: e.color }}
+                    onClick={(ev) => { ev.stopPropagation(); onEdit(e.dbKey, e.rec); }}
+                  >
                     {e.title}
                   </button>
                 );
