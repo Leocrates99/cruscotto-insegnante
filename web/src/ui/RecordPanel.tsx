@@ -4,6 +4,7 @@ import { schemaByKey } from "@model";
 import { newId, records, recordTitle, upsert, type Rec, type Value } from "../store/store";
 import { SearchSelect } from "./SearchSelect";
 import { obiettiviPerMateria, type ObiettivoSuggerito } from "../data/catalog";
+import { schoolYearOptions, type SchoolYearOption } from "./schoolYear";
 
 const str = (v: Value): string => (typeof v === "string" ? v : v === undefined ? "" : String(v));
 const asStrArr = (v: Value): string[] => (Array.isArray(v) ? v : []);
@@ -13,9 +14,19 @@ const asStrArr = (v: Value): string[] => (Array.isArray(v) ? v : []);
  * in parallelo senza coprire la vista; su mobile è un overlay a tutta larghezza.
  * Per gli Obiettivi il campo "Enunciato" usa una combobox con suggerimenti per materia.
  */
-export function RecordPanel({ dbKey, rec, onClose }: { dbKey: DbKey; rec?: Rec; onClose: () => void }) {
+export function RecordPanel({
+  dbKey,
+  rec,
+  prefill,
+  onClose,
+}: {
+  dbKey: DbKey;
+  rec?: Rec;
+  prefill?: Record<string, Value>;
+  onClose: () => void;
+}) {
   const def = schemaByKey[dbKey];
-  const [draft, setDraft] = useState<Rec>(() => (rec ? { ...rec } : { id: newId() }));
+  const [draft, setDraft] = useState<Rec>(() => (rec ? { ...rec } : { id: newId(), ...(prefill ?? {}) }));
   const set = (name: string, v: Value) => setDraft((d) => ({ ...d, [name]: v }));
   const merge = (patch: Record<string, Value>) => setDraft((d) => ({ ...d, ...patch }));
 
@@ -56,6 +67,27 @@ export function RecordPanel({ dbKey, rec, onClose }: { dbKey: DbKey; rec?: Rec; 
                           ...(s.livello ? { "Livello cognitivo": s.livello } : {}),
                           ...(s.ciclo ? { Ciclo: s.ciclo } : {}),
                         });
+                      }}
+                    />
+                  </label>
+                );
+              }
+              // Anni · Titolo → combobox anno scolastico (con date auto-compilate)
+              if (dbKey === "anni" && name === "Titolo") {
+                return (
+                  <label className="field" key={name}>
+                    <span>
+                      {name} <em>· anno scolastico</em>
+                    </span>
+                    <SearchSelect<SchoolYearOption>
+                      value={str(draft[name])}
+                      onChange={(v) => set(name, v)}
+                      placeholder="Scrivi o scegli (es. a.s. 24/25)…"
+                      options={schoolYearOptions().map((o) => ({ label: o.titolo, data: o }))}
+                      onSelect={(opt) => {
+                        const o = opt.data;
+                        if (!o) return;
+                        merge({ Titolo: o.titolo, Inizio: o.inizio, Fine: o.fine });
                       }}
                     />
                   </label>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { DbKey } from "@model";
-import type { Rec } from "./store/store";
+import type { Rec, Value } from "./store/store";
 import { Nav } from "./ui/Nav";
 import { Toolbar } from "./ui/Toolbar";
 import { HomeView } from "./ui/HomeView";
@@ -23,12 +23,18 @@ export type View =
   | { kind: "entity"; key: DbKey }
   | { kind: "uda"; id: string };
 
+interface Editing {
+  dbKey: DbKey;
+  rec?: Rec;
+  prefill?: Record<string, Value>;
+}
+
 export function App() {
   const [view, setView] = useState<View>({ kind: "calendar" });
   const [navOpen, setNavOpen] = useState(false);
-  const [editing, setEditing] = useState<{ dbKey: DbKey; rec?: Rec } | null>(null);
+  const [editing, setEditing] = useState<Editing | null>(null);
 
-  const onEdit = (dbKey: DbKey, rec?: Rec) => setEditing({ dbKey, rec });
+  const onEdit = (dbKey: DbKey, rec?: Rec, prefill?: Record<string, Value>) => setEditing({ dbKey, rec, prefill });
   const openUda = (id: string) => setView({ kind: "uda", id });
 
   return (
@@ -38,7 +44,7 @@ export function App() {
         <Nav view={view} onChange={setView} open={navOpen} onNavigate={() => setNavOpen(false)} />
         {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
         <main className="main">
-          {view.kind === "calendar" && <CalendarView onEdit={onEdit} />}
+          {view.kind === "calendar" && <CalendarView onEdit={onEdit} onView={setView} />}
           {view.kind === "kanban" && <KanbanView onEdit={onEdit} onOpenUda={openUda} />}
           {view.kind === "timeline" && <TimelineView onOpenUda={openUda} />}
           {view.kind === "promemoria" && <PromemoriaView onEdit={onEdit} />}
@@ -52,7 +58,9 @@ export function App() {
           )}
         </main>
       </div>
-      {editing && <RecordPanel dbKey={editing.dbKey} rec={editing.rec} onClose={() => setEditing(null)} />}
+      {editing && (
+        <RecordPanel dbKey={editing.dbKey} rec={editing.rec} prefill={editing.prefill} onClose={() => setEditing(null)} />
+      )}
     </div>
   );
 }

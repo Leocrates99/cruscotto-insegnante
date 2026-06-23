@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { STATO_CICLO } from "@model";
+import { STATO_CICLO, schemaByKey } from "@model";
 import type { DbKey } from "@model";
-import { getRecord, records, recordTitle, upsert, type Rec } from "../store/store";
+import { getRecord, newId, records, recordTitle, titleProp, upsert, type Rec } from "../store/store";
 import { useStore } from "../store/useStore";
 import { materiaColor } from "./materia";
 
@@ -11,16 +11,24 @@ const ENTITIES: { key: DbKey; label: string }[] = [
   { key: "progetti", label: "Progetti" },
 ];
 
+// Colori dei nomi-colore Notion → tinte reali (gerarchia degli stati).
+const NOTION_HEX: Record<string, string> = {
+  gray: "#9aa3af", brown: "#9c6b3c", orange: "#d97706", yellow: "#caa43c",
+  blue: "#3b6fe0", purple: "#7c3aed", pink: "#db2777", green: "#2f855a", red: "#c53030", default: "#6b7280",
+};
+
 export function KanbanView({
   onEdit,
   onOpenUda,
 }: {
-  onEdit: (k: DbKey, r: Rec) => void;
+  onEdit: (k: DbKey, r?: Rec) => void;
   onOpenUda: (id: string) => void;
 }) {
   useStore();
   const [entity, setEntity] = useState<DbKey>("uda");
   const [dragId, setDragId] = useState<string | null>(null);
+  const [overCol, setOverCol] = useState<string | null>(null);
+  const [quick, setQuick] = useState("");
 
   const byStato = new Map<string, Rec[]>();
   for (const col of STATO_CICLO) byStato.set(col.name, []);
@@ -32,10 +40,12 @@ export function KanbanView({
   }
 
   const drop = (stato: string) => {
-    if (!dragId) return;
-    const r = getRecord(entity, dragId);
-    if (r && r["Stato"] !== stato) upsert(entity, { ...r, Stato: stato });
+    if (dragId) {
+      const r = getRecord(entity, dragId);
+      if (r && r["Stato"] !== stato) upsert(entity, { ...r, Stato: stato });
+    }
     setDragId(null);
+    setOverCol(null);
   };
 
   const materiaOf = (r: Rec): string | undefined => {
@@ -49,8 +59,15 @@ export function KanbanView({
     return undefined;
   };
 
+  const addQuick = () => {
+    const t = quick.trim();
+    if (!t) return;
+    upsert(entity, { id: newId(), [titleProp(entity)]: t, Stato: STATO_CICLO[0].name } as Rec);
+    setQuick("");
+  };
+
   return (
-    <section>
+    <section className="kanban-view">
       <div className="view-head">
         <h1>🗂️ Kanban</h1>
         <div className="seg">
@@ -61,14 +78,33 @@ export function KanbanView({
           ))}
         </div>
       </div>
-      <p className="muted">Trascina le schede tra le colonne per cambiarne lo stato.</p>
+
+      <div className="kan-quick">
+        <input
+          value={quick}
+          placeholder={`Nuova attività in «${schemaByKey[entity].title}»…`}
+          onChange={(e) => setQuick(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") addQuick(); }}
+        />
+        <button className="primary" onClick={addQuick}>+ Aggiungi</button>
+        <button onClick={() => onEdit(entity)}>Con dettagli…</button>
+      </div>
+
       <div className="kanban">
         {STATO_CICLO.map((col) => {
+          const hex = NOTION_HEX[col.color ?? "default"] ?? NOTION_HEX.default;
           const cards = byStato.get(col.name) ?? [];
           return (
-            <div key={col.name} className="kan-col" onDragOver={(e) => e.preventDefault()} onDrop={() => drop(col.name)}>
+            <div
+              key={col.name}
+              className={overCol === col.name ? "kan-col over" : "kan-col"}
+              style={{ borderTopColor: hex }}
+              onDragOver={(e) => { e.preventDefault(); setOverCol(col.name); }}
+              onDragLeave={() => setOverCol((c) => (c === col.name ? null : c))}
+              onDrop={() => drop(col.name)}
+            >
               <div className="kan-col-head">
-                <span>{col.name}</span>
+                <span style={{ color: hex }}>● {col.name}</span>
                 <b>{cards.length}</b>
               </div>
               <div className="kan-cards">
@@ -81,7 +117,7 @@ export function KanbanView({
                       draggable
                       style={mc ? { borderLeftColor: mc } : undefined}
                       onDragStart={() => setDragId(r.id)}
-                      onDragEnd={() => setDragId(null)}
+                      onDragEnd={() => { setDragId(null); setOverCol(null); }}
                       onClick={() => (entity === "uda" ? onOpenUda(r.id) : onEdit(entity, r))}
                     >
                       {recordTitle(entity, r)}
