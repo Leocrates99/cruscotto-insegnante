@@ -6,6 +6,7 @@ import { SearchSelect } from "./SearchSelect";
 import { obiettiviPerMateria, type ObiettivoSuggerito } from "../data/catalog";
 import { schoolYearOptions, type SchoolYearOption } from "./schoolYear";
 import { useSettings } from "../store/settings";
+import { materieAttive, useProfile } from "../store/profile";
 
 const str = (v: Value): string => (typeof v === "string" ? v : v === undefined ? "" : String(v));
 const asStrArr = (v: Value): string[] => (Array.isArray(v) ? v : []);
@@ -31,6 +32,7 @@ export function RecordPanel({
   const set = (name: string, v: Value) => setDraft((d) => ({ ...d, [name]: v }));
   const merge = (patch: Record<string, Value>) => setDraft((d) => ({ ...d, ...patch }));
   const settings = useSettings();
+  const profile = useProfile();
   const hasDate = Object.values(def.properties).some((p) => p.type === "date");
 
   return (
@@ -93,6 +95,25 @@ export function RecordPanel({
                         merge({ Titolo: o.titolo, Inizio: o.inizio, Fine: o.fine });
                       }}
                     />
+                  </label>
+                );
+              }
+              // Materia → opzioni dal profilo del docente (più l'eventuale valore già impostato)
+              if (name === "Materia" && prop.type === "select") {
+                const cur = str(draft[name]);
+                const base = materieAttive(profile);
+                const opts = cur && !base.includes(cur) ? [cur, ...base] : base;
+                return (
+                  <label className="field" key={name}>
+                    <span>
+                      {name} <em>· dal tuo profilo</em>
+                    </span>
+                    <select value={cur} onChange={(e) => set(name, e.target.value || undefined)}>
+                      <option value="">—</option>
+                      {opts.map((o) => (
+                        <option key={o} value={o}>{o}</option>
+                      ))}
+                    </select>
                   </label>
                 );
               }

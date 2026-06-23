@@ -4,7 +4,7 @@ import { exportJson, readJsonFile } from "../store/persistence";
 import { buildSeedState } from "../store/seed";
 import { getTheme, toggleTheme } from "./theme";
 
-export function Toolbar({ onToggleNav }: { onToggleNav: () => void }) {
+export function Toolbar({ onToggleNav, onOpenProfile }: { onToggleNav: () => void; onOpenProfile: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [theme, setThemeState] = useState(getTheme());
 
@@ -42,6 +42,7 @@ export function Toolbar({ onToggleNav }: { onToggleNav: () => void }) {
         >
           Azzera
         </button>
+        <button title="Profilo docente e scuola" onClick={onOpenProfile}>👤 Profilo</button>
         <button className="theme-toggle" title="Tema chiaro / scuro" onClick={() => setThemeState(toggleTheme())}>
           {theme === "dark" ? "☀️" : "🌙"}
         </button>

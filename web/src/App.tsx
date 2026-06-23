@@ -12,6 +12,8 @@ import { KanbanView } from "./ui/KanbanView";
 import { TimelineView } from "./ui/TimelineView";
 import { PromemoriaView } from "./ui/PromemoriaView";
 import { RecordPanel } from "./ui/RecordPanel";
+import { Onboarding } from "./ui/Onboarding";
+import { useProfile } from "./store/profile";
 
 export type View =
   | { kind: "calendar" }
@@ -33,13 +35,18 @@ export function App() {
   const [view, setView] = useState<View>({ kind: "calendar" });
   const [navOpen, setNavOpen] = useState(false);
   const [editing, setEditing] = useState<Editing | null>(null);
+  const profile = useProfile();
+  const [showProfile, setShowProfile] = useState(false);
+  const [skipped, setSkipped] = useState(false);
+  const showOnboarding = showProfile || (!profile.onboarded && !skipped);
 
   const onEdit = (dbKey: DbKey, rec?: Rec, prefill?: Record<string, Value>) => setEditing({ dbKey, rec, prefill });
   const openUda = (id: string) => setView({ kind: "uda", id });
+  const closeProfile = () => { setShowProfile(false); setSkipped(true); };
 
   return (
     <div className={editing ? "app panel-open" : "app"}>
-      <Toolbar onToggleNav={() => setNavOpen((o) => !o)} />
+      <Toolbar onToggleNav={() => setNavOpen((o) => !o)} onOpenProfile={() => setShowProfile(true)} />
       <div className="body">
         <Nav view={view} onChange={setView} open={navOpen} onNavigate={() => setNavOpen(false)} />
         {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
@@ -61,6 +68,7 @@ export function App() {
       {editing && (
         <RecordPanel dbKey={editing.dbKey} rec={editing.rec} prefill={editing.prefill} onClose={() => setEditing(null)} />
       )}
+      {showOnboarding && <Onboarding onClose={closeProfile} />}
     </div>
   );
 }
