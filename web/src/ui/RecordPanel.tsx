@@ -3,10 +3,10 @@ import type { BasePropertyDef, DbKey } from "@model";
 import { schemaByKey } from "@model";
 import { newId, records, recordTitle, upsert, type Rec, type Value } from "../store/store";
 import { SearchSelect } from "./SearchSelect";
-import { obiettiviPerMateria, type ObiettivoSuggerito } from "../data/catalog";
 import { schoolYearOptions, type SchoolYearOption } from "./schoolYear";
 import { useSettings } from "../store/settings";
-import { materieAttive, useProfile } from "../store/profile";
+import { materieAttive, scuoleCorrenti, useProfile } from "../store/profile";
+import { bloomLabel, cicloDaFase, obiettiviPerMateria as taxObiettivi, useTassonomia, type TaxObiettivo } from "../data/tassonomia";
 
 const str = (v: Value): string => (typeof v === "string" ? v : v === undefined ? "" : String(v));
 const asStrArr = (v: Value): string[] => (Array.isArray(v) ? v : []);
@@ -33,6 +33,7 @@ export function RecordPanel({
   const merge = (patch: Record<string, Value>) => setDraft((d) => ({ ...d, ...patch }));
   const settings = useSettings();
   const profile = useProfile();
+  const tax = useTassonomia();
   const hasDate = Object.values(def.properties).some((p) => p.type === "date");
 
   return (
@@ -49,28 +50,31 @@ export function RecordPanel({
         <div className="panel-body">
           <div className="form">
             {Object.entries(def.properties).map(([name, prop]) => {
-              // Obiettivi · Enunciato → combobox con suggerimenti per materia
+              // Obiettivi · Enunciato → combobox dalla tassonomia (filtrata per materia/indirizzo/ciclo)
               if (dbKey === "obiettivi" && name === "Enunciato") {
                 const materia = str(draft["Materia"]);
-                const list: ObiettivoSuggerito[] = (materia && obiettiviPerMateria[materia]) || [];
+                const ciclo = str(draft["Ciclo"]);
+                const indir = scuoleCorrenti(profile)[0]?.indirizzo;
+                const list: TaxObiettivo[] = tax && materia ? taxObiettivi(tax, materia, { indirizzoId: indir, ciclo }) : [];
                 return (
                   <label className="field" key={name}>
                     <span>
-                      {name} {materia ? <em>· suggerimenti {materia}</em> : <em>· scegli prima la Materia</em>}
+                      {name}{" "}
+                      {materia ? <em>· tassonomia {tax ? `(${list.length})` : "(carico…)"}</em> : <em>· scegli prima la Materia</em>}
                     </span>
-                    <SearchSelect<ObiettivoSuggerito>
+                    <SearchSelect<TaxObiettivo>
                       value={str(draft[name])}
                       onChange={(v) => set(name, v)}
                       placeholder="Scrivi o cerca un obiettivo…"
-                      options={list.map((s) => ({ label: s.enunciato, data: s }))}
+                      options={list.map((o) => ({ label: o.descrizione ? `${o.argomento} — ${o.descrizione}` : o.argomento, data: o }))}
                       onSelect={(opt) => {
-                        const s = opt.data;
-                        if (!s) return;
+                        const o = opt.data;
+                        if (!o) return;
                         merge({
-                          Enunciato: s.enunciato,
-                          ...(s.tipo ? { Tipo: s.tipo } : {}),
-                          ...(s.livello ? { "Livello cognitivo": s.livello } : {}),
-                          ...(s.ciclo ? { Ciclo: s.ciclo } : {}),
+                          Enunciato: o.argomento,
+                          Tipo: o.tipo,
+                          ...(bloomLabel(o.bloom) ? { "Livello cognitivo": bloomLabel(o.bloom) } : {}),
+                          ...(cicloDaFase(o.fase) ? { Ciclo: cicloDaFase(o.fase) } : {}),
                         });
                       }}
                     />
