@@ -661,6 +661,48 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 }
 .nav-backdrop { display: none; }
 
+/* ── "Oggi": la porta d'ingresso ─────────────────────────────────────────── */
+.oggi-head h1 { margin: 0; }
+.oggi-head .muted { margin: 0.1rem 0 0; text-transform: capitalize; }
+
+.oggi-azioni { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.9rem 0 1.1rem; }
+
+.oggi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.9rem; align-items: start; }
+.oggi-card { background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); padding: 1rem 1.1rem; box-shadow: var(--shadow-sm); }
+.oggi-card h2 { margin: 0 0 0.7rem; font-size: 1.02rem; display: flex; align-items: center; gap: 0.4rem; }
+.oggi-card .muted { margin: 0; font-size: 0.86rem; }
+.oggi-sub { font: 600 0.72rem var(--font-ui); color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 0.9rem 0 0.4rem; }
+
+.oggi-orario { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.oggi-orario li { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+.oggi-ora { font: 700 0.78rem var(--font-mono); color: var(--ink-muted); min-width: 3.2rem; }
+
+.oggi-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.oggi-list li { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+.oggi-list li + li { border-top: 1px solid var(--parchment-dark); padding-top: 0.4rem; }
+.oggi-when { margin-left: auto; font-size: 0.74rem; color: var(--ink-muted); white-space: nowrap; }
+.oggi-when.warn, .oggi-metric b.warn { color: var(--danger); font-weight: 700; }
+.oggi-more { margin-top: 0.6rem; }
+
+.oggi-stat { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.oggi-metric { flex: 1 1 80px; display: flex; flex-direction: column; align-items: center; gap: 0.15rem; padding: 0.7rem 0.5rem; background: var(--parchment); border: 1px solid var(--parchment-dark); border-radius: var(--radius); }
+.oggi-metric b { font: 700 1.5rem var(--font-display); color: var(--ink); }
+.oggi-metric small { font-size: 0.72rem; color: var(--ink-muted); text-align: center; }
+
+/* Pulsante "a link" per le azioni testuali dentro le card */
+.linklike { background: none; border: none; padding: 0; color: var(--accent); font: inherit; font-weight: 600; text-align: left; }
+.linklike:hover { background: none; box-shadow: none; transform: none; text-decoration: underline; }
+
+/* Avvio guidato (cold-start) */
+.oggi-coldstart { background: var(--accent-pale); border: 1px solid var(--accent-border); border-radius: var(--radius-lg); padding: 1.1rem 1.2rem; margin-bottom: 0.4rem; }
+.oggi-coldstart h2 { margin: 0 0 0.3rem; font-size: 1.1rem; }
+.oggi-coldstart .muted { margin: 0 0 0.9rem; }
+.oggi-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.7rem; }
+.oggi-step { display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; padding: 0.9rem 1rem; background: var(--cream); border: 1px solid var(--accent-border); border-radius: var(--radius); text-align: left; }
+.oggi-step strong { font-size: 0.94rem; }
+.oggi-step small { color: var(--ink-muted); font-size: 0.78rem; }
+.oggi-step-n { display: inline-flex; align-items: center; justify-content: center; width: 1.6rem; height: 1.6rem; border-radius: 99px; background: var(--accent); color: #fff; font: 700 0.9rem var(--font-ui); margin-bottom: 0.25rem; }
+
 /* ── Tablet ──────────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .nav { width: 208px; }
@@ -700,6 +742,7 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
   .modal-backdrop { padding: 0.8rem; }
 
   .cards { grid-template-columns: 1fr; }
+  .oggi-grid { grid-template-columns: 1fr; }
   .counts { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
   .metrics .metric { min-width: 0; }
   .cal-grid { gap: 3px; }

@@ -19,12 +19,14 @@ import { AvanzamentoView } from "./ui/AvanzamentoView";
 import { ValutazioneView } from "./ui/ValutazioneView";
 import { AndamentoView } from "./ui/AndamentoView";
 import { PlannerView } from "./ui/PlannerView";
+import { OggiView } from "./ui/OggiView";
 import { PromemoriaView } from "./ui/PromemoriaView";
 import { RecordPanel } from "./ui/RecordPanel";
 import { Onboarding } from "./ui/Onboarding";
 import { useProfile } from "./store/profile";
 
 export type View =
+  | { kind: "oggi" }
   | { kind: "calendar" }
   | { kind: "kanban" }
   | { kind: "timeline" }
@@ -45,7 +47,7 @@ interface Editing {
 }
 
 export function App() {
-  const [view, setView] = useState<View>({ kind: "calendar" });
+  const [view, setView] = useState<View>({ kind: "oggi" });
   const [navOpen, setNavOpen] = useState(false);
   const [editing, setEditing] = useState<Editing | null>(null);
   const profile = useProfile();
@@ -72,7 +74,7 @@ export function App() {
   const closeProfile = () => { setShowProfile(false); setSkipped(true); };
 
   // Viste "dense" (griglie/tabelle): usano tutta la larghezza su PC; quelle testuali restano strette.
-  const VISTE_LARGHE = new Set(["calendar", "kanban", "timeline", "avanzamento", "valutazione", "andamento", "planner", "programmazione", "entity"]);
+  const VISTE_LARGHE = new Set(["oggi", "calendar", "kanban", "timeline", "avanzamento", "valutazione", "andamento", "planner", "programmazione", "entity"]);
   const mainWide = VISTE_LARGHE.has(view.kind);
 
   return (
@@ -91,6 +93,7 @@ export function App() {
         <Nav view={view} onChange={setView} open={navOpen} onNavigate={() => setNavOpen(false)} />
         {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
         <main className={mainWide ? "main main--wide" : "main"}>
+          {view.kind === "oggi" && <OggiView onView={setView} onEdit={onEdit} onOpenProfile={() => setShowProfile(true)} />}
           {view.kind === "calendar" && <CalendarView onEdit={onEdit} onView={setView} />}
           {view.kind === "kanban" && <KanbanView onEdit={onEdit} onOpenUda={openUda} />}
           {view.kind === "timeline" && <TimelineView onOpenUda={openUda} />}

@@ -12,6 +12,7 @@ const SEZIONI: Sezione[] = [
   {
     titolo: "Lavoro",
     viste: [
+      { v: { kind: "oggi" }, label: "Oggi", icon: "☀️" },
       { v: { kind: "calendar" }, label: "Calendario", icon: "📅" },
       { v: { kind: "planner" }, label: "Pianifica", icon: "🧠" },
       { v: { kind: "kanban" }, label: "Kanban", icon: "🗂️" },
