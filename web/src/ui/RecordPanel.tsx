@@ -4,7 +4,6 @@ import { schemaByKey } from "@model";
 import { newId, records, recordTitle, upsert, type Rec, type Value } from "../store/store";
 import { SearchSelect } from "./SearchSelect";
 import { schoolYearOptions, type SchoolYearOption } from "./schoolYear";
-import { useSettings } from "../store/settings";
 import { materieAttive, scuoleCorrenti, useProfile } from "../store/profile";
 import { bloomLabel, cicloDaFase, obiettiviPerMateria as taxObiettivi, useTassonomia, type TaxObiettivo } from "../data/tassonomia";
 
@@ -31,7 +30,6 @@ export function RecordPanel({
   const [draft, setDraft] = useState<Rec>(() => (rec ? { ...rec } : { id: newId(), ...(prefill ?? {}) }));
   const set = (name: string, v: Value) => setDraft((d) => ({ ...d, [name]: v }));
   const merge = (patch: Record<string, Value>) => setDraft((d) => ({ ...d, ...patch }));
-  const settings = useSettings();
   const profile = useProfile();
   const tax = useTassonomia();
   const hasDate = Object.values(def.properties).some((p) => p.type === "date");
@@ -123,19 +121,12 @@ export function RecordPanel({
               }
               return <Field key={name} name={name} prop={prop} value={draft[name]} onChange={(v) => set(name, v)} />;
             })}
-            {settings.timeBands.length > 0 && hasDate && (
+            {hasDate && (
               <label className="field">
                 <span>
-                  Fascia oraria <em>· posiziona l'evento nel calendario</em>
+                  Ora <em>· facoltativa (es. riunioni del pomeriggio); vuota = «giornata»</em>
                 </span>
-                <select value={str(draft["Fascia"])} onChange={(e) => set("Fascia", e.target.value || undefined)}>
-                  <option value="">Giornata (nessuna fascia)</option>
-                  {settings.timeBands.map((b) => (
-                    <option key={b.label} value={b.label}>
-                      {b.label} ({b.start}–{b.end})
-                    </option>
-                  ))}
-                </select>
+                <input type="time" value={str(draft["Ora"])} onChange={(e) => set("Ora", e.target.value || undefined)} />
               </label>
             )}
             {(def.relations ?? []).map((rel) => (

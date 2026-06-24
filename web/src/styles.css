@@ -154,6 +154,8 @@ button.danger:hover { background: var(--danger-light); border-color: var(--dange
 .dropdown > summary.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
 .dropdown[open] > summary { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .dropdown-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; display: flex; flex-direction: column; min-width: 180px; background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: var(--radius); box-shadow: var(--shadow); padding: 4px; }
+/* Tendina ancorata a sinistra (per i pulsanti sul lato sinistro: si apre verso destra) */
+.dropdown--start .dropdown-menu { left: 0; right: auto; }
 .dropdown-menu button { text-align: left; background: none; border: none; color: var(--ink); padding: 0.45rem 0.6rem; border-radius: var(--radius); font: 500 0.84rem var(--font-ui); width: 100%; }
 .dropdown-menu button:hover { background: var(--parchment-dark); }
 .dropdown-menu button.danger { color: var(--danger); }
@@ -353,7 +355,7 @@ td .check { color: var(--success); font-weight: 700; }
 
 /* Corpo: tabella oraria scolastica. Righe = ore (fasce), colonne = giorni.
    Le righe riempiono l'altezza; con molte ore (rientri) scorre senza schiacciarsi. */
-.tg-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; }
+.tg-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; padding-bottom: 8px; }
 .pg-axis { border-top: 1px solid var(--parchment-dark); border-right: 1px solid var(--parchment-dark); padding: 4px 7px; display: flex; flex-direction: column; justify-content: center; gap: 1px; background: var(--parchment); }
 .pg-ora { font: 700 0.82rem var(--font-ui); color: var(--ink); line-height: 1.05; }
 .pg-time { font: 600 0.66rem var(--font-mono); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
@@ -364,13 +366,14 @@ td .check { color: var(--success); font-weight: 700; }
 
 /* Lezione: blocco pieno del colore della materia che riempie la cella. */
 .pg-lesson { flex: 1 1 auto; min-height: 0; border-radius: 6px; padding: 4px 8px; display: flex; flex-direction: column; justify-content: center; gap: 2px; overflow: hidden; box-shadow: var(--shadow-sm); }
-.pg-l-mat { font: 600 0.82rem var(--font-ui); line-height: 1.14; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pg-l-mat { font: 600 0.82rem var(--font-ui); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .pg-l-cls { font: 700 0.72rem var(--font-ui); opacity: 0.92; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Chip eventi (scadenze, verifiche, riunioni…): pieni e a contrasto. */
 .tg-chip { text-align: left; font-size: 0.72rem; font-weight: 600; padding: 0.14rem 0.4rem; border: 1px solid var(--parchment-dark); border-radius: 5px; background: var(--parchment); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: grab; }
 .tg-chip.plain { background: var(--parchment); }
 .tg-chip:hover { transform: none; box-shadow: var(--shadow-sm); filter: brightness(0.97); }
+.tg-chip-ora { font-weight: 800; font-variant-numeric: tabular-nums; }
 
 .tg-empty { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--ink-muted); font-size: 0.9rem; padding: 1.5rem; }
 

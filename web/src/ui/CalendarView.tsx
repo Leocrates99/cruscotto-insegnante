@@ -94,7 +94,7 @@ export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: Vie
     <section className={mode === "month" ? "cal-view cal-view--month" : "cal-view"}>
       <div className="view-head cal-toolbar">
         <div className="cal-left">
-          <details className="dropdown">
+          <details className="dropdown dropdown--start">
             <summary className="primary">+ Nuovo</summary>
             <div className="dropdown-menu">
               <button onClick={(e) => { closeDd(e.currentTarget); onEdit("scadenze", undefined, { Data: ymd(anchor) }); }}>📌 Scadenza</button>
@@ -186,22 +186,34 @@ function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { days: Da
   const profile = useProfile();
   const settings = useSettings();
   const bands = settings.timeBands;
-  const bandLabels = new Set(bands.map((b) => b.label));
   const orarioByKey = new Map(profile.orario.map((s) => [`${s.giorno}:${s.fascia}`, s] as const));
 
   const now = new Date();
   const todayStr = ymd(now);
   const nowMin = now.getHours() * 60 + now.getMinutes();
+  const bandOf = (min: number) => bands.find((b) => toMinutes(b.start) <= min && min < toMinutes(b.end));
   // Periodo (fascia) corrente, per evidenziare la riga di "oggi".
-  const curBand = bands.find((b) => toMinutes(b.start) <= nowMin && nowMin < toMinutes(b.end))?.label;
+  const curBand = bandOf(nowMin)?.label;
   const cols = { gridTemplateColumns: `86px repeat(${days.length}, minmax(0, 1fr))` } as const;
   const bodyStyle = { ...cols, gridTemplateRows: `repeat(${Math.max(1, bands.length)}, minmax(58px, 1fr))` } as const;
 
-  const isFascia = (e: CalEvent) => typeof e.rec["Fascia"] === "string" && bandLabels.has(e.rec["Fascia"] as string);
-  // Drop su una cella → giorno + fascia (in giornata se fascia assente).
-  const drop = (ds: string, fascia?: string) => {
+  // Ora di un evento: dal campo libero "Ora" (HH:MM) o, per retrocompatibilità, dall'inizio della "Fascia".
+  const eventOra = (e: CalEvent): string | undefined => {
+    const o = e.rec["Ora"];
+    if (typeof o === "string" && /^\d{1,2}:\d{2}/.test(o)) return o;
+    const f = e.rec["Fascia"];
+    if (typeof f === "string") return bands.find((b) => b.label === f)?.start;
+    return undefined;
+  };
+  // Riga in cui collocare l'evento: la fascia che contiene la sua ora; altrimenti "giornata".
+  const eventBand = (e: CalEvent): string | undefined => {
+    const o = eventOra(e);
+    return o ? bandOf(toMinutes(o))?.label : undefined;
+  };
+  // Drop su una cella → giorno + ora (vuota = "giornata").
+  const drop = (ds: string, ora?: string) => {
     if (!dragEv) return;
-    upsert(dragEv.dbKey, { ...dragEv.rec, [dragEv.prop]: ds, Fascia: fascia });
+    upsert(dragEv.dbKey, { ...dragEv.rec, [dragEv.prop]: ds, Ora: ora });
     setDragEv(null);
     setOver(null);
   };
@@ -212,9 +224,10 @@ function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { days: Da
   });
   const chip = (e: CalEvent, j: number) => {
     const bg = eventColor(e);
+    const o = eventOra(e);
     return (
-      <button key={j} className={bg ? "tg-chip" : "tg-chip plain"} {...dragProps(e)} style={bg ? { background: bg, color: contrastText(bg), borderColor: bg } : undefined} title={`${e.title} · ${e.prop}`} onClick={(ev) => { ev.stopPropagation(); onEdit(e.dbKey, e.rec); }}>
-        {e.title}
+      <button key={j} className={bg ? "tg-chip" : "tg-chip plain"} {...dragProps(e)} style={bg ? { background: bg, color: contrastText(bg), borderColor: bg } : undefined} title={`${o ? o + " · " : ""}${e.title} · ${e.prop}`} onClick={(ev) => { ev.stopPropagation(); onEdit(e.dbKey, e.rec); }}>
+        {o ? <b className="tg-chip-ora">{o}</b> : null}{o ? " " : ""}{e.title}
       </button>
     );
   };
@@ -234,7 +247,7 @@ function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { days: Da
         <div className="tg-axis-label">giornata</div>
         {days.map((d, i) => {
           const ds = ymd(d);
-          const allday = (byDay.get(ds) ?? []).filter((e) => !isFascia(e));
+          const allday = (byDay.get(ds) ?? []).filter((e) => eventBand(e) === undefined);
           const sess = sessByDay.get(ds) ?? [];
           const key = `${i}:allday`;
           return (
@@ -272,7 +285,7 @@ function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { days: Da
                 const isToday = ds === todayStr;
                 const ov = orarioByKey.get(`${wd}:${b.label}`);
                 const lessonBg = ov && (ov.materia || ov.classe) ? (materiaColor(ov.materia) ?? classeColor(ov.classe) ?? "#6b6660") : undefined;
-                const evs = (byDay.get(ds) ?? []).filter((e) => e.rec["Fascia"] === b.label);
+                const evs = (byDay.get(ds) ?? []).filter((e) => eventBand(e) === b.label);
                 const key = `${di}:${b.label}`;
                 const cls = ["pg-cell"];
                 if (isToday) cls.push("today");
@@ -282,9 +295,9 @@ function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { days: Da
                   <div
                     key={di}
                     className={cls.join(" ")}
-                    onClick={() => onEdit("scadenze", undefined, { Data: ds, Fascia: b.label })}
+                    onClick={() => onEdit("scadenze", undefined, { Data: ds, Ora: b.start })}
                     onDragOver={(ev) => { ev.preventDefault(); setOver(key); }}
-                    onDrop={(ev) => { ev.stopPropagation(); drop(ds, b.label); }}
+                    onDrop={(ev) => { ev.stopPropagation(); drop(ds, b.start); }}
                   >
                     {lessonBg && (
                       <div className="pg-lesson" style={{ background: lessonBg, color: contrastText(lessonBg) }} title={`${[ov?.materia, ov?.classe].filter(Boolean).join(" · ")} · ${b.start}–${b.end}`}>
