@@ -16,6 +16,7 @@ export function Toolbar({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [theme, setThemeState] = useState(getTheme());
+  const closeDd = (el: HTMLElement) => el.closest("details")?.removeAttribute("open");
 
   return (
     <header className="masthead">
@@ -32,30 +33,17 @@ export function Toolbar({
         </div>
       </div>
       <div className="actions">
-        <button
-          onClick={() => {
-            if (confirm("Caricare i dati di esempio (4 UdA-modello)? Sostituiscono i dati attuali.")) {
-              snapshotNow();
-              replaceState(buildSeedState());
-            }
-          }}
-        >
-          Carica esempio
-        </button>
-        <button onClick={() => { exportJson(getState()); markExported(); }}>Esporta</button>
-        <button onClick={() => fileRef.current?.click()}>Importa</button>
-        <button title="Backup e sicurezza dei dati" onClick={onOpenBackup}>💾 Backup</button>
-        <button
-          className="danger"
-          onClick={() => {
-            if (confirm("Azzerare tutti i dati di questo browser? (ne viene salvato prima un punto di ripristino)")) {
-              snapshotNow();
-              clearState();
-            }
-          }}
-        >
-          Azzera
-        </button>
+        <details className="dropdown">
+          <summary>📁 Dati</summary>
+          <div className="dropdown-menu">
+            <button onClick={(e) => { closeDd(e.currentTarget); if (confirm("Caricare i dati di esempio (4 UdA-modello)? Sostituiscono i dati attuali.")) { snapshotNow(); replaceState(buildSeedState()); } }}>Carica esempio</button>
+            <button onClick={(e) => { closeDd(e.currentTarget); exportJson(getState()); markExported(); }}>⬇️ Esporta</button>
+            <button onClick={(e) => { closeDd(e.currentTarget); fileRef.current?.click(); }}>⬆️ Importa</button>
+            <button onClick={(e) => { closeDd(e.currentTarget); onOpenBackup(); }}>💾 Backup</button>
+            <hr />
+            <button className="danger" onClick={(e) => { closeDd(e.currentTarget); if (confirm("Azzerare tutti i dati di questo browser? (ne viene salvato prima un punto di ripristino)")) { snapshotNow(); clearState(); } }}>Azzera tutto</button>
+          </div>
+        </details>
         <button title="Profilo docente e scuola" onClick={onOpenProfile}>👤 Profilo</button>
         <button className="theme-toggle" title="Tema chiaro / scuro" onClick={() => setThemeState(toggleTheme())}>
           {theme === "dark" ? "☀️" : "🌙"}

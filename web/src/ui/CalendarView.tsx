@@ -48,6 +48,7 @@ export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: Vie
   }
   const [showVerifica, setShowVerifica] = useState(false);
   const openSessione: OpenSess = (id) => onView({ kind: "valutazione", sessioneId: id });
+  const closeDd = (el: HTMLElement) => el.closest("details")?.removeAttribute("open");
 
   const setMode = (m: Mode) => setSettings({ calendarMode: m });
   const shift = (dir: number) =>
@@ -79,13 +80,15 @@ export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: Vie
             <button onClick={() => shift(1)} aria-label="Successivo">›</button>
           </div>
           <button onClick={() => setShowOrario(true)}>🕒 Orario</button>
-          <button onClick={() => onEdit("scadenze", undefined, { Data: ymd(anchor) })}>+ Scadenza</button>
-          <button onClick={() => onEdit("lezioni", undefined, { "Data prevista": ymd(anchor) })}>+ Lezione</button>
-          <button onClick={() => setShowVerifica(true)}>📝 Verifica</button>
-          <button onClick={() => onView({ kind: "planner" })}>🧠 Pianifica</button>
-          <button onClick={() => onView({ kind: "avanzamento" })}>🚦 Avanzamento</button>
-          <button onClick={() => onView({ kind: "promemoria" })}>📌 Promemoria</button>
-          <button onClick={() => onView({ kind: "programmazione" })}>📊 Sostenibilità</button>
+          <details className="dropdown">
+            <summary className="primary">+ Nuovo</summary>
+            <div className="dropdown-menu">
+              <button onClick={(e) => { closeDd(e.currentTarget); onEdit("scadenze", undefined, { Data: ymd(anchor) }); }}>📌 Scadenza</button>
+              <button onClick={(e) => { closeDd(e.currentTarget); onEdit("lezioni", undefined, { "Data prevista": ymd(anchor) }); }}>📘 Lezione</button>
+              <button onClick={(e) => { closeDd(e.currentTarget); setShowVerifica(true); }}>📝 Verifica</button>
+              <button onClick={(e) => { closeDd(e.currentTarget); onView({ kind: "planner" }); }}>🧠 Pianifica</button>
+            </div>
+          </details>
         </div>
       </div>
 

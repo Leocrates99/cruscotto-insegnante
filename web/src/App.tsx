@@ -71,6 +71,10 @@ export function App() {
   const openUda = (id: string) => setView({ kind: "uda", id });
   const closeProfile = () => { setShowProfile(false); setSkipped(true); };
 
+  // Viste "dense" (griglie/tabelle): usano tutta la larghezza su PC; quelle testuali restano strette.
+  const VISTE_LARGHE = new Set(["calendar", "kanban", "timeline", "avanzamento", "valutazione", "andamento", "planner", "programmazione", "entity"]);
+  const mainWide = VISTE_LARGHE.has(view.kind);
+
   return (
     <div className={editing ? "app panel-open" : "app"}>
       <Toolbar onToggleNav={() => setNavOpen((o) => !o)} onOpenProfile={() => setShowProfile(true)} onOpenBackup={() => setShowBackup(true)} />
@@ -86,7 +90,7 @@ export function App() {
       <div className="body">
         <Nav view={view} onChange={setView} open={navOpen} onNavigate={() => setNavOpen(false)} />
         {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
-        <main className="main">
+        <main className={mainWide ? "main main--wide" : "main"}>
           {view.kind === "calendar" && <CalendarView onEdit={onEdit} onView={setView} />}
           {view.kind === "kanban" && <KanbanView onEdit={onEdit} onOpenUda={openUda} />}
           {view.kind === "timeline" && <TimelineView onOpenUda={openUda} />}
