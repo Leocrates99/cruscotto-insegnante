@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { generateBands, setSettings, useSettings } from "../store/settings";
+import { generateBands, setSettings, useSettings, type TimeBand } from "../store/settings";
 import { classeInfo, classiAttive, contiClasse, materieAttive, setProfile, useProfile, type OrarioSlot, type StudenteAnon } from "../store/profile";
 import { classeColor, materiaColor } from "./materia";
 import { classiFromSlots, mergeSlots, parseOrarioFile } from "../store/orarioImport";
@@ -55,6 +55,16 @@ export function OrarioLavoro() {
 
   const bands = settings.timeBands;
   const giorni = GIORNI.filter((g) => settings.giorniLezione.includes(g.i));
+
+  // ── Fasce orarie (spostate qui dal calendario, per evitare clic sbagliati) ──
+  const [bStart, setBStart] = useState("08:00");
+  const [bDur, setBDur] = useState(55);
+  const [bCount, setBCount] = useState(6);
+  const [bAfter, setBAfter] = useState(0);
+  const [bMin, setBMin] = useState(15);
+  const genBands = () => setSettings({ timeBands: generateBands(bStart, bDur, bCount, bAfter || undefined, bMin) });
+  const editBand = (i: number, patch: Partial<TimeBand>) => setSettings({ timeBands: bands.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
+  const removeBand = (i: number) => setSettings({ timeBands: bands.filter((_, j) => j !== i) });
 
   const slotAt = (g: number, fascia: string) => profile.orario.find((s) => s.giorno === g && s.fascia === fascia);
   const setSlot = (g: number, fascia: string, patch: Partial<OrarioSlot>) => {
@@ -175,12 +185,37 @@ export function OrarioLavoro() {
       </div>
 
       <div className="ol-sec">
+        <h4>Fasce orarie <em>· le righe del calendario (1ª ora, 2ª ora…)</em></h4>
+        <p className="muted">Genera le ore agganciate all'orologio, poi rifiniscile a mano. Valgono per la vista settimana/giorno del calendario.</p>
+        <div className="orario-form">
+          <label className="field"><span>Inizio</span><input type="time" value={bStart} onChange={(e) => setBStart(e.target.value)} /></label>
+          <label className="field"><span>Durata (min)</span><input type="number" value={bDur} onChange={(e) => setBDur(Number(e.target.value))} /></label>
+          <label className="field"><span>N° ore</span><input type="number" value={bCount} onChange={(e) => setBCount(Number(e.target.value))} /></label>
+          <label className="field"><span>Pausa dopo la</span><input type="number" placeholder="0 = nessuna" value={bAfter} onChange={(e) => setBAfter(Number(e.target.value))} /></label>
+          <label className="field"><span>Pausa (min)</span><input type="number" value={bMin} onChange={(e) => setBMin(Number(e.target.value))} /></label>
+          <button className="primary" onClick={genBands}>Genera</button>
+        </div>
+        <div className="orario-bands">
+          {bands.length === 0 ? (
+            <p className="muted">Nessuna fascia: usa «Genera».</p>
+          ) : (
+            bands.map((b, i) => (
+              <div key={i} className="orario-band">
+                <input value={b.label} onChange={(e) => editBand(i, { label: e.target.value })} />
+                <input type="time" value={b.start} onChange={(e) => editBand(i, { start: e.target.value })} />
+                <input type="time" value={b.end} onChange={(e) => editBand(i, { end: e.target.value })} />
+                <button className="danger" aria-label="Rimuovi" onClick={() => removeBand(i)}>✕</button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div className="ol-sec">
         <h4>Griglia settimanale</h4>
         {bands.length === 0 ? (
           <div className="ol-nobands">
-            <span className="muted">Servono le fasce orarie.</span>
-            <button onClick={() => setSettings({ timeBands: generateBands("08:00", 55, 6) })}>Genera 6 ore (8:00, 55′)</button>
-            <span className="muted">Le rifinisci dal calendario → 🕒 Orario.</span>
+            <span className="muted">Servono le fasce orarie: generale qui sopra.</span>
           </div>
         ) : giorni.length === 0 ? (
           <span className="muted">Seleziona almeno un giorno di lezione.</span>
