@@ -450,6 +450,52 @@ td .check { color: var(--success); font-weight: 700; }
 .av-actions { display: inline-flex; gap: 0.3rem; }
 .av-actions button { font: 600 0.72rem var(--font-ui); padding: 0.25rem 0.5rem; }
 
+/* ── Calcolatore voti & griglie ─────────────────────────────────────────────── */
+.vz-tools { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.vz-tools select { font: 500 0.84rem var(--font-ui); padding: 0.35rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); max-width: 320px; }
+.vz-bilancia { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: end; margin: 0.6rem 0 1rem; padding: 0.7rem 0.9rem; background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); }
+.vz-slider { display: flex; flex-direction: column; gap: 0.2rem; flex: 1 1 280px; font: 500 0.82rem var(--font-ui); }
+.vz-slider input[type="range"] { width: 100%; accent-color: var(--accent); }
+.vz-slider em { color: var(--ink-muted); font-size: 0.72rem; }
+.field.sm { gap: 0.2rem; }
+.field.sm input, .field.sm select { padding: 0.35rem 0.45rem; }
+.vz-table th, .vz-table td { text-align: center; vertical-align: middle; }
+.vz-table th small { color: var(--ink-muted); font-weight: 400; }
+.vz-lbl { text-align: left !important; }
+.vz-table .vz-lbl input { width: 84px; font: 500 0.82rem var(--font-ui); padding: 0.3rem 0.4rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.vz-table td input.vz-pt { width: 64px; text-align: center; font: 0.84rem var(--font-ui); padding: 0.3rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.vz-table td select { font: 0.8rem var(--font-ui); padding: 0.25rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); max-width: 150px; }
+.vz-voto { font: 800 0.95rem var(--font-ui); }
+.vz-voto.ok { color: var(--success); }
+.vz-voto.no { color: #c0392b; }
+.vz-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.6rem 0; }
+.vz-hint { font-size: 0.76rem; }
+.vz-dist { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; padding: 0.7rem 0.9rem; background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); }
+.vz-dist-stats { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.vz-sum { font: 600 0.82rem var(--font-ui); padding: 0.3rem 0.6rem; border-radius: var(--radius); border: 1px solid var(--parchment-dark); background: var(--parchment); }
+.vz-sum.s { color: var(--success); }
+.vz-hist { display: flex; gap: 4px; align-items: flex-end; height: 70px; }
+.vz-bar { width: 22px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
+.vz-bar > span { width: 100%; background: var(--parchment-dark); border-radius: 3px 3px 0 0; min-height: 2px; }
+.vz-bar.ok > span { background: var(--accent); }
+.vz-bar small { font-size: 0.62rem; color: var(--ink-muted); margin-top: 2px; }
+
+/* editor griglia */
+.ge-meta, .ge-scala { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); margin-bottom: 0.6rem; }
+.ge-h { margin: 0.8rem 0 0.3rem; font-size: 0.95rem; }
+.ge-inds { display: flex; flex-direction: column; gap: 0.5rem; max-height: 300px; overflow-y: auto; }
+.ge-ind { border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: 0.5rem; background: var(--cream); }
+.ge-ind-head { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.ge-ind-nome { flex: 1 1 160px; font: 600 0.85rem var(--font-ui); padding: 0.35rem 0.45rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.ge-ind-head select { font: 0.8rem var(--font-ui); padding: 0.3rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.ge-peso { font: 0.74rem var(--font-ui); color: var(--ink-muted); display: inline-flex; align-items: center; gap: 0.25rem; }
+.ge-peso input { width: 48px; padding: 0.25rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.ge-desc { margin: 0.4rem 0 0 0.6rem; display: flex; flex-direction: column; gap: 0.25rem; }
+.ge-desc-row { display: flex; gap: 0.35rem; align-items: center; }
+.ge-desc-row input[type="text"] { flex: 1; padding: 0.25rem 0.4rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); font: 0.8rem var(--font-ui); }
+.ge-desc-row input[type="number"] { width: 56px; padding: 0.25rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.ge-addrow { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+
 /* ── Hamburger + backdrop (attivi solo su mobile) ───────────────────────────── */
 .nav-toggle {
   display: none; width: 38px; height: 38px; padding: 0; flex-shrink: 0;
