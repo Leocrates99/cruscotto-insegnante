@@ -496,6 +496,61 @@ td .check { color: var(--success); font-weight: 700; }
 .ge-desc-row input[type="number"] { width: 56px; padding: 0.25rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
 .ge-addrow { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 
+/* ── Valutazione "Pro": estensioni ──────────────────────────────────────────── */
+.vz-bilancia .field.sm.chk2, .chk2 { flex-direction: row; align-items: center; gap: 0.35rem; font: 500 0.8rem var(--font-ui); white-space: nowrap; }
+.vz-fasce-note { font: 500 0.82rem var(--font-ui); color: var(--ink-muted); align-self: center; }
+.vz-rowact { display: flex; gap: 0.25rem; justify-content: center; }
+.vz-rowact button { font-size: 0.78rem; padding: 0.2rem 0.4rem; }
+.vz-voto small { display: block; font-size: 0.62rem; font-weight: 600; opacity: 0.8; }
+.vz-strumenti { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; margin-top: 0.8rem; }
+.vz-inverso { padding: 0.6rem 0.8rem; background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); }
+.vz-inverso h4 { margin: 0 0 0.4rem; font: 700 0.8rem var(--font-ui); }
+.vz-inv-row { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.vz-inv-row input { width: 120px; font: 0.85rem var(--font-ui); padding: 0.35rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.vz-inv-row button { font: 600 0.76rem var(--font-ui); padding: 0.3rem 0.55rem; }
+.vz-conv { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+.vz-conv th, .vz-conv td { border: 1px solid var(--parchment-dark); padding: 0.25rem 0.6rem; text-align: center; }
+.vz-conv tr.ok { background: rgba(47,125,90,0.08); }
+.vz-conv tr.no { background: rgba(192,57,43,0.07); }
+
+.ge-fasce { border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: 0.5rem; margin-bottom: 0.6rem; }
+.ge-fasce-head { display: flex; justify-content: space-between; align-items: center; font: 600 0.78rem var(--font-ui); margin-bottom: 0.4rem; }
+.ge-fascia-row { display: flex; gap: 0.35rem; align-items: center; margin-bottom: 0.25rem; }
+.ge-fascia-row input[type="number"] { width: 52px; padding: 0.25rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.ge-fascia-row input[type="text"] { flex: 1; padding: 0.25rem 0.4rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.ge-ind-desc { width: 100%; margin-top: 0.35rem; padding: 0.3rem 0.45rem; border: 1px dashed var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); font: 0.8rem var(--font-ui); }
+
+/* Scheda stampabile */
+.scheda { color: var(--ink); }
+.scheda-head { text-align: center; border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; margin-bottom: 0.8rem; }
+.scheda-head h3 { margin: 0; font-size: 1.05rem; }
+.scheda-head p { margin: 0.2rem 0 0; font-size: 0.78rem; color: var(--ink-muted); }
+.scheda-info { display: flex; gap: 1.5rem; margin-bottom: 0.8rem; font-size: 0.9rem; }
+.scheda-info span { display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--ink-muted); }
+.scheda-voto { display: flex; align-items: center; gap: 1rem; padding: 0.6rem 0.9rem; background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); margin-bottom: 0.8rem; }
+.scheda-voto-n { font: 800 2.4rem var(--font-display, var(--font-ui)); color: var(--accent); }
+.scheda-giud { font: 700 0.9rem var(--font-ui); }
+.scheda-tab { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 0.8rem; }
+.scheda-tab th, .scheda-tab td { border-bottom: 1px solid var(--parchment-dark); padding: 0.3rem 0.5rem; text-align: left; }
+.scheda-tab th { font-size: 0.7rem; text-transform: uppercase; color: var(--ink-muted); }
+.scheda-tot td { border-top: 2px solid var(--accent); font-weight: 700; }
+.scheda-note { margin-bottom: 1rem; }
+.scheda-note > span { font-size: 0.72rem; text-transform: uppercase; color: var(--ink-muted); }
+.scheda-note textarea { width: 100%; margin-top: 0.3rem; padding: 0.4rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); font: 0.85rem var(--font-ui); resize: vertical; }
+.scheda-note-text { white-space: pre-wrap; min-height: 2.5rem; border-bottom: 1px dotted var(--parchment-dark); }
+.scheda-firme { display: flex; justify-content: space-between; margin-top: 2.5rem; font-size: 0.8rem; }
+.scheda-firme > div { border-top: 1px solid var(--ink); padding-top: 0.3rem; width: 40%; text-align: center; }
+
+/* Stampa: mostra solo l'area-stampa */
+.print-only { display: none; }
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0.4rem; }
+  .no-print { display: none !important; }
+  .print-only { display: block; }
+}
+
 /* ── Hamburger + backdrop (attivi solo su mobile) ───────────────────────────── */
 .nav-toggle {
   display: none; width: 38px; height: 38px; padding: 0; flex-shrink: 0;
