@@ -4,6 +4,7 @@
 // e per la stampa/PDF vettoriale). Tutto dai dati locali, nessuna dipendenza.
 import { getRecord, records, recordTitle, type Rec, type Value } from "./store";
 import { classeDiLezione } from "../compute/progress";
+import { obiettivoVerificato } from "../compute/computed";
 import { getProfile, materieClasseEffettive, scuoleCorrenti } from "./profile";
 import { annoCorrente, getValutazione, type Sessione } from "./valutazione";
 import { distribuzione, rigaCompilata } from "../compute/voto";
@@ -15,11 +16,21 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const ids = (v: Value): string[] => (Array.isArray(v) ? v : []);
 const isIso = (v: Value): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v);
 const SVOLTE = new Set(["Svolta", "Valutata", "Archiviata"]);
+/** Date sempre in formato giorno/mese/anno. */
+const fmtDate = (iso: string): string => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso); return m ? `${m[3]}/${m[2]}/${m[1]}` : iso; };
+/** Classifica un obiettivo-record (gestisce sia "conoscenza/abilità/competenza" sia i codici CON/COM). */
+function tipoObiettivo(rec: Rec): "conoscenza" | "abilita" | "competenza" {
+  const t = str(rec["Tipo"]).toLowerCase();
+  if (t.startsWith("con")) return "conoscenza";
+  if (t.startsWith("ab")) return "abilita";
+  if (t.startsWith("com")) return "competenza";
+  return "conoscenza";
+}
 
 // ── Programmazione svolta ────────────────────────────────────────────────────
 export interface UdaR { titolo: string; competenza: string; stato: string; obiettivi: string[] }
 export interface LezR { data: string; titolo: string; stato: string; ore: number; obiettivi: string; esito: string }
-export interface SezioneProg { classe: string; materia: string; finalita: string; monteOre?: number; strumenti: string[]; uda: UdaR[]; lezioni: LezR[]; obiettivi: string[]; oreSvolte: number }
+export interface SezioneProg { classe: string; materia: string; finalita: string; monteOre?: number; strumenti: string[]; uda: UdaR[]; lezioni: LezR[]; conoscenze: string[]; abilita: string[]; competenze: string[]; raggiunti: string[]; oreSvolte: number }
 export interface ReportProg { docente: string; scuola: string; anno: string; sezioni: SezioneProg[] }
 
 const classeLabelRel = (rec: Rec): string | undefined => {
@@ -73,10 +84,23 @@ export function buildProgrammazione(): ReportProg {
         esito: str(l["Esito/riflessione"]),
       }));
 
-    // Elenco obiettivi affrontati (UdA + righe degli "Obiettivi della lezione").
-    const obSet = new Set<string>();
-    uda.forEach((u) => u.obiettivi.forEach((o) => obSet.add(o)));
-    lezR.forEach((l) => l.obiettivi.split(/\n+/).map((s) => s.replace(/^[•\-\s]+/, "").trim()).filter(Boolean).forEach((o) => obSet.add(o)));
+    // Conoscenze / abilità / competenze / obiettivi raggiunti, dagli obiettivi-record.
+    const objIds = new Set<string>();
+    for (const u of udaSet.values()) ids(u["Obiettivi"]).forEach((id) => objIds.add(id));
+    if (prog) ids(prog["Competenze attese"]).forEach((id) => objIds.add(id));
+    const conoscenze = new Set<string>(), abilita = new Set<string>(), competenze = new Set<string>();
+    const raggiunti = new Set<string>();
+    for (const id of objIds) {
+      const o = getRecord("obiettivi", id); if (!o) continue;
+      const en = str(o["Enunciato"]) || recordTitle("obiettivi", o);
+      const t = tipoObiettivo(o);
+      (t === "conoscenza" ? conoscenze : t === "abilita" ? abilita : competenze).add(en);
+      if (obiettivoVerificato(id)) raggiunti.add(en);
+    }
+    // Contenuti concreti dalle righe "Obiettivi della lezione" → conoscenze.
+    lezR.forEach((l) => l.obiettivi.split(/\n+/).map((s) => s.replace(/^[•\-\s]+/, "").trim()).filter(Boolean).forEach((o) => conoscenze.add(o)));
+    // Competenze attese delle UdA.
+    uda.forEach((u) => { if (u.competenza) competenze.add(u.competenza); });
 
     const oreSvolte = lez.filter((l) => SVOLTE.has(str(l["Stato"]))).reduce((s, l) => s + (typeof l["Durata (ore)"] === "number" ? (l["Durata (ore)"] as number) : 0), 0);
 
@@ -85,7 +109,7 @@ export function buildProgrammazione(): ReportProg {
       finalita: prog ? str(prog["Finalità generali"]) : "",
       monteOre: prog && typeof prog["Monte ore"] === "number" ? (prog["Monte ore"] as number) : undefined,
       strumenti: prog ? (Array.isArray(prog["Strumenti di verifica"]) ? (prog["Strumenti di verifica"] as string[]) : []) : [],
-      uda, lezioni: lezR, obiettivi: [...obSet], oreSvolte,
+      uda, lezioni: lezR, conoscenze: [...conoscenze], abilita: [...abilita], competenze: [...competenze], raggiunti: [...raggiunti], oreSvolte,
     });
   }
   sezioni.sort((a, b) => a.classe.localeCompare(b.classe) || a.materia.localeCompare(b.materia));
@@ -120,6 +144,7 @@ export function buildValutazione(): ReportVal {
 // ── Serializzazione Markdown ─────────────────────────────────────────────────
 export function progToMarkdown(r: ReportProg): string {
   const L: string[] = [];
+  const lista = (titolo: string, items: string[]) => { if (items.length) { L.push("", `#### ${titolo}`); items.forEach((o) => L.push(`- ${o}`)); } };
   L.push(`# Resoconto della programmazione svolta — ${r.anno}`);
   if (r.docente || r.scuola) L.push(`*${[r.docente, r.scuola].filter(Boolean).join(" · ")}*`);
   L.push("");
@@ -127,15 +152,18 @@ export function progToMarkdown(r: ReportProg): string {
   for (const s of r.sezioni) {
     if (s.classe !== curClasse) { L.push(`## Classe ${s.classe}`); curClasse = s.classe; }
     L.push(`### ${s.materia}`);
-    if (s.finalita) L.push(`**Finalità generali.** ${s.finalita}`);
-    const meta = [s.monteOre != null ? `Monte ore: ${s.monteOre}` : "", `Ore svolte: ${num(s.oreSvolte)}`, s.strumenti.length ? `Strumenti: ${s.strumenti.join(", ")}` : ""].filter(Boolean);
-    if (meta.length) L.push(meta.join(" · "));
-    if (s.uda.length) { L.push("", "**UdA / Moduli**"); s.uda.forEach((u) => L.push(`- **${u.titolo}**${u.stato ? ` _(${u.stato})_` : ""}${u.competenza ? ` — ${u.competenza}` : ""}`)); }
+    const meta = [s.monteOre != null ? `Monte ore: ${s.monteOre}` : "", `Ore svolte: ${num(s.oreSvolte)}`, s.strumenti.length ? `Strumenti di verifica: ${s.strumenti.join(", ")}` : ""].filter(Boolean);
+    if (meta.length) L.push("", meta.join(" · "));
+    if (s.finalita) { L.push("", "#### Finalità generali", s.finalita); }
+    if (s.uda.length) { L.push("", "#### UdA / Moduli"); s.uda.forEach((u) => L.push(`- **${u.titolo}**${u.stato ? ` _(${u.stato})_` : ""}${u.competenza ? ` — ${u.competenza}` : ""}`)); }
+    lista("Conoscenze e contenuti", s.conoscenze);
+    lista("Abilità", s.abilita);
+    lista("Competenze", s.competenze);
+    lista("Obiettivi raggiunti (verificati)", s.raggiunti);
     if (s.lezioni.length) {
-      L.push("", `**Lezioni svolte (${s.lezioni.length})**`, "", "| Data | Lezione | Stato | Ore |", "| --- | --- | --- | --- |");
-      s.lezioni.forEach((l) => L.push(`| ${l.data || "—"} | ${l.titolo.replace(/\|/g, "/")} | ${l.stato || "—"} | ${l.ore || ""} |`));
+      L.push("", `#### Lezioni svolte (${s.lezioni.length})`, "", "| Data | Lezione | Stato | Ore |", "| --- | --- | --- | --- |");
+      s.lezioni.forEach((l) => L.push(`| ${l.data ? fmtDate(l.data) : "—"} | ${l.titolo.replace(/\|/g, "/")} | ${l.stato || "—"} | ${l.ore || ""} |`));
     }
-    if (s.obiettivi.length) { L.push("", "**Obiettivi affrontati**"); s.obiettivi.forEach((o) => L.push(`- ${o}`)); }
     L.push("");
   }
   if (r.sezioni.length === 0) L.push("_Nessuna lezione o programmazione registrata per quest'anno._");
@@ -152,7 +180,7 @@ export function valToMarkdown(r: ReportVal): string {
     if (s.classe !== curClasse) { L.push(`## Classe ${s.classe}`); curClasse = s.classe; }
     L.push(`### ${s.materia || "—"} — media generale ${num(s.mediaGen)}`);
     L.push("", "| Verifica | Data | Media | Valutati | % suff. |", "| --- | --- | --- | --- | --- |");
-    s.verifiche.forEach((v) => L.push(`| ${v.titolo.replace(/\|/g, "/")} | ${v.data} | ${num(v.media)} | ${v.n} | ${v.pctSuff}% |`));
+    s.verifiche.forEach((v) => L.push(`| ${v.titolo.replace(/\|/g, "/")} | ${fmtDate(v.data)} | ${num(v.media)} | ${v.n} | ${v.pctSuff}% |`));
     L.push("");
   }
   if (r.sezioni.length === 0) L.push("_Nessuna verifica valutata per quest'anno._");
@@ -162,22 +190,26 @@ export function valToMarkdown(r: ReportVal): string {
 // ── Serializzazione HTML (anteprima, stampa/PDF, Word) ───────────────────────
 export function progToHtml(r: ReportProg): string {
   const H: string[] = [];
+  const lista = (titolo: string, items: string[]) => { if (items.length) { H.push(`<h4>${titolo}</h4><ul>`); items.forEach((o) => H.push(`<li>${esc(o)}</li>`)); H.push("</ul>"); } };
   H.push(`<h1>Resoconto della programmazione svolta — ${esc(r.anno)}</h1>`);
   if (r.docente || r.scuola) H.push(`<p class="rep-sub">${esc([r.docente, r.scuola].filter(Boolean).join(" · "))}</p>`);
   let curClasse = "";
   for (const s of r.sezioni) {
     if (s.classe !== curClasse) { H.push(`<h2>Classe ${esc(s.classe)}</h2>`); curClasse = s.classe; }
     H.push(`<h3 style="color:${materiaColor(s.materia) ?? "#333"}">${esc(s.materia)}</h3>`);
-    if (s.finalita) H.push(`<p><b>Finalità generali.</b> ${esc(s.finalita)}</p>`);
-    const meta = [s.monteOre != null ? `Monte ore: ${s.monteOre}` : "", `Ore svolte: ${num(s.oreSvolte)}`, s.strumenti.length ? `Strumenti: ${esc(s.strumenti.join(", "))}` : ""].filter(Boolean);
+    const meta = [s.monteOre != null ? `Monte ore: ${s.monteOre}` : "", `Ore svolte: ${num(s.oreSvolte)}`, s.strumenti.length ? `Strumenti di verifica: ${esc(s.strumenti.join(", "))}` : ""].filter(Boolean);
     if (meta.length) H.push(`<p class="rep-meta">${meta.join(" · ")}</p>`);
-    if (s.uda.length) { H.push("<p><b>UdA / Moduli</b></p><ul>"); s.uda.forEach((u) => H.push(`<li><b>${esc(u.titolo)}</b>${u.stato ? ` <i>(${esc(u.stato)})</i>` : ""}${u.competenza ? ` — ${esc(u.competenza)}` : ""}</li>`)); H.push("</ul>"); }
+    if (s.finalita) H.push(`<h4>Finalità generali</h4><p>${esc(s.finalita)}</p>`);
+    if (s.uda.length) { H.push("<h4>UdA / Moduli</h4><ul>"); s.uda.forEach((u) => H.push(`<li><b>${esc(u.titolo)}</b>${u.stato ? ` <i>(${esc(u.stato)})</i>` : ""}${u.competenza ? ` — ${esc(u.competenza)}` : ""}</li>`)); H.push("</ul>"); }
+    lista("Conoscenze e contenuti", s.conoscenze);
+    lista("Abilità", s.abilita);
+    lista("Competenze", s.competenze);
+    lista("Obiettivi raggiunti (verificati)", s.raggiunti);
     if (s.lezioni.length) {
-      H.push(`<p><b>Lezioni svolte (${s.lezioni.length})</b></p><table><thead><tr><th>Data</th><th>Lezione</th><th>Stato</th><th>Ore</th></tr></thead><tbody>`);
-      s.lezioni.forEach((l) => H.push(`<tr><td>${esc(l.data || "—")}</td><td>${esc(l.titolo)}</td><td>${esc(l.stato || "—")}</td><td>${l.ore || ""}</td></tr>`));
+      H.push(`<h4>Lezioni svolte (${s.lezioni.length})</h4><table><thead><tr><th>Data</th><th>Lezione</th><th>Stato</th><th>Ore</th></tr></thead><tbody>`);
+      s.lezioni.forEach((l) => H.push(`<tr><td>${esc(l.data ? fmtDate(l.data) : "—")}</td><td>${esc(l.titolo)}</td><td>${esc(l.stato || "—")}</td><td>${l.ore || ""}</td></tr>`));
       H.push("</tbody></table>");
     }
-    if (s.obiettivi.length) { H.push("<p><b>Obiettivi affrontati</b></p><ul>"); s.obiettivi.forEach((o) => H.push(`<li>${esc(o)}</li>`)); H.push("</ul>"); }
   }
   if (r.sezioni.length === 0) H.push("<p><i>Nessuna lezione o programmazione registrata per quest'anno.</i></p>");
   return H.join("\n");
@@ -196,11 +228,11 @@ export function valToHtml(r: ReportVal): string {
     s.verifiche.forEach((v) => {
       const pct = Math.max(2, Math.min(100, Math.round((v.media / (v.votoMax || 10)) * 100)));
       const col = v.pctSuff >= 50 ? "#2f7d5a" : "#c0531f";
-      H.push(`<div class="rep-bar"><span class="rep-bar-lab">${esc(v.titolo)} <i>(${esc(v.data)})</i></span><span class="rep-bar-track"><span class="rep-bar-fill" style="width:${pct}%;background:${col}"></span></span><b class="rep-bar-val">${num(v.media)}</b></div>`);
+      H.push(`<div class="rep-bar"><span class="rep-bar-lab">${esc(v.titolo)} <i>(${esc(fmtDate(v.data))})</i></span><span class="rep-bar-track"><span class="rep-bar-fill" style="width:${pct}%;background:${col}"></span></span><b class="rep-bar-val">${num(v.media)}</b></div>`);
     });
     H.push("</div>");
     H.push("<table><thead><tr><th>Verifica</th><th>Data</th><th>Media</th><th>Valutati</th><th>% suff.</th></tr></thead><tbody>");
-    s.verifiche.forEach((v) => H.push(`<tr><td>${esc(v.titolo)}</td><td>${esc(v.data)}</td><td>${num(v.media)}</td><td>${v.n}</td><td>${v.pctSuff}%</td></tr>`));
+    s.verifiche.forEach((v) => H.push(`<tr><td>${esc(v.titolo)}</td><td>${esc(fmtDate(v.data))}</td><td>${num(v.media)}</td><td>${v.n}</td><td>${v.pctSuff}%</td></tr>`));
     H.push("</tbody></table>");
   }
   if (r.sezioni.length === 0) H.push("<p><i>Nessuna verifica valutata per quest'anno.</i></p>");
@@ -220,8 +252,27 @@ export function downloadMarkdown(name: string, md: string) {
 }
 /** Word apre senza problemi un HTML con estensione .doc e MIME application/msword. */
 export function downloadWord(name: string, titolo: string, bodyHtml: string) {
+  // Titolature in Helvetica, corpo in Garamond (10pt), gerarchia H1>H2>H3>H4 distinta.
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(titolo)}</title>
-<style>body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#222}h1{font-size:18pt}h2{font-size:14pt;border-bottom:1px solid #999;margin-top:18pt}h3{font-size:12pt;margin-bottom:4pt}table{border-collapse:collapse;width:100%;margin:6pt 0}th,td{border:1px solid #999;padding:3pt 6pt;text-align:left;font-size:10pt}.rep-sub{color:#666;font-style:italic}.rep-meta{color:#555}.rep-bar{display:flex;align-items:center;gap:8px;margin:2pt 0}.rep-bar-track{flex:1;background:#eee;height:12px}.rep-bar-fill{display:block;height:12px}.rep-bar-val{min-width:34px}</style>
+<style>
+body{font-family:Garamond,"EB Garamond","Adobe Garamond Pro",Georgia,serif;font-size:10pt;color:#1a1a1a;line-height:1.4}
+h1,h2,h3,h4{font-family:Helvetica,"Helvetica Neue",Arial,sans-serif;color:#111;margin:0.7em 0 0.3em;line-height:1.2}
+h1{font-size:20pt}
+h2{font-size:15pt;border-bottom:1px solid #999;padding-bottom:2pt;margin-top:18pt}
+h3{font-size:13pt;color:#222}
+h4{font-size:11pt;color:#333;margin:0.5em 0 0.2em}
+p{margin:0.25em 0}
+ul{margin:0.2em 0 0.4em 0}
+table{border-collapse:collapse;width:100%;margin:6pt 0}
+th,td{border:1px solid #999;padding:3pt 6pt;text-align:left;font-size:9.5pt}
+th{background:#f0f0f0;font-family:Helvetica,Arial,sans-serif}
+.rep-sub{color:#666;font-style:italic}
+.rep-meta{color:#555}
+.rep-bar{display:flex;align-items:center;gap:8px;margin:2pt 0}
+.rep-bar-track{flex:1;background:#eee;height:12px}
+.rep-bar-fill{display:block;height:12px}
+.rep-bar-val{min-width:34px}
+</style>
 </head><body>${bodyHtml}</body></html>`;
   download(`${name}.doc`, "application/msword;charset=utf-8", html);
 }
