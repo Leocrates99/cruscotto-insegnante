@@ -1,10 +1,11 @@
-// Service worker minimale per l'uso offline (app local-first).
-// Strategia: network-first per le navigazioni (HTML aggiornato quando c'è rete),
-// cache-first per gli asset con hash (immutabili). Le risorse cross-origin
-// (es. Google Fonts) non vengono gestite: vanno in rete e degradano sui font di sistema.
-// Alza la versione a ogni cambio importante: l'activate ripulisce le cache vecchie,
-// così i dispositivi che avevano in cache una build precedente la scartano.
-const CACHE = "cruscotto-shell-v2";
+// Service worker per l'uso offline (app local-first).
+// Strategia: network-first per le NAVIGAZIONI, con `cache: "reload"` per scavalcare
+// la cache HTTP del browser → l'HTML servito è sempre l'ultimo deployato (e quindi
+// punta agli ultimi bundle con hash). Cache-first solo per gli asset con hash (immutabili).
+// All'attivazione di una nuova versione: ripulisce le cache vecchie e RICARICA le schede
+// aperte, così l'app si aggiorna da sola senza svuotare cache a mano.
+// IMPORTANTE: alzare CACHE a ogni cambio significativo del service worker.
+const CACHE = "cruscotto-shell-v3";
 const SHELL = ["./", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -17,6 +18,9 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
+      // Ricarica le finestre aperte sull'ultima versione (preserva i dati in localStorage).
+      .then(() => self.clients.matchAll({ type: "window" }))
+      .then((clients) => clients.forEach((c) => { try { c.navigate(c.url); } catch { /* ignora */ } }))
   );
 });
 
@@ -28,7 +32,7 @@ self.addEventListener("fetch", (event) => {
 
   if (req.mode === "navigate") {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: "reload" })
         .then((res) => {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(req, copy));
