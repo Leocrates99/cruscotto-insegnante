@@ -1,7 +1,7 @@
 // Calcolo del voto da una griglia. Supporta scale multiple, più formule di conversione,
 // arrotondamenti e regole; griglie a curva (percentuale → voto) e a fasce (punteggio → voto).
 
-import type { ArrotondaModo, Fascia, FormulaId, Griglia, Indicatore, RigaCorrezione, ScalaVoto } from "../store/valutazione";
+import type { ArrotondaModo, Fascia, FormulaId, Griglia, Indicatore, RigaCorrezione, ScalaVoto, Sessione } from "../store/valutazione";
 
 export interface ScalaPreset {
   nome: string;
@@ -163,6 +163,11 @@ export interface Distribuzione {
   max: number;
   devStd: number;
 }
+/** Media di classe di una sessione (solo righe compilate). */
+export function mediaSessione(s: Sessione): number {
+  return distribuzione(s.griglia, s.righe.filter(rigaCompilata)).media;
+}
+
 export function distribuzione(griglia: Griglia, righe: RigaCorrezione[]): Distribuzione {
   const voti = righe.map((r) => votoRiga(griglia, r).voto);
   const n = voti.length;

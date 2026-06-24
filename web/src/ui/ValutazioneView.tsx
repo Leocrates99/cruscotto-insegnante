@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import type { View } from "../App";
 import {
   ARROTONDAMENTI,
   FORMULE,
@@ -12,98 +13,56 @@ import {
   votoRiga,
 } from "../compute/voto";
 import {
-  importGriglie,
+  annoCorrente,
+  archiviaAnno,
+  getSessione,
   newId,
-  nuovaGriglia,
-  setBozza,
-  setConsentiNomi,
-  svuotaBozza,
+  removeSessione,
+  sessioniDi,
   upsertGriglia,
+  upsertSessione,
   useValutazione,
-  type Categoria,
   type Griglia,
   type RigaCorrezione,
 } from "../store/valutazione";
+import { classeInfo, classiAttive, useProfile } from "../store/profile";
 import { GrigliaEditor } from "./GrigliaEditor";
 import { SchedaStampa } from "./SchedaStampa";
+import { VerificaForm } from "./VerificaForm";
 
-const CAT_LABEL: Record<Categoria, string> = {
-  esercizi: "Esercizi", scritto: "Scritto", orale: "Orale", "scrutinio-materia": "Scrutinio · materia", condotta: "Condotta", altro: "Altro",
-};
 const num = (v: number) => v.toLocaleString("it-IT", { maximumFractionDigits: 2 });
 
-export function ValutazioneView() {
+export function ValutazioneView({ sessioneId, onView }: { sessioneId?: string; onView: (v: View) => void }) {
   const v = useValutazione();
-  const griglie = v.griglie;
-  const [grigliaId, setGrigliaId] = useState<string>(() => griglie[0]?.id ?? "");
-  const [editing, setEditing] = useState<Griglia | null>(null);
+  const profile = useProfile();
+  const classi = classiAttive(profile);
+  const anno = annoCorrente();
+
+  const [selClasse, setSelClasse] = useState<string>(classi[0] ?? "");
+  const [selSessId, setSelSessId] = useState<string>("");
+  const [editing, setEditing] = useState<{ g: Griglia; onSave?: (g: Griglia) => void } | null>(null);
   const [scheda, setScheda] = useState<RigaCorrezione | null>(null);
   const [showTab, setShowTab] = useState(false);
+  const [showVerifica, setShowVerifica] = useState(false);
+  const [showModelli, setShowModelli] = useState(false);
   const [invTarget, setInvTarget] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
 
-  const griglia = griglie.find((g) => g.id === grigliaId) ?? griglie[0];
-  const righe: RigaCorrezione[] = griglia ? (v.bozze[griglia.id] ?? []) : [];
+  useEffect(() => {
+    if (sessioneId) {
+      const s = getSessione(sessioneId);
+      if (s) { setSelClasse(s.classe); setSelSessId(s.id); }
+    }
+  }, [sessioneId]);
 
-  if (!griglia) {
-    return (
-      <section><div className="view-head"><h1>🧮 Calcolatore voti</h1></div>
-        <p className="muted"><button onClick={() => { const g = nuovaGriglia(); upsertGriglia(g); setGrigliaId(g.id); setEditing(g); }}>+ Nuova griglia</button></p>
-      </section>
-    );
-  }
+  const sessioni = selClasse ? sessioniDi(selClasse, anno).filter((s) => !s.archiviata) : [];
+  const sess = sessioni.find((s) => s.id === selSessId) ?? sessioni[0];
 
-  const scala = griglia.scala;
-  const fasce = scala.tipo === "fasce";
-  const indAttivi = griglia.indicatori.filter((i) => i.attivo !== false);
-  const maxTot = indAttivi.reduce((s, i) => s + maxIndicatore(i), 0);
-
-  const setScala = (patch: Partial<Griglia["scala"]>) => upsertGriglia({ ...griglia, scala: { ...scala, ...patch } });
-  const applyPreset = (id: string) => {
-    const p = SCALE_PRESETS[id];
-    if (p) setScala({ preset: id, votoMin: p.votoMin, votoMax: p.votoMax, sufficienza: p.sufficienza, arrotondamento: p.arrotondamento, labels: p.labels });
-  };
-
-  const setValore = (rigaId: string, indId: string, val: number | undefined) => {
-    setBozza(griglia.id, righe.map((r) => {
-      if (r.id !== rigaId) return r;
-      const valori = { ...r.valori };
-      if (val === undefined) delete valori[indId];
-      else valori[indId] = val;
-      return { ...r, valori };
-    }));
-  };
-  const patchRiga = (rigaId: string, patch: Partial<RigaCorrezione>) =>
-    setBozza(griglia.id, righe.map((r) => (r.id === rigaId ? { ...r, ...patch } : r)));
-  const addRiga = () => setBozza(griglia.id, [...righe, { id: newId(), valori: {} }]);
-  const removeRiga = (id: string) => setBozza(griglia.id, righe.filter((r) => r.id !== id));
-
-  const compilate = righe.filter(rigaCompilata);
-  const dist = distribuzione(griglia, compilate);
-  const inv = invTarget !== "" ? calcoloInverso(Number(invTarget), scala, maxTot) : null;
-
-  const esportaGriglie = () => {
-    const blob = new Blob([JSON.stringify(griglie, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `griglie-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-  };
-  const onImport = async (f: File) => {
-    try { const d = JSON.parse(await f.text()); if (Array.isArray(d)) importGriglie(d as Griglia[]); else alert("Il file non contiene griglie."); }
-    catch { alert("File JSON non valido."); }
-  };
-  const esportaCSV = () => {
-    const head = ["nome", "classe", "punti", "max", "%", "voto", "esito"].join(";");
-    const body = compilate.map((r) => {
-      const vr = votoRiga(griglia, r);
-      return [r.nome ?? "", r.classe ?? "", num(vr.punti), vr.max, Math.round(vr.pct * 100), votoDisplay(vr.voto, scala), vr.voto >= scala.sufficienza ? "Suff" : "Insuff"].join(";");
-    }).join("\n");
-    const blob = new Blob(["﻿" + head + "\n" + body], { type: "text/csv" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `valutazione-${griglia.categoria}-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
+  const newVerifica = () => setShowVerifica(true);
+  const archivia = () => {
+    if (confirm(`Archiviare le medie di classe dell'${anno}? Le verifiche restano consultabili nei trend; non saranno più modificabili qui.`)) {
+      const n = archiviaAnno(anno);
+      alert(n ? `Archiviate ${n} voci (medie di classe).` : "Nessuna verifica da archiviare.");
+    }
   };
 
   return (
@@ -111,71 +70,159 @@ export function ValutazioneView() {
       <div className="view-head">
         <h1>🧮 Calcolatore voti</h1>
         <div className="vz-tools">
-          <select value={griglia.id} onChange={(e) => setGrigliaId(e.target.value)}>
-            {griglie.map((g) => <option key={g.id} value={g.id}>{CAT_LABEL[g.categoria]} · {g.nome}</option>)}
+          <select value={selClasse} onChange={(e) => { setSelClasse(e.target.value); setSelSessId(""); }}>
+            {classi.length === 0 && <option value="">— (aggiungi classi nel profilo)</option>}
+            {classi.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
-          <button onClick={() => setEditing(griglia)}>✏️ Modifica</button>
-          <button onClick={() => { const g = nuovaGriglia(); upsertGriglia(g); setGrigliaId(g.id); setEditing(g); }}>+ Nuova</button>
-          <button onClick={esportaGriglie} title="Esporta griglie (senza voti)">⬇️</button>
-          <button onClick={() => fileRef.current?.click()} title="Importa griglie">⬆️</button>
-          <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void onImport(f); e.target.value = ""; }} />
+          {sessioni.length > 0 && (
+            <select value={sess?.id ?? ""} onChange={(e) => setSelSessId(e.target.value)}>
+              {sessioni.map((s) => <option key={s.id} value={s.id}>{s.titolo} · {s.data}</option>)}
+            </select>
+          )}
+          <button onClick={newVerifica} disabled={!selClasse}>+ Verifica</button>
+          <button onClick={() => setShowModelli(true)} title="Modelli di griglia (template)">📐 Modelli</button>
+          <button onClick={archivia} title="Archivia le medie a fine anno">🗄️ Archivia a.s.</button>
         </div>
       </div>
 
-      {/* Config / bilanciamento */}
+      {!selClasse ? (
+        <p className="muted">Aggiungi una classe (e la sua anagrafica) nel <b>Profilo → Orario & classi</b>, poi crea una verifica.</p>
+      ) : !sess ? (
+        <div className="vz-empty">
+          <p className="muted">Nessuna verifica per <b>{selClasse}</b> nell'{anno}.</p>
+          <button className="primary" onClick={newVerifica}>+ Nuova verifica</button>
+        </div>
+      ) : (
+        <Correzione
+          key={sess.id}
+          sess={sess}
+          selClasse={selClasse}
+          invTarget={invTarget}
+          setInvTarget={setInvTarget}
+          onEditStruttura={() => setEditing({ g: sess.griglia, onSave: (g) => upsertSessione({ ...sess, griglia: g }) })}
+          onScheda={setScheda}
+          onShowTab={() => setShowTab(true)}
+          onRemove={() => { if (confirm("Eliminare questa verifica e i suoi punteggi?")) { removeSessione(sess.id); setSelSessId(""); } }}
+        />
+      )}
+
+      {editing && <GrigliaEditor griglia={editing.g} onSave={editing.onSave} onClose={() => setEditing(null)} />}
+      {scheda && sess && <SchedaStampa griglia={sess.griglia} riga={scheda} onClose={() => setScheda(null)} />}
+      {showTab && sess && <TabellaModal sess={sess} onClose={() => setShowTab(false)} />}
+      {showVerifica && <VerificaForm prefill={{ classe: selClasse }} onClose={() => setShowVerifica(false)} onOpen={(id) => { setShowVerifica(false); setSelSessId(id); onView({ kind: "valutazione", sessioneId: id }); }} />}
+      {showModelli && <ModelliModal onEdit={(g) => { setShowModelli(false); setEditing({ g }); }} onClose={() => setShowModelli(false)} />}
+    </section>
+  );
+}
+
+// ── Correzione di una sessione ───────────────────────────────────────────────
+function Correzione({ sess, selClasse, invTarget, setInvTarget, onEditStruttura, onScheda, onShowTab, onRemove }: {
+  sess: import("../store/valutazione").Sessione;
+  selClasse: string;
+  invTarget: string;
+  setInvTarget: (v: string) => void;
+  onEditStruttura: () => void;
+  onScheda: (r: RigaCorrezione) => void;
+  onShowTab: () => void;
+  onRemove: () => void;
+}) {
+  const profile = useProfile();
+  const consentiNomi = useValutazione().consentiNomi;
+  const griglia = sess.griglia;
+  const scala = griglia.scala;
+  const fasce = scala.tipo === "fasce";
+  const indAttivi = griglia.indicatori.filter((i) => i.attivo !== false);
+  const maxTot = indAttivi.reduce((s, i) => s + maxIndicatore(i), 0);
+  const studMap = new Map(classeInfo(selClasse, profile).studenti.map((s) => [s.n, s]));
+
+  const setScala = (patch: Partial<Griglia["scala"]>) => upsertSessione({ ...sess, griglia: { ...griglia, scala: { ...scala, ...patch } } });
+  const applyPreset = (id: string) => { const p = SCALE_PRESETS[id]; if (p) setScala({ preset: id, votoMin: p.votoMin, votoMax: p.votoMax, sufficienza: p.sufficienza, arrotondamento: p.arrotondamento, labels: p.labels }); };
+  const setValore = (rigaId: string, indId: string, val: number | undefined) =>
+    upsertSessione({ ...sess, righe: sess.righe.map((r) => { if (r.id !== rigaId) return r; const valori = { ...r.valori }; if (val === undefined) delete valori[indId]; else valori[indId] = val; return { ...r, valori }; }) });
+  const setNome = (rigaId: string, nome: string) => upsertSessione({ ...sess, righe: sess.righe.map((r) => (r.id === rigaId ? { ...r, nome } : r)) });
+  const addRiga = () => upsertSessione({ ...sess, righe: [...sess.righe, { id: newId(), n: Math.max(0, ...sess.righe.map((r) => r.n ?? 0)) + 1, valori: {} }] });
+  const removeRiga = (id: string) => upsertSessione({ ...sess, righe: sess.righe.filter((r) => r.id !== id) });
+  const allinea = () => {
+    const studs = classeInfo(selClasse, profile).studenti;
+    if (studs.length === 0) { alert("Nessuna anagrafica per questa classe (impostala nel profilo)."); return; }
+    const byN = new Map(sess.righe.map((r) => [r.n, r]));
+    upsertSessione({ ...sess, righe: studs.map((st) => byN.get(st.n) ?? { id: newId(), n: st.n, valori: {} }) });
+  };
+
+  const compilate = sess.righe.filter(rigaCompilata);
+  const dist = distribuzione(griglia, compilate);
+  const inv = invTarget !== "" ? calcoloInverso(Number(invTarget), scala, maxTot) : null;
+
+  const esportaCSV = () => {
+    const head = ["registro", "nome", "punti", "max", "%", "voto", "esito"].join(";");
+    const body = compilate.map((r) => { const vr = votoRiga(griglia, r); return [r.n ?? "", r.nome ?? "", num(vr.punti), vr.max, Math.round(vr.pct * 100), votoDisplay(vr.voto, scala), vr.voto >= scala.sufficienza ? "Suff" : "Insuff"].join(";"); }).join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + head + "\n" + body], { type: "text/csv" }));
+    a.download = `verifica-${selClasse}-${sess.data}.csv`;
+    a.click();
+  };
+
+  return (
+    <>
+      <div className="vz-sesshead">
+        <div><b>{sess.titolo}</b> <span className="muted">· {sess.materia ?? ""} · {sess.data}</span></div>
+        <div className="vz-sessact">
+          <button onClick={onEditStruttura}>✏️ Struttura</button>
+          <button onClick={allinea}>👥 Allinea anagrafica</button>
+          <button className="danger" onClick={onRemove}>Elimina verifica</button>
+        </div>
+      </div>
+
       <div className="vz-bilancia">
         <label className="field sm"><span>Scala</span>
           <select value={scala.preset ?? "decimi"} onChange={(e) => applyPreset(e.target.value)}>
             {Object.entries(SCALE_PRESETS).map(([k, p]) => <option key={k} value={k}>{p.nome}</option>)}
           </select>
         </label>
-        {fasce ? (
-          <span className="vz-fasce-note">Scala <b>a fasce di punteggio</b> (totale /{maxTot} → voto). Modifica le fasce dall'editor.</span>
-        ) : (
+        {fasce ? <span className="vz-fasce-note">Scala <b>a fasce</b> (totale /{maxTot} → voto).</span> : (
           <>
             <label className="field sm"><span>Formula</span>
               <select value={scala.formula} onChange={(e) => setScala({ formula: e.target.value as Griglia["scala"]["formula"] })}>
                 {Object.entries(FORMULE).map(([k, f]) => <option key={k} value={k}>{f.nome}</option>)}
               </select>
             </label>
-            <label className="vz-slider">
-              <span>Soglia sufficienza: <b>{scala.sogliaSuff}%</b></span>
+            <label className="vz-slider"><span>Soglia suff.: <b>{scala.sogliaSuff}%</b></span>
               <input type="range" min={20} max={90} value={scala.sogliaSuff} onChange={(e) => setScala({ sogliaSuff: Number(e.target.value) })} />
-              <em>più bassa = più facile</em>
             </label>
             <label className="field sm"><span>Arrotonda</span>
               <select value={`${scala.arrotondamento}|${scala.arrotondaModo}`} onChange={(e) => { const [st, mo] = e.target.value.split("|"); setScala({ arrotondamento: Number(st), arrotondaModo: mo as Griglia["scala"]["arrotondaModo"] }); }}>
-                {[0.25, 0.5, 1].flatMap((st) => (Object.keys(ARROTONDAMENTI) as (keyof typeof ARROTONDAMENTI)[]).map((mo) => (
-                  <option key={`${st}|${mo}`} value={`${st}|${mo}`}>{st} · {ARROTONDAMENTI[mo]}</option>
-                )))}
+                {[0.25, 0.5, 1].flatMap((st) => (Object.keys(ARROTONDAMENTI) as (keyof typeof ARROTONDAMENTI)[]).map((mo) => <option key={`${st}|${mo}`} value={`${st}|${mo}`}>{st} · {ARROTONDAMENTI[mo]}</option>))}
               </select>
             </label>
-            <label className="field sm chk2"><input type="checkbox" checked={!!scala.quasiSuff} onChange={(e) => setScala({ quasiSuff: e.target.checked })} /> quasi-suff → {scala.sufficienza}</label>
           </>
         )}
       </div>
 
-      {/* Tabella correzione */}
       <div className="table-wrap">
         <table className="vz-table">
           <thead>
             <tr>
-              {v.consentiNomi && <th className="vz-lbl">Candidato</th>}
-              {v.consentiNomi && <th className="vz-lbl">Classe</th>}
+              <th className="vz-reg">Reg.</th>
               {indAttivi.map((ind) => <th key={ind.id} title={ind.descrizione}>{ind.nome}{ind.tipo === "punti" ? <small> /{ind.max}</small> : null}</th>)}
               <th>Voto</th>
               <th />
             </tr>
           </thead>
           <tbody>
-            {righe.length === 0 && <tr><td colSpan={indAttivi.length + (v.consentiNomi ? 4 : 2)} className="muted">Nessun candidato. Usa «+ Riga».</td></tr>}
-            {righe.map((r, i) => {
+            {sess.righe.length === 0 && <tr><td colSpan={indAttivi.length + 3} className="muted">Nessuno studente. «Allinea anagrafica» o «+ Riga».</td></tr>}
+            {sess.righe.map((r) => {
+              const st = r.n != null ? studMap.get(r.n) : undefined;
               const vr = votoRiga(griglia, r);
               const suff = vr.voto >= scala.sufficienza;
               return (
                 <tr key={r.id}>
-                  {v.consentiNomi && <td className="vz-lbl"><input type="text" placeholder={`${i + 1}`} value={r.nome ?? ""} onChange={(e) => patchRiga(r.id, { nome: e.target.value })} /></td>}
-                  {v.consentiNomi && <td className="vz-lbl"><input type="text" placeholder="—" value={r.classe ?? ""} onChange={(e) => patchRiga(r.id, { classe: e.target.value })} /></td>}
+                  <td className="vz-reg">
+                    <span className="vz-regn">{r.n ?? "—"}</span>
+                    {st?.l104 && <span className="vz-badge b104" title="L.104">104</span>}
+                    {st?.bes && <span className="vz-badge bbes" title="BES">BES</span>}
+                    {st?.dsa && <span className="vz-badge bdsa" title="DSA">DSA</span>}
+                    {consentiNomi && <input className="vz-nome" type="text" placeholder="nome (locale)" value={r.nome ?? ""} onChange={(e) => setNome(r.id, e.target.value)} />}
+                  </td>
                   {indAttivi.map((ind) => (
                     <td key={ind.id}>
                       {ind.tipo === "punti" ? (
@@ -190,7 +237,7 @@ export function ValutazioneView() {
                   ))}
                   <td className={suff ? "vz-voto ok" : "vz-voto no"}>{votoDisplay(vr.voto, scala)}{vr.giudizio ? <small> {vr.giudizio}</small> : null}</td>
                   <td className="vz-rowact">
-                    <button title="Scheda stampabile" onClick={() => setScheda(r)}>🖨️</button>
+                    <button title="Scheda" onClick={() => onScheda(r)}>🖨️</button>
                     <button className="danger" aria-label="Rimuovi" onClick={() => removeRiga(r.id)}>✕</button>
                   </td>
                 </tr>
@@ -203,13 +250,9 @@ export function ValutazioneView() {
       <div className="vz-actions">
         <button onClick={addRiga}>+ Riga</button>
         <button onClick={esportaCSV} disabled={compilate.length === 0}>📊 CSV</button>
-        <button onClick={() => setShowTab(true)}>📋 Tabella conversione</button>
-        {righe.length > 0 && <button className="danger" onClick={() => { if (confirm("Svuotare la correzione corrente?")) svuotaBozza(griglia.id); }}>Svuota</button>}
-        <label className="field sm chk2"><input type="checkbox" checked={v.consentiNomi} onChange={(e) => setConsentiNomi(e.target.checked)} /> nomi</label>
-        <span className="muted vz-hint">I nomi restano <b>solo su questo dispositivo</b> (fuori dal backup). Usa numeri/iniziali se preferisci.</span>
+        <button onClick={onShowTab}>📋 Tabella conversione</button>
       </div>
 
-      {/* Strumenti */}
       <div className="vz-strumenti">
         {!fasce && (
           <div className="vz-inverso">
@@ -224,41 +267,58 @@ export function ValutazioneView() {
         )}
         {dist.n > 0 && (
           <div className="vz-dist">
-            <span className="vz-sum">Candidati <b>{dist.n}</b></span>
+            <span className="vz-sum big">Media classe <b>{num(dist.media)}</b></span>
+            <span className="vz-sum">Valutati <b>{dist.n}</b></span>
             <span className="vz-sum s">Sufficienti <b>{dist.sufficienti}</b> ({dist.pctSuff}%)</span>
-            <span className="vz-sum">Media <b>{num(dist.media)}</b></span>
             <span className="vz-sum">Min <b>{num(dist.min)}</b> · Max <b>{num(dist.max)}</b></span>
             <span className="vz-sum">σ <b>{num(dist.devStd)}</b></span>
           </div>
         )}
       </div>
+    </>
+  );
+}
 
-      {editing && <GrigliaEditor griglia={editing} onClose={() => setEditing(null)} />}
-      {scheda && <SchedaStampa griglia={griglia} riga={scheda} onClose={() => setScheda(null)} />}
-      {showTab && (
-        <div className="modal-backdrop" onClick={() => setShowTab(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="panel-head"><h2>📋 Tabella di conversione</h2><button className="icon-btn" onClick={() => setShowTab(false)}>✕</button></div>
-            <div className="print-area">
-              <p className="muted">{griglia.nome} · max {maxTot} punti · {fasce ? "scala a fasce" : FORMULE[scala.formula].nome + ` · soglia ${scala.sogliaSuff}%`}</p>
-              <table className="vz-conv">
-                <thead><tr><th>Punti</th><th>%</th><th>Voto</th></tr></thead>
-                <tbody>
-                  {tabellaConversione(maxTot, scala).map((r, i) => (
-                    <tr key={i} className={r.suff ? "ok" : "no"}>
-                      <td>{num(r.punti)}</td><td>{Math.round(r.pct * 100)}%</td><td><b>{votoDisplay(r.voto, scala)}</b></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="modal-actions no-print">
-              <button onClick={() => setShowTab(false)}>Chiudi</button>
-              <button className="primary" onClick={() => window.print()}>🖨️ Stampa</button>
-            </div>
-          </div>
+// ── Tabella conversione (modale) ─────────────────────────────────────────────
+function TabellaModal({ sess, onClose }: { sess: import("../store/valutazione").Sessione; onClose: () => void }) {
+  const griglia = sess.griglia;
+  const maxTot = griglia.indicatori.filter((i) => i.attivo !== false).reduce((s, i) => s + maxIndicatore(i), 0);
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="panel-head"><h2>📋 Tabella di conversione</h2><button className="icon-btn" onClick={onClose}>✕</button></div>
+        <div className="print-area">
+          <p className="muted">{sess.titolo} · {sess.classe} · max {maxTot} punti</p>
+          <table className="vz-conv">
+            <thead><tr><th>Punti</th><th>%</th><th>Voto</th></tr></thead>
+            <tbody>
+              {tabellaConversione(maxTot, griglia.scala).map((r, i) => (
+                <tr key={i} className={r.suff ? "ok" : "no"}><td>{num(r.punti)}</td><td>{Math.round(r.pct * 100)}%</td><td><b>{votoDisplay(r.voto, griglia.scala)}</b></td></tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
-    </section>
+        <div className="modal-actions no-print"><button onClick={onClose}>Chiudi</button><button className="primary" onClick={() => window.print()}>🖨️ Stampa</button></div>
+      </div>
+    </div>
+  );
+}
+
+// ── Modelli (template) ───────────────────────────────────────────────────────
+function ModelliModal({ onEdit, onClose }: { onEdit: (g: Griglia) => void; onClose: () => void }) {
+  const { griglie } = useValutazione();
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="panel-head"><h2>📐 Modelli di griglia</h2><button className="icon-btn" onClick={onClose}>✕</button></div>
+        <p className="muted">Strutture riutilizzabili (esercizi, rubriche, condotta) da personalizzare col tuo PTOF.</p>
+        <ul className="modelli-list">
+          {griglie.map((g) => (
+            <li key={g.id}><span>{g.nome}</span><button onClick={() => onEdit(g)}>Modifica</button></li>
+          ))}
+        </ul>
+        <div className="modal-actions"><button onClick={onClose}>Chiudi</button></div>
+      </div>
+    </div>
   );
 }

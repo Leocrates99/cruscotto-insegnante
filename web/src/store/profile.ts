@@ -19,6 +19,19 @@ export interface OrarioSlot {
   classe?: string;
 }
 
+/** Uno studente anonimo: identificato dal SOLO numero di registro (no nome/cognome obbligatori). */
+export interface StudenteAnon {
+  n: number;
+  l104?: boolean;
+  bes?: boolean;
+  dsa?: boolean;
+  nome?: string; // facoltativo, solo locale
+}
+/** Anagrafica di una classe: l'elenco per numero di registro. */
+export interface ClasseInfo {
+  studenti: StudenteAnon[];
+}
+
 /** Profilo del docente: scuole, classi di concorso e materie pertinenti (web-local). */
 export interface Profile {
   onboarded: boolean;
@@ -27,6 +40,7 @@ export interface Profile {
   concorsi: string[]; // codici classe di concorso, es. "A-13"
   materie: string[]; // materie confermate → guidano i menù a tendina
   classi: string[]; // etichette delle classi del docente (es. "IV A")
+  classiInfo?: Record<string, ClasseInfo>; // anagrafica per classe (numeri di registro + 104/BES/DSA)
   orario: OrarioSlot[]; // tabella oraria di lavoro settimanale
   coloriMaterie?: Record<string, string>;
   coloriClassi?: Record<string, string>;
@@ -90,4 +104,15 @@ export function materieAttive(p: Profile = profile): string[] {
 /** Classi del docente (working set per i menù). */
 export function classiAttive(p: Profile = profile): string[] {
   return p.classi;
+}
+
+/** Anagrafica di una classe (vuota se non compilata). */
+export function classeInfo(label: string, p: Profile = profile): ClasseInfo {
+  return p.classiInfo?.[label] ?? { studenti: [] };
+}
+
+/** Conteggi derivati dell'anagrafica di una classe. */
+export function contiClasse(label: string, p: Profile = profile): { tot: number; l104: number; bes: number; dsa: number } {
+  const s = classeInfo(label, p).studenti;
+  return { tot: s.length, l104: s.filter((x) => x.l104).length, bes: s.filter((x) => x.bes).length, dsa: s.filter((x) => x.dsa).length };
 }

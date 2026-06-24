@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { generateBands, setSettings, useSettings } from "../store/settings";
-import { classiAttive, materieAttive, setProfile, useProfile, type OrarioSlot } from "../store/profile";
+import { classeInfo, classiAttive, contiClasse, materieAttive, setProfile, useProfile, type OrarioSlot, type StudenteAnon } from "../store/profile";
 import { classeColor, materiaColor } from "./materia";
 import { classiFromSlots, mergeSlots, parseOrarioFile } from "../store/orarioImport";
 
@@ -39,6 +39,19 @@ export function OrarioLavoro() {
   };
   const removeClasse = (c: string) => setProfile({ classi: profile.classi.filter((x) => x !== c) });
   const setColore = (c: string, col: string) => setProfile({ coloriClassi: { ...(profile.coloriClassi ?? {}), [c]: col } });
+
+  // Anagrafica classi (per numero di registro)
+  const [anag, setAnag] = useState<string>("");
+  const anagClasse = anag || profile.classi[0] || "";
+  const saveStudenti = (classe: string, studenti: StudenteAnon[]) =>
+    setProfile({ classiInfo: { ...(profile.classiInfo ?? {}), [classe]: { studenti } } });
+  const setNumStudenti = (classe: string, nRaw: number) => {
+    const n = Math.max(0, Math.min(40, nRaw || 0));
+    const cur = classeInfo(classe, profile).studenti;
+    saveStudenti(classe, Array.from({ length: n }, (_, i) => cur.find((s) => s.n === i + 1) ?? { n: i + 1 }));
+  };
+  const toggleFlag = (classe: string, n: number, flag: "l104" | "bes" | "dsa") =>
+    saveStudenti(classe, classeInfo(classe, profile).studenti.map((s) => (s.n === n ? { ...s, [flag]: !s[flag] } : s)));
 
   const bands = settings.timeBands;
   const giorni = GIORNI.filter((g) => settings.giorniLezione.includes(g.i));
@@ -98,6 +111,36 @@ export function OrarioLavoro() {
           <input value={nuovaClasse} placeholder="Es. IV A" onChange={(e) => setNuovaClasse(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") addClasse(); }} />
           <button onClick={addClasse}>+ Classe</button>
         </div>
+      </div>
+
+      <div className="ol-sec">
+        <h4>Anagrafica classi <em>· per numero di registro, senza nomi</em></h4>
+        {profile.classi.length === 0 ? (
+          <span className="muted">Aggiungi prima una classe.</span>
+        ) : (
+          <>
+            <div className="ol-anag-top">
+              <select value={anagClasse} onChange={(e) => setAnag(e.target.value)}>
+                {profile.classi.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <label className="field sm"><span>N° studenti</span>
+                <input type="number" min={0} max={40} value={classeInfo(anagClasse, profile).studenti.length} onChange={(e) => setNumStudenti(anagClasse, Number(e.target.value))} />
+              </label>
+              {(() => { const c = contiClasse(anagClasse, profile); return <span className="ol-conti">L.104 <b>{c.l104}</b> · BES <b>{c.bes}</b> · DSA <b>{c.dsa}</b></span>; })()}
+            </div>
+            <div className="ol-roster">
+              {classeInfo(anagClasse, profile).studenti.length === 0 && <span className="muted">Imposta il numero di studenti.</span>}
+              {classeInfo(anagClasse, profile).studenti.map((st) => (
+                <div key={st.n} className="ol-stud">
+                  <span className="ol-stud-n">{st.n}</span>
+                  <label className={st.l104 ? "on" : ""}><input type="checkbox" checked={!!st.l104} onChange={() => toggleFlag(anagClasse, st.n, "l104")} /> 104</label>
+                  <label className={st.bes ? "on" : ""}><input type="checkbox" checked={!!st.bes} onChange={() => toggleFlag(anagClasse, st.n, "bes")} /> BES</label>
+                  <label className={st.dsa ? "on" : ""}><input type="checkbox" checked={!!st.dsa} onChange={() => toggleFlag(anagClasse, st.n, "dsa")} /> DSA</label>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="ol-sec">

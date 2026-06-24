@@ -8,6 +8,7 @@
 import { useSyncExternalStore } from "react";
 import { newId } from "./store";
 import { seedGriglie } from "../data/modelliValutazione";
+import { mediaSessione } from "../compute/voto";
 
 export interface Descrittore {
   etichetta: string;
@@ -62,17 +63,43 @@ export interface Griglia {
   scala: ScalaVoto;
 }
 
-/** Riga di correzione: un candidato. nome/classe ammessi ma solo locali. */
+/** Riga di correzione: un candidato, identificato dal numero di registro. nome facoltativo e locale. */
 export interface RigaCorrezione {
   id: string;
+  n?: number; // numero di registro
   nome?: string;
-  classe?: string;
   valori: Record<string, number>; // [indId] = punti (tipo punti) | indice descrittore (livelli)
 }
 
+/** Una sessione di correzione = una verifica di una classe (salvata per l'anno scolastico). */
+export interface Sessione {
+  id: string;
+  classe: string;
+  materia?: string;
+  titolo: string;
+  data: string; // ISO yyyy-mm-dd
+  annoScolastico: string;
+  griglia: Griglia; // struttura della verifica (anche mista punti + livelli)
+  righe: RigaCorrezione[];
+  archiviata?: boolean;
+}
+
+/** Voce d'archivio: SOLO medie di classe (aggregati anonimi). */
+export interface ArchivioVoce {
+  annoScolastico: string;
+  classe: string;
+  materia?: string;
+  titolo?: string; // presente = media di singola verifica; assente = media generale annuale
+  data?: string;
+  media: number;
+  nStudenti?: number;
+  nVerifiche?: number;
+}
+
 interface ValutazioneState {
-  griglie: Griglia[];
-  bozze: Record<string, RigaCorrezione[]>;
+  griglie: Griglia[]; // modelli/struttura di partenza
+  sessioni: Sessione[];
+  archivio: ArchivioVoce[];
   consentiNomi: boolean;
 }
 
@@ -90,19 +117,19 @@ export const SCALA_DEFAULT: ScalaVoto = {
   tipo: "curva",
 };
 
-const KEY = "cruscotto-valutazione:v2";
+const KEY = "cruscotto-valutazione:v3";
 
 function load(): ValutazioneState {
   try {
     const s = localStorage.getItem(KEY);
     if (s) {
       const p = JSON.parse(s) as Partial<ValutazioneState>;
-      return { griglie: p.griglie?.length ? p.griglie : seedGriglie(), bozze: p.bozze ?? {}, consentiNomi: p.consentiNomi ?? true };
+      return { griglie: p.griglie?.length ? p.griglie : seedGriglie(), sessioni: p.sessioni ?? [], archivio: p.archivio ?? [], consentiNomi: p.consentiNomi ?? true };
     }
   } catch {
     /* storage non disponibile */
   }
-  return { griglie: seedGriglie(), bozze: {}, consentiNomi: true };
+  return { griglie: seedGriglie(), sessioni: [], archivio: [], consentiNomi: true };
 }
 
 let state = load();
@@ -143,9 +170,7 @@ export function upsertGriglia(g: Griglia): void {
   commit();
 }
 export function removeGriglia(id: string): void {
-  const bozze = { ...state.bozze };
-  delete bozze[id];
-  state = { ...state, griglie: state.griglie.filter((g) => g.id !== id), bozze };
+  state = { ...state, griglie: state.griglie.filter((g) => g.id !== id) };
   commit();
 }
 export function nuovaGriglia(categoria: Categoria = "esercizi"): Griglia {
@@ -157,16 +182,63 @@ export function importGriglie(list: Griglia[]): void {
   commit();
 }
 
-// ── Bozze di correzione (locali) ─────────────────────────────────────────────
-export function getBozza(grigliaId: string): RigaCorrezione[] {
-  return state.bozze[grigliaId] ?? [];
+// ── Anno scolastico ──────────────────────────────────────────────────────────
+export function annoCorrente(d: Date = new Date()): string {
+  const y = d.getFullYear();
+  const start = d.getMonth() >= 8 ? y : y - 1; // settembre = mese 8
+  const a = String(start % 100).padStart(2, "0");
+  const b = String((start + 1) % 100).padStart(2, "0");
+  return `a.s. ${a}/${b}`;
 }
-export function setBozza(grigliaId: string, righe: RigaCorrezione[]): void {
-  state = { ...state, bozze: { ...state.bozze, [grigliaId]: righe } };
+
+// ── Sessioni (verifiche per classe) ──────────────────────────────────────────
+export function sessioniDi(classe: string, anno?: string): Sessione[] {
+  return state.sessioni.filter((s) => s.classe === classe && (!anno || s.annoScolastico === anno));
+}
+export function getSessione(id: string): Sessione | undefined {
+  return state.sessioni.find((s) => s.id === id);
+}
+export function upsertSessione(s: Sessione): void {
+  const i = state.sessioni.findIndex((x) => x.id === s.id);
+  state = { ...state, sessioni: i >= 0 ? state.sessioni.map((x) => (x.id === s.id ? s : x)) : [...state.sessioni, s] };
   commit();
 }
-export function svuotaBozza(grigliaId: string): void {
-  setBozza(grigliaId, []);
+export function removeSessione(id: string): void {
+  state = { ...state, sessioni: state.sessioni.filter((s) => s.id !== id) };
+  commit();
+}
+
+// ── Archivio (SOLO medie di classe, aggregati anonimi) ───────────────────────
+/** Consolida nell'archivio le medie dell'anno: una per verifica + una generale per classe. */
+export function archiviaAnno(anno: string): number {
+  const voci: ArchivioVoce[] = [];
+  const classi = Array.from(new Set(state.sessioni.filter((s) => s.annoScolastico === anno && !s.archiviata).map((s) => s.classe)));
+  for (const classe of classi) {
+    const sess = state.sessioni.filter((s) => s.annoScolastico === anno && s.classe === classe && !s.archiviata);
+    const medie: number[] = [];
+    for (const s of sess) {
+      const m = mediaSessione(s);
+      medie.push(m);
+      voci.push({ annoScolastico: anno, classe, materia: s.materia, titolo: s.titolo, data: s.data, media: m, nStudenti: s.righe.length });
+    }
+    if (medie.length) {
+      const gen = Math.round((medie.reduce((a, b) => a + b, 0) / medie.length) * 100) / 100;
+      voci.push({ annoScolastico: anno, classe, media: gen, nVerifiche: medie.length });
+    }
+  }
+  if (voci.length) {
+    state = {
+      ...state,
+      archivio: [...state.archivio, ...voci],
+      sessioni: state.sessioni.map((s) => (s.annoScolastico === anno ? { ...s, archiviata: true } : s)),
+    };
+    commit();
+  }
+  return voci.length;
+}
+export function removeArchivioVoce(i: number): void {
+  state = { ...state, archivio: state.archivio.filter((_, j) => j !== i) };
+  commit();
 }
 
 export { newId };

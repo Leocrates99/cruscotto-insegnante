@@ -10,6 +10,7 @@ const VIEWS: { v: View; label: string; icon: string }[] = [
   { v: { kind: "timeline" }, label: "Cronoprogramma", icon: "📈" },
   { v: { kind: "avanzamento" }, label: "Avanzamento", icon: "🚦" },
   { v: { kind: "valutazione" }, label: "Calcolatore voti", icon: "🧮" },
+  { v: { kind: "andamento" }, label: "Andamento", icon: "📉" },
   { v: { kind: "promemoria" }, label: "Promemoria", icon: "📌" },
   { v: { kind: "home" }, label: "Panoramica", icon: "🏠" },
   { v: { kind: "programmazione" }, label: "Sostenibilità oraria", icon: "📊" },

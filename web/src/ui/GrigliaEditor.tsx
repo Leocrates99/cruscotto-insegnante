@@ -11,7 +11,7 @@ const CATEGORIE: { id: Categoria; label: string }[] = [
   { id: "altro", label: "Altro" },
 ];
 
-export function GrigliaEditor({ griglia, onClose }: { griglia: Griglia; onClose: () => void }) {
+export function GrigliaEditor({ griglia, onClose, onSave }: { griglia: Griglia; onClose: () => void; onSave?: (g: Griglia) => void }) {
   const [g, setG] = useState<Griglia>(() => structuredClone(griglia));
   const s = g.scala;
 
@@ -37,7 +37,7 @@ export function GrigliaEditor({ griglia, onClose }: { griglia: Griglia; onClose:
   const addFascia = () => setScala({ fasce: [...(s.fasce ?? []), { min: 0, max: 0, voto: s.votoMin }] });
   const removeFascia = (i: number) => setScala({ fasce: (s.fasce ?? []).filter((_, j) => j !== i) });
 
-  const save = () => { upsertGriglia(g); onClose(); };
+  const save = () => { if (onSave) onSave(g); else upsertGriglia(g); onClose(); };
   const del = () => { if (confirm("Eliminare questa griglia?")) { removeGriglia(g.id); onClose(); } };
 
   return (
@@ -140,7 +140,7 @@ export function GrigliaEditor({ griglia, onClose }: { griglia: Griglia; onClose:
         </div>
 
         <div className="modal-actions wizard-actions">
-          <button className="danger" onClick={del}>Elimina</button>
+          {!onSave && <button className="danger" onClick={del}>Elimina</button>}
           <span className="spacer" />
           <button onClick={onClose}>Annulla</button>
           <button className="primary" onClick={save}>Salva griglia</button>

@@ -8,9 +8,13 @@ import { setSettings, toMinutes, useSettings, type TimeBand } from "../store/set
 import { useProfile } from "../store/profile";
 import { classeColor, materiaColor } from "./materia";
 import { OrarioSetup } from "./OrarioSetup";
+import { VerificaForm } from "./VerificaForm";
+import { useValutazione } from "../store/valutazione";
 
 type Mode = "week" | "month" | "day";
 type Edit = (k: DbKey, rec?: Rec, prefill?: Record<string, Value>) => void;
+type SessChip = { id: string; titolo: string; color?: string };
+type OpenSess = (id: string) => void;
 
 const MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
 const WD = ["lun", "mar", "mer", "gio", "ven", "sab", "dom"];
@@ -31,6 +35,19 @@ export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: Vie
 
   const byDay = new Map<string, CalEvent[]>();
   for (const e of collectEvents()) { const a = byDay.get(e.date) ?? []; a.push(e); byDay.set(e.date, a); }
+
+  // Sessioni-verifica (layer valutazione) mostrate come eventi.
+  const valut = useValutazione();
+  const sessByDay = new Map<string, SessChip[]>();
+  for (const s of valut.sessioni) {
+    if (!/^\d{4}-\d{2}-\d{2}/.test(s.data)) continue;
+    const k = s.data.slice(0, 10);
+    const a = sessByDay.get(k) ?? [];
+    a.push({ id: s.id, titolo: s.titolo, color: materiaColor(s.materia) });
+    sessByDay.set(k, a);
+  }
+  const [showVerifica, setShowVerifica] = useState(false);
+  const openSessione: OpenSess = (id) => onView({ kind: "valutazione", sessioneId: id });
 
   const setMode = (m: Mode) => setSettings({ calendarMode: m });
   const shift = (dir: number) =>
@@ -64,6 +81,7 @@ export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: Vie
           <button onClick={() => setShowOrario(true)}>🕒 Orario</button>
           <button onClick={() => onEdit("scadenze", undefined, { Data: ymd(anchor) })}>+ Scadenza</button>
           <button onClick={() => onEdit("lezioni", undefined, { "Data prevista": ymd(anchor) })}>+ Lezione</button>
+          <button onClick={() => setShowVerifica(true)}>📝 Verifica</button>
           <button onClick={() => onView({ kind: "avanzamento" })}>🚦 Avanzamento</button>
           <button onClick={() => onView({ kind: "promemoria" })}>📌 Promemoria</button>
           <button onClick={() => onView({ kind: "programmazione" })}>📊 Sostenibilità</button>
@@ -71,17 +89,18 @@ export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: Vie
       </div>
 
       {mode === "month" ? (
-        <MonthGrid anchor={anchor} byDay={byDay} onEdit={onEdit} />
+        <MonthGrid anchor={anchor} byDay={byDay} sessByDay={sessByDay} onEdit={onEdit} onOpenSessione={openSessione} />
       ) : (
-        <TimeGrid days={mode === "day" ? [anchor] : weekDays(anchor).filter((d) => settings.giorniLezione.includes((d.getDay() + 6) % 7))} byDay={byDay} bands={settings.timeBands} onEdit={onEdit} />
+        <TimeGrid days={mode === "day" ? [anchor] : weekDays(anchor).filter((d) => settings.giorniLezione.includes((d.getDay() + 6) % 7))} byDay={byDay} sessByDay={sessByDay} bands={settings.timeBands} onEdit={onEdit} onOpenSessione={openSessione} />
       )}
 
       {showOrario && <OrarioSetup onClose={() => setShowOrario(false)} />}
+      {showVerifica && <VerificaForm prefill={{ data: ymd(anchor) }} onClose={() => setShowVerifica(false)} onOpen={(id) => { setShowVerifica(false); openSessione(id); }} />}
     </section>
   );
 }
 
-function MonthGrid({ anchor, byDay, onEdit }: { anchor: Date; byDay: Map<string, CalEvent[]>; onEdit: Edit }) {
+function MonthGrid({ anchor, byDay, sessByDay, onEdit, onOpenSessione }: { anchor: Date; byDay: Map<string, CalEvent[]>; sessByDay: Map<string, SessChip[]>; onEdit: Edit; onOpenSessione: OpenSess }) {
   const y = anchor.getFullYear(), m = anchor.getMonth();
   const startWd = (new Date(y, m, 1).getDay() + 6) % 7;
   const dim = new Date(y, m + 1, 0).getDate();
@@ -97,10 +116,16 @@ function MonthGrid({ anchor, byDay, onEdit }: { anchor: Date; byDay: Map<string,
         if (!c) return <div key={i} className="cal-cell empty" />;
         const ds = ymd(c);
         const evs = byDay.get(ds) ?? [];
+        const sess = sessByDay.get(ds) ?? [];
         return (
           <div key={i} className={ds === todayStr ? "cal-cell today" : "cal-cell"} onClick={() => onEdit("scadenze", undefined, { Data: ds })}>
             <div className="cal-day">{c.getDate()}</div>
             <div className="cal-events">
+              {sess.map((s) => (
+                <button key={s.id} className="cal-ev cal-sess" style={s.color ? { borderLeftColor: s.color } : undefined} title={`Verifica · ${s.titolo}`} onClick={(ev) => { ev.stopPropagation(); onOpenSessione(s.id); }}>
+                  📝 {s.titolo}
+                </button>
+              ))}
               {evs.slice(0, 4).map((e, j) => (
                 <button key={j} className="cal-ev" style={e.color ? { borderLeftColor: e.color } : undefined} title={`${e.title} · ${e.prop}`} onClick={(ev) => { ev.stopPropagation(); onEdit(e.dbKey, e.rec); }}>
                   {e.title}
@@ -115,7 +140,7 @@ function MonthGrid({ anchor, byDay, onEdit }: { anchor: Date; byDay: Map<string,
   );
 }
 
-function TimeGrid({ days, byDay, bands, onEdit }: { days: Date[]; byDay: Map<string, CalEvent[]>; bands: TimeBand[]; onEdit: Edit }) {
+function TimeGrid({ days, byDay, sessByDay, bands, onEdit, onOpenSessione }: { days: Date[]; byDay: Map<string, CalEvent[]>; sessByDay: Map<string, SessChip[]>; bands: TimeBand[]; onEdit: Edit; onOpenSessione: OpenSess }) {
   const [dragEv, setDragEv] = useState<CalEvent | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const profile = useProfile();
@@ -167,6 +192,7 @@ function TimeGrid({ days, byDay, bands, onEdit }: { days: Date[]; byDay: Map<str
         {days.map((d, i) => {
           const ds = ymd(d);
           const allday = (byDay.get(ds) ?? []).filter((e) => !(typeof e.rec["Fascia"] === "string" && bandByLabel.has(e.rec["Fascia"] as string)));
+          const sess = sessByDay.get(ds) ?? [];
           const key = `${i}:allday`;
           return (
             <div
@@ -176,6 +202,11 @@ function TimeGrid({ days, byDay, bands, onEdit }: { days: Date[]; byDay: Map<str
               onDragOver={(ev) => { ev.preventDefault(); setOver(key); }}
               onDrop={() => drop(ds, undefined)}
             >
+              {sess.map((s) => (
+                <button key={s.id} className="cal-ev cal-sess" style={s.color ? { borderLeftColor: s.color } : undefined} title={`Verifica · ${s.titolo}`} onClick={(ev) => { ev.stopPropagation(); onOpenSessione(s.id); }}>
+                  📝 {s.titolo}
+                </button>
+              ))}
               {allday.map((e, j) => (
                 <button key={j} className="cal-ev" {...dragProps(e)} style={e.color ? { borderLeftColor: e.color } : undefined} title={`${e.title} · ${e.prop}`} onClick={(ev) => { ev.stopPropagation(); onEdit(e.dbKey, e.rec); }}>
                   {e.title}

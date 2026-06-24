@@ -25,7 +25,7 @@ export function SchedaStampa({ griglia, riga, onClose }: { griglia: Griglia; rig
           </div>
           <div className="scheda-info">
             <div><span>Candidato</span><b>{riga.nome || "________________"}</b></div>
-            <div><span>Classe</span><b>{riga.classe || "______"}</b></div>
+            <div><span>N° registro</span><b>{riga.n ?? "____"}</b></div>
           </div>
 
           <div className="scheda-voto">
