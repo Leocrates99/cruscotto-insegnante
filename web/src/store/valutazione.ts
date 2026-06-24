@@ -82,6 +82,7 @@ export interface Sessione {
   griglia: Griglia; // struttura della verifica (anche mista punti + livelli)
   righe: RigaCorrezione[];
   archiviata?: boolean;
+  conclusa?: boolean; // correzione chiusa (consultabile, riapribile)
 }
 
 /** Voce d'archivio: SOLO medie di classe (aggregati anonimi). */

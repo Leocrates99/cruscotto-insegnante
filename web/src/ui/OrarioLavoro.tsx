@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { generateBands, setSettings, useSettings, type TimeBand } from "../store/settings";
-import { classeInfo, classiAttive, contiClasse, materieAttive, setProfile, useProfile, type OrarioSlot, type StudenteAnon } from "../store/profile";
+import { classeInfo, classiAttive, contiClasse, materieAttive, materieClasseEffettive, materieDiClasse, setProfile, useProfile, type OrarioSlot, type StudenteAnon } from "../store/profile";
 import { classeColor, materiaColor } from "./materia";
 import { classiFromSlots, mergeSlots, parseOrarioFile } from "../store/orarioImport";
-import { classeUnicaPerMateria, materiaUnicaPerClasse, materiePerClasse } from "../store/links";
+import { classeUnicaPerMateria } from "../store/links";
 
 const GIORNI = [
   { i: 0, short: "Lun" },
@@ -40,6 +40,11 @@ export function OrarioLavoro() {
   };
   const removeClasse = (c: string) => setProfile({ classi: profile.classi.filter((x) => x !== c) });
   const setColore = (c: string, col: string) => setProfile({ coloriClassi: { ...(profile.coloriClassi ?? {}), [c]: col } });
+  const toggleMateriaClasse = (classe: string, materia: string) => {
+    const cur = materieDiClasse(classe, profile);
+    const next = cur.includes(materia) ? cur.filter((m) => m !== materia) : [...cur, materia];
+    setProfile({ classeMaterie: { ...(profile.classeMaterie ?? {}), [classe]: next } });
+  };
 
   // Anagrafica classi (per numero di registro)
   const [anag, setAnag] = useState<string>("");
@@ -72,7 +77,7 @@ export function OrarioLavoro() {
     const others = profile.orario.filter((s) => !(s.giorno === g && s.fascia === fascia));
     const next: OrarioSlot = { giorno: g, fascia, ...slotAt(g, fascia), ...patch };
     // Aggancio automatico materia↔classe (riempie solo il campo ancora vuoto, mai sovrascrive).
-    if (patch.classe && !next.materia) { const m = materiaUnicaPerClasse(patch.classe, profile.orario); if (m) next.materia = m; }
+    if (patch.classe && !next.materia) { const ms = materieDiClasse(patch.classe, profile); if (ms.length === 1) next.materia = ms[0]; }
     if (patch.materia && !next.classe) { const c = classeUnicaPerMateria(patch.materia, profile.orario); if (c) next.classe = c; }
     setProfile({ orario: next.materia || next.classe ? [...others, next] : others });
   };
@@ -110,15 +115,31 @@ export function OrarioLavoro() {
       </div>
 
       <div className="ol-sec">
-        <h4>Le tue classi</h4>
-        <div className="ol-classi">
-          {profile.classi.length === 0 && <span className="muted">Aggiungi le classi in cui insegni (ognuna avrà un colore).</span>}
+        <h4>Le tue classi <em>· spunta le materie che insegni in ciascuna (sinolo classe–materia)</em></h4>
+        <div className="ol-classi-cards">
+          {profile.classi.length === 0 && <span className="muted">Aggiungi le classi in cui insegni (ognuna avrà un colore e le sue materie).</span>}
           {profile.classi.map((c) => (
-            <span key={c} className="ol-classe" style={{ borderColor: classeColor(c) }}>
-              <input type="color" value={classeColor(c) ?? "#888888"} onChange={(e) => setColore(c, e.target.value)} title="Colore classe" />
-              {c}
-              <button onClick={() => removeClasse(c)} aria-label="Rimuovi">✕</button>
-            </span>
+            <div key={c} className="ol-classe-card" style={{ borderColor: classeColor(c) }}>
+              <div className="ol-classe-head">
+                <input type="color" value={classeColor(c) ?? "#888888"} onChange={(e) => setColore(c, e.target.value)} title="Colore classe" />
+                <b>{c}</b>
+                <button className="danger" onClick={() => removeClasse(c)} aria-label="Rimuovi">✕</button>
+              </div>
+              <div className="ol-classe-mat">
+                {materie.length === 0 ? (
+                  <span className="muted">Aggiungi prima le materie (passo «Materie»).</span>
+                ) : (
+                  materie.map((m) => {
+                    const on = materieDiClasse(c, profile).includes(m);
+                    return (
+                      <button key={m} className={on ? "ol-mat on" : "ol-mat"} style={on ? { borderColor: materiaColor(m), color: materiaColor(m), background: `${materiaColor(m)}14` } : undefined} onClick={() => toggleMateriaClasse(c, m)}>
+                        {on ? "✓ " : ""}{m}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           ))}
         </div>
         <div className="ol-add">
@@ -243,19 +264,12 @@ export function OrarioLavoro() {
                       return (
                         <td key={g.i} style={{ background: mc ? `${mc}1f` : undefined, borderLeft: cc ? `3px solid ${cc}` : undefined }}>
                           {(() => {
-                            const inClasse = s?.classe ? materiePerClasse(s.classe, profile.orario) : [];
-                            const altre = materie.filter((m) => !inClasse.includes(m));
+                            const opts = s?.classe ? materieClasseEffettive(s.classe, profile) : materie;
+                            const list = s?.materia && !opts.includes(s.materia) ? [s.materia, ...opts] : opts;
                             return (
                               <select value={s?.materia ?? ""} onChange={(e) => setSlot(g.i, b.label, { materia: e.target.value || undefined })}>
                                 <option value="">—</option>
-                                {inClasse.length > 0 && (
-                                  <optgroup label="In questa classe">
-                                    {inClasse.map((m) => <option key={m} value={m}>{m}</option>)}
-                                  </optgroup>
-                                )}
-                                <optgroup label={inClasse.length > 0 ? "Altre materie" : "Materie"}>
-                                  {altre.map((m) => <option key={m} value={m}>{m}</option>)}
-                                </optgroup>
+                                {list.map((m) => <option key={m} value={m}>{m}</option>)}
                               </select>
                             );
                           })()}

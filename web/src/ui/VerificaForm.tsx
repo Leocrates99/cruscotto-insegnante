@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { classeInfo, classiAttive, materieAttive, useProfile } from "../store/profile";
+import { classeInfo, classiAttive, materieAttive, materieClasseEffettive, useProfile } from "../store/profile";
 import {
   SCALA_DEFAULT,
   annoCorrente,
@@ -42,6 +42,7 @@ export function VerificaForm({ prefill, onClose, onOpen }: { prefill?: { classe?
   const removeEx = (i: number) => setEsercizi((xs) => xs.filter((_, j) => j !== i));
 
   const studenti = classe ? classeInfo(classe, profile).studenti : [];
+  const materieCls = classe ? materieClasseEffettive(classe, profile) : materie; // sinolo classe→materie
 
   const crea = () => {
     const indEsercizi: Indicatore[] = esercizi
@@ -71,14 +72,15 @@ export function VerificaForm({ prefill, onClose, onOpen }: { prefill?: { classe?
         <div className="vf-meta">
           <label className="field"><span>Titolo</span><input type="text" value={titolo} placeholder="Es. Verifica di latino" onChange={(e) => setTitolo(e.target.value)} /></label>
           <label className="field"><span>Classe</span>
-            <select value={classe} onChange={(e) => setClasse(e.target.value)}>
+            <select value={classe} onChange={(e) => { const c = e.target.value; setClasse(c); const ms = materieClasseEffettive(c, profile); if (!ms.includes(materia)) setMateria(ms[0] ?? ""); }}>
               {classi.length === 0 && <option value="">— (aggiungi classi nel profilo)</option>}
               {classi.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
           <label className="field"><span>Materia</span>
-            <select value={materia} onChange={(e) => setMateria(e.target.value)}>
-              {materie.map((m) => <option key={m} value={m}>{m}</option>)}
+            <select value={materieCls.includes(materia) ? materia : ""} onChange={(e) => setMateria(e.target.value)}>
+              {!materieCls.includes(materia) && <option value="">—</option>}
+              {materieCls.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </label>
           <label className="field"><span>Data</span><input type="date" value={data} onChange={(e) => setData(e.target.value)} /></label>

@@ -477,6 +477,17 @@ td .check { color: var(--success); font-weight: 700; }
 .ol-classe { display: inline-flex; align-items: center; gap: 0.35rem; font: 600 0.8rem var(--font-ui); padding: 0.2rem 0.45rem; border: 2px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); }
 .ol-classe input[type="color"] { width: 18px; height: 18px; border: none; padding: 0; background: none; cursor: pointer; }
 .ol-classe button { background: none; border: none; cursor: pointer; color: var(--ink-muted); padding: 0 0.15rem; }
+/* Carte classe col sinolo classe↔materie */
+.ol-classi-cards { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.5rem; }
+.ol-classe-card { flex: 1 1 240px; max-width: 360px; border: 2px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); padding: 0.5rem 0.6rem; }
+.ol-classe-head { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem; }
+.ol-classe-head b { font: 700 0.92rem var(--font-ui); flex: 1; }
+.ol-classe-head input[type="color"] { width: 18px; height: 18px; border: none; padding: 0; background: none; cursor: pointer; }
+.ol-classe-head button { background: none; border: none; cursor: pointer; color: var(--ink-muted); padding: 0 0.15rem; }
+.ol-classe-mat { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.ol-mat { font: 600 0.74rem var(--font-ui); padding: 0.18rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: 99px; background: var(--parchment); color: var(--ink-muted); cursor: pointer; }
+.ol-mat:hover { border-color: var(--accent); color: var(--accent); transform: none; box-shadow: none; }
+.ol-mat.on { font-weight: 700; }
 .ol-add { display: flex; gap: 0.4rem; }
 .ol-add input { flex: 1; font: 0.85rem var(--font-ui); padding: 0.4rem 0.55rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
 .ol-nobands { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
@@ -649,6 +660,23 @@ td .check { color: var(--success); font-weight: 700; }
 
 /* Calcolatore per classe */
 .vz-sesshead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+/* Panoramica della sessione (correzione) */
+.vz-overview { display: flex; flex-wrap: wrap; align-items: center; gap: 0.7rem 1.2rem; padding: 0.7rem 0.9rem; margin-bottom: 0.7rem; background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.vz-ov-main { flex: 1 1 280px; min-width: 0; }
+.vz-ov-main h2 { margin: 0 0 0.3rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.vz-conclusa { font: 700 0.66rem var(--font-ui); color: var(--success); border: 1px solid var(--success); border-radius: 99px; padding: 0.05rem 0.45rem; }
+.vz-ov-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.4rem; }
+.vz-ov-bar { height: 7px; }
+.vz-ov-stats { display: flex; gap: 1rem; }
+.vz-ov-metric { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.vz-ov-metric b { font: 700 1.3rem var(--font-display); color: var(--ink); }
+.vz-ov-metric small { font-size: 0.68rem; color: var(--ink-muted); white-space: nowrap; }
+.vz-riep { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 0.6rem; margin: 0.6rem 0; }
+.vz-riep-cell { display: flex; flex-direction: column; align-items: center; padding: 0.7rem 0.5rem; background: var(--parchment); border: 1px solid var(--parchment-dark); border-radius: var(--radius); }
+.vz-riep-cell.big { background: var(--accent-pale); border-color: var(--accent-border); }
+.vz-riep-cell b { font: 700 1.5rem var(--font-display); color: var(--ink); }
+.vz-riep-cell small { font-size: 0.7rem; color: var(--ink-muted); text-align: center; }
+.vz-riep-note { margin-top: 0.6rem; }
 .vz-sessact { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .vz-sessact button { font: 600 0.76rem var(--font-ui); padding: 0.3rem 0.55rem; }
 .vz-empty { display: flex; flex-direction: column; gap: 0.6rem; align-items: flex-start; }

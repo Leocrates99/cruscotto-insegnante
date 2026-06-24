@@ -19,11 +19,11 @@ import {
   newId,
   removeSessione,
   sessioniDi,
-  upsertGriglia,
   upsertSessione,
   useValutazione,
   type Griglia,
   type RigaCorrezione,
+  type Sessione,
 } from "../store/valutazione";
 import { classeInfo, classiAttive, useProfile } from "../store/profile";
 import { GrigliaEditor } from "./GrigliaEditor";
@@ -31,6 +31,11 @@ import { SchedaStampa } from "./SchedaStampa";
 import { VerificaForm } from "./VerificaForm";
 
 const num = (v: number) => v.toLocaleString("it-IT", { maximumFractionDigits: 2 });
+const oggi = () => new Date().toISOString().slice(0, 10);
+/** Uno scrutinio (burocratico) vs una verifica (didattica), in base alla categoria della griglia. */
+const isScrutinio = (s: Sessione) => s.griglia.categoria === "scrutinio-materia" || s.griglia.categoria === "condotta";
+const CAT_LABEL: Record<string, string> = { esercizi: "Esercizi", scritto: "Scritto", orale: "Orale", "scrutinio-materia": "Voto di materia", condotta: "Condotta", altro: "Altro" };
+const categoriaLabel = (c: Griglia["categoria"]): string => CAT_LABEL[c] ?? c;
 
 export function ValutazioneView({ sessioneId, onView }: { sessioneId?: string; onView: (v: View) => void }) {
   const v = useValutazione();
@@ -38,6 +43,7 @@ export function ValutazioneView({ sessioneId, onView }: { sessioneId?: string; o
   const classi = classiAttive(profile);
   const anno = annoCorrente();
 
+  const [ambito, setAmbito] = useState<"verifiche" | "scrutini">("verifiche");
   const [selClasse, setSelClasse] = useState<string>(classi[0] ?? "");
   const [selSessId, setSelSessId] = useState<string>("");
   const [editing, setEditing] = useState<{ g: Griglia; onSave?: (g: Griglia) => void } | null>(null);
@@ -45,19 +51,32 @@ export function ValutazioneView({ sessioneId, onView }: { sessioneId?: string; o
   const [showTab, setShowTab] = useState(false);
   const [showVerifica, setShowVerifica] = useState(false);
   const [showModelli, setShowModelli] = useState(false);
+  const [riepilogo, setRiepilogo] = useState<Sessione | null>(null);
   const [invTarget, setInvTarget] = useState("");
 
   useEffect(() => {
     if (sessioneId) {
       const s = getSessione(sessioneId);
-      if (s) { setSelClasse(s.classe); setSelSessId(s.id); }
+      if (s) { setSelClasse(s.classe); setSelSessId(s.id); setAmbito(isScrutinio(s) ? "scrutini" : "verifiche"); }
     }
   }, [sessioneId]);
 
-  const sessioni = selClasse ? sessioniDi(selClasse, anno).filter((s) => !s.archiviata) : [];
+  const tutte = selClasse ? sessioniDi(selClasse, anno).filter((s) => !s.archiviata) : [];
+  const sessioni = tutte.filter((s) => (ambito === "scrutini") === isScrutinio(s));
   const sess = sessioni.find((s) => s.id === selSessId) ?? sessioni[0];
+  const scrutinioModelli = v.griglie.filter((g) => g.categoria === "scrutinio-materia" || g.categoria === "condotta");
+  const etichetta = ambito === "scrutini" ? "scrutinio" : "verifica";
 
   const newVerifica = () => setShowVerifica(true);
+  const creaScrutinio = (model: Griglia) => {
+    if (!selClasse) return;
+    const griglia: Griglia = { ...model, id: newId(), indicatori: model.indicatori.map((i) => ({ ...i, id: newId() })), scala: { ...model.scala, fasce: model.scala.fasce?.map((f) => ({ ...f })) } };
+    const righe = classeInfo(selClasse, profile).studenti.map((s) => ({ id: newId(), n: s.n, valori: {} }));
+    const nuova: Sessione = { id: newId(), classe: selClasse, titolo: model.nome, data: oggi(), annoScolastico: anno, griglia, righe };
+    upsertSessione(nuova);
+    setSelSessId(nuova.id);
+    onView({ kind: "valutazione", sessioneId: nuova.id });
+  };
   const archivia = () => {
     if (confirm(`Archiviare le medie di classe dell'${anno}? Le verifiche restano consultabili nei trend; non saranno più modificabili qui.`)) {
       const n = archiviaAnno(anno);
@@ -68,8 +87,12 @@ export function ValutazioneView({ sessioneId, onView }: { sessioneId?: string; o
   return (
     <section className="valutazione">
       <div className="view-head">
-        <h1>🧮 Calcolatore voti</h1>
+        <h1>🧮 {ambito === "scrutini" ? "Scrutini" : "Calcolatore voti"}</h1>
         <div className="vz-tools">
+          <div className="seg">
+            <button className={ambito === "verifiche" ? "active" : ""} onClick={() => { setAmbito("verifiche"); setSelSessId(""); }}>📝 Verifiche</button>
+            <button className={ambito === "scrutini" ? "active" : ""} onClick={() => { setAmbito("scrutini"); setSelSessId(""); }}>🗳️ Scrutini</button>
+          </div>
           <select value={selClasse} onChange={(e) => { setSelClasse(e.target.value); setSelSessId(""); }}>
             {classi.length === 0 && <option value="">— (aggiungi classi nel profilo)</option>}
             {classi.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -79,18 +102,33 @@ export function ValutazioneView({ sessioneId, onView }: { sessioneId?: string; o
               {sessioni.map((s) => <option key={s.id} value={s.id}>{s.titolo} · {s.data}</option>)}
             </select>
           )}
-          <button onClick={newVerifica} disabled={!selClasse}>+ Verifica</button>
+          {ambito === "verifiche" ? (
+            <button onClick={newVerifica} disabled={!selClasse}>+ Verifica</button>
+          ) : (
+            <details className="dropdown dropdown--start">
+              <summary className="primary">+ Scrutinio</summary>
+              <div className="dropdown-menu">
+                {scrutinioModelli.length === 0 ? (
+                  <button disabled>Nessun modello (vedi 📐 Modelli)</button>
+                ) : scrutinioModelli.map((g) => (
+                  <button key={g.id} disabled={!selClasse} onClick={(e) => { e.currentTarget.closest("details")?.removeAttribute("open"); creaScrutinio(g); }}>{g.nome}</button>
+                ))}
+              </div>
+            </details>
+          )}
           <button onClick={() => setShowModelli(true)} title="Modelli di griglia (template)">📐 Modelli</button>
           <button onClick={archivia} title="Archivia le medie a fine anno">🗄️ Archivia a.s.</button>
         </div>
       </div>
 
       {!selClasse ? (
-        <p className="muted">Aggiungi una classe (e la sua anagrafica) nel <b>Profilo → Orario & classi</b>, poi crea una verifica.</p>
+        <p className="muted">Aggiungi una classe (e la sua anagrafica) nel <b>Profilo → Orario & classi</b>, poi crea una {etichetta}.</p>
       ) : !sess ? (
         <div className="vz-empty">
-          <p className="muted">Nessuna verifica per <b>{selClasse}</b> nell'{anno}.</p>
-          <button className="primary" onClick={newVerifica}>+ Nuova verifica</button>
+          <p className="muted">Nessuna {etichetta} per <b>{selClasse}</b> nell'{anno}.</p>
+          {ambito === "verifiche"
+            ? <button className="primary" onClick={newVerifica}>+ Nuova verifica</button>
+            : <p className="muted">Usa <b>+ Scrutinio</b> per crearne uno dai modelli (voto di materia / condotta).</p>}
         </div>
       ) : (
         <Correzione
@@ -102,28 +140,33 @@ export function ValutazioneView({ sessioneId, onView }: { sessioneId?: string; o
           onEditStruttura={() => setEditing({ g: sess.griglia, onSave: (g) => upsertSessione({ ...sess, griglia: g }) })}
           onScheda={setScheda}
           onShowTab={() => setShowTab(true)}
-          onRemove={() => { if (confirm("Eliminare questa verifica e i suoi punteggi?")) { removeSessione(sess.id); setSelSessId(""); } }}
+          onConcludi={() => { upsertSessione({ ...sess, conclusa: true }); setRiepilogo({ ...sess, conclusa: true }); }}
+          onRiapri={() => upsertSessione({ ...sess, conclusa: false })}
+          onRemove={() => { if (confirm(`Eliminare questa ${etichetta} e i suoi punteggi?`)) { removeSessione(sess.id); setSelSessId(""); } }}
         />
       )}
 
       {editing && <GrigliaEditor griglia={editing.g} onSave={editing.onSave} onClose={() => setEditing(null)} />}
       {scheda && sess && <SchedaStampa griglia={sess.griglia} riga={scheda} onClose={() => setScheda(null)} />}
       {showTab && sess && <TabellaModal sess={sess} onClose={() => setShowTab(false)} />}
-      {showVerifica && <VerificaForm prefill={{ classe: selClasse }} onClose={() => setShowVerifica(false)} onOpen={(id) => { setShowVerifica(false); setSelSessId(id); onView({ kind: "valutazione", sessioneId: id }); }} />}
+      {riepilogo && <RiepilogoModal sess={riepilogo} onClose={() => setRiepilogo(null)} />}
+      {showVerifica && <VerificaForm prefill={{ classe: selClasse }} onClose={() => setShowVerifica(false)} onOpen={(id) => { setShowVerifica(false); setAmbito("verifiche"); setSelSessId(id); onView({ kind: "valutazione", sessioneId: id }); }} />}
       {showModelli && <ModelliModal onEdit={(g) => { setShowModelli(false); setEditing({ g }); }} onClose={() => setShowModelli(false)} />}
     </section>
   );
 }
 
 // ── Correzione di una sessione ───────────────────────────────────────────────
-function Correzione({ sess, selClasse, invTarget, setInvTarget, onEditStruttura, onScheda, onShowTab, onRemove }: {
-  sess: import("../store/valutazione").Sessione;
+function Correzione({ sess, selClasse, invTarget, setInvTarget, onEditStruttura, onScheda, onShowTab, onConcludi, onRiapri, onRemove }: {
+  sess: Sessione;
   selClasse: string;
   invTarget: string;
   setInvTarget: (v: string) => void;
   onEditStruttura: () => void;
   onScheda: (r: RigaCorrezione) => void;
   onShowTab: () => void;
+  onConcludi: () => void;
+  onRiapri: () => void;
   onRemove: () => void;
 }) {
   const profile = useProfile();
@@ -164,12 +207,29 @@ function Correzione({ sess, selClasse, invTarget, setInvTarget, onEditStruttura,
 
   return (
     <>
-      <div className="vz-sesshead">
-        <div><b>{sess.titolo}</b> <span className="muted">· {sess.materia ?? ""} · {sess.data}</span></div>
+      <div className="vz-overview">
+        <div className="vz-ov-main">
+          <h2>{sess.titolo}{sess.conclusa && <span className="vz-conclusa">✔ conclusa</span>}</h2>
+          <div className="vz-ov-chips">
+            <span className="chip" style={{ borderColor: "var(--accent)" }}>{selClasse}</span>
+            {sess.materia && <span className="chip">{sess.materia}</span>}
+            <span className="chip">{sess.data}</span>
+            <span className="chip">{categoriaLabel(griglia.categoria)}</span>
+          </div>
+          <div className="bar vz-ov-bar"><div style={{ width: `${sess.righe.length ? Math.round((compilate.length / sess.righe.length) * 100) : 0}%` }} /></div>
+        </div>
+        <div className="vz-ov-stats">
+          <div className="vz-ov-metric"><b>{compilate.length}</b><small>/ {sess.righe.length} corretti</small></div>
+          {dist.n > 0 && <div className="vz-ov-metric"><b>{num(dist.media)}</b><small>media</small></div>}
+          {dist.n > 0 && <div className="vz-ov-metric"><b>{dist.pctSuff}%</b><small>sufficienti</small></div>}
+        </div>
         <div className="vz-sessact">
           <button onClick={onEditStruttura}>✏️ Struttura</button>
-          <button onClick={allinea}>👥 Allinea anagrafica</button>
-          <button className="danger" onClick={onRemove}>Elimina verifica</button>
+          <button onClick={allinea}>👥 Allinea</button>
+          {sess.conclusa
+            ? <button onClick={onRiapri}>↻ Riapri</button>
+            : <button className="primary" onClick={onConcludi} disabled={compilate.length === 0}>✔️ Concludi</button>}
+          <button className="danger" onClick={onRemove} title="Elimina">🗑️</button>
         </div>
       </div>
 
@@ -297,6 +357,36 @@ function TabellaModal({ sess, onClose }: { sess: import("../store/valutazione").
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="modal-actions no-print"><button onClick={onClose}>Chiudi</button><button className="primary" onClick={() => window.print()}>🖨️ Stampa</button></div>
+      </div>
+    </div>
+  );
+}
+
+// ── Riepilogo di chiusura della correzione ───────────────────────────────────
+function RiepilogoModal({ sess, onClose }: { sess: Sessione; onClose: () => void }) {
+  const compilate = sess.righe.filter(rigaCompilata);
+  const dist = distribuzione(sess.griglia, compilate);
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="panel-head"><h2>✔️ Riepilogo · {sess.titolo}</h2><button className="icon-btn" onClick={onClose}>✕</button></div>
+        <div className="print-area">
+          <p className="muted">{sess.classe}{sess.materia ? ` · ${sess.materia}` : ""} · {sess.data} · {categoriaLabel(sess.griglia.categoria)}</p>
+          {dist.n === 0 ? (
+            <p className="muted">Nessuna riga compilata.</p>
+          ) : (
+            <div className="vz-riep">
+              <div className="vz-riep-cell big"><b>{num(dist.media)}</b><small>media di classe</small></div>
+              <div className="vz-riep-cell"><b>{dist.n}</b><small>valutati su {sess.righe.length}</small></div>
+              <div className="vz-riep-cell"><b>{dist.sufficienti}</b><small>sufficienti ({dist.pctSuff}%)</small></div>
+              <div className="vz-riep-cell"><b>{num(dist.min)}</b><small>minimo</small></div>
+              <div className="vz-riep-cell"><b>{num(dist.max)}</b><small>massimo</small></div>
+              <div className="vz-riep-cell"><b>{num(dist.devStd)}</b><small>dev. std (σ)</small></div>
+            </div>
+          )}
+          <p className="muted vz-riep-note">Procedura conclusa: la correzione resta consultabile e riapribile dal pulsante «↻ Riapri».</p>
         </div>
         <div className="modal-actions no-print"><button onClick={onClose}>Chiudi</button><button className="primary" onClick={() => window.print()}>🖨️ Stampa</button></div>
       </div>

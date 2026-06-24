@@ -16,6 +16,8 @@ export const riunioni: SchemaDef = {
       type: "select",
       options: [
         { name: "consiglio di classe", color: "blue" },
+        { name: "scrutinio", color: "red" },
+        { name: "ricevimento genitori", color: "yellow" },
         { name: "collegio docenti", color: "purple" },
         { name: "dipartimento", color: "green" },
         { name: "GLO", color: "orange" },
@@ -24,5 +26,8 @@ export const riunioni: SchemaDef = {
     },
     "Note grezze": { type: "rich_text" },
   },
-  relations: [{ name: "Anno scolastico", target: "anni" }],
+  relations: [
+    { name: "Anno scolastico", target: "anni" },
+    { name: "Classe", target: "classi" },
+  ],
 };

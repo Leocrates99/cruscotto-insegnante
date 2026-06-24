@@ -60,6 +60,7 @@ function contrastText(hex?: string): string {
 
 export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: View) => void }) {
   useStore();
+  const profile = useProfile();
   const settings = useSettings();
   const mode = settings.calendarMode as Mode;
   const [anchor, setAnchor] = useState(() => new Date());
@@ -81,6 +82,18 @@ export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: Vie
   const [showVerifica, setShowVerifica] = useState(false);
   const openSessione: OpenSess = (id) => onView({ kind: "valutazione", sessioneId: id });
   const closeDd = (el: HTMLElement) => el.closest("details")?.removeAttribute("open");
+
+  // Impegno burocratico precompilato (Consiglio/Ricevimento/Scrutinio), agganciato alla classe.
+  const impegno = (tipo: string, base: string) => {
+    const one = profile.classi.length === 1 ? profile.classi[0] : undefined;
+    onEdit("riunioni", undefined, {
+      Titolo: one ? `${base} — ${one}` : base,
+      Tipo: tipo,
+      Data: ymd(anchor),
+      "Anno scolastico": [annoCorrenteId()],
+      ...(one ? { Classe: [classeId(one)] } : {}),
+    });
+  };
 
   const setMode = (m: Mode) => setSettings({ calendarMode: m });
   const shift = (dir: number) =>
@@ -107,6 +120,10 @@ export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: Vie
               <button onClick={(e) => { closeDd(e.currentTarget); onEdit("lezioni", undefined, { "Data prevista": ymd(anchor) }); }}>📘 Lezione</button>
               <button onClick={(e) => { closeDd(e.currentTarget); setShowVerifica(true); }}>📝 Verifica</button>
               <button onClick={(e) => { closeDd(e.currentTarget); onView({ kind: "planner" }); }}>🧠 Pianifica</button>
+              <hr />
+              <button onClick={(e) => { closeDd(e.currentTarget); impegno("consiglio di classe", "Consiglio di Classe"); }}>🏛️ Consiglio di Classe</button>
+              <button onClick={(e) => { closeDd(e.currentTarget); impegno("ricevimento genitori", "Ricevimento genitori"); }}>👪 Ricevimento genitori</button>
+              <button onClick={(e) => { closeDd(e.currentTarget); impegno("scrutinio", "Scrutinio"); }}>🗳️ Scrutinio</button>
             </div>
           </details>
           <h1>📅 {title}</h1>

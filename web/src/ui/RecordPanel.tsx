@@ -5,7 +5,7 @@ import { getRecord, newId, records, recordTitle, upsert, type Rec, type Value } 
 import { annoCorrenteId, classeId, classeUnicaPerMateria, materiaUnicaPerClasse } from "../store/links";
 import { SearchSelect } from "./SearchSelect";
 import { schoolYearOptions, type SchoolYearOption } from "./schoolYear";
-import { materieAttive, scuoleCorrenti, useProfile } from "../store/profile";
+import { materieAttive, materieClasseEffettive, materieDiClasse, scuoleCorrenti, useProfile } from "../store/profile";
 import { bloomLabel, cicloDaFase, obiettiviPerMateria as taxObiettivi, useTassonomia, type TaxObiettivo } from "../data/tassonomia";
 
 const str = (v: Value): string => (typeof v === "string" ? v : v === undefined ? "" : String(v));
@@ -62,7 +62,8 @@ export function RecordPanel({
     if (!ids.length) return;
     const label = getRecord("classi", ids[0])?.["Titolo"];
     if (typeof label !== "string") return;
-    const m = materiaUnicaPerClasse(label, profile.orario);
+    const esplicite = materieDiClasse(label, profile);
+    const m = esplicite.length === 1 ? esplicite[0] : materiaUnicaPerClasse(label, profile.orario);
     if (m) set("Materia", m);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classeKey]);
@@ -136,7 +137,9 @@ export function RecordPanel({
               // Materia → opzioni dal profilo del docente (più l'eventuale valore già impostato)
               if (name === "Materia" && prop.type === "select") {
                 const cur = str(draft[name]);
-                const base = materieAttive(profile);
+                const clsIds = Array.isArray(draft["Classe"]) ? (draft["Classe"] as string[]) : [];
+                const clsLabel = clsIds.length ? (getRecord("classi", clsIds[0])?.["Titolo"] as string | undefined) : undefined;
+                const base = clsLabel ? materieClasseEffettive(clsLabel, profile) : materieAttive(profile);
                 const opts = cur && !base.includes(cur) ? [cur, ...base] : base;
                 return (
                   <label className="field" key={name}>

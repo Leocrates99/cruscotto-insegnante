@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { View } from "../App";
 import { newId, records, upsert, type Rec } from "../store/store";
 import { useStore } from "../store/useStore";
-import { classiAttive, materieAttive, scuoleCorrenti, useProfile } from "../store/profile";
+import { classiAttive, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
 import { bloomLabel, cicloDaFase, nucleiConObiettivi, useTassonomia, type TaxObiettivo } from "../data/tassonomia";
 import { materiaColor } from "./materia";
 
@@ -82,6 +82,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   };
 
   const isUda = tipo === "uda";
+  // Sinolo: per lezione/laboratorio le materie sono quelle della classe scelta.
+  const materieDisp = !isUda && classe ? materieClasseEffettive(classe, profile) : materie;
 
   return (
     <section className="planner">
@@ -100,13 +102,14 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
         <>
           <div className="pl-ctx">
             <label className="field sm"><span>Materia</span>
-              <select value={materia} onChange={(e) => { setMateria(e.target.value); setSel([]); }}>
-                {materie.map((m) => <option key={m} value={m}>{m}</option>)}
+              <select value={materieDisp.includes(materia) ? materia : ""} onChange={(e) => { setMateria(e.target.value); setSel([]); }}>
+                {!materieDisp.includes(materia) && <option value="">—</option>}
+                {materieDisp.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </label>
             {!isUda && (
               <label className="field sm"><span>Classe</span>
-                <select value={classe} onChange={(e) => setClasse(e.target.value)}>
+                <select value={classe} onChange={(e) => { const c = e.target.value; setClasse(c); const ms = materieClasseEffettive(c, profile); if (!ms.includes(materia)) { setMateria(ms[0] ?? ""); setSel([]); } }}>
                   {classi.length === 0 && <option value="">—</option>}
                   {classi.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>

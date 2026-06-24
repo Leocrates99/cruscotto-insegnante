@@ -40,6 +40,7 @@ export interface Profile {
   concorsi: string[]; // codici classe di concorso, es. "A-13"
   materie: string[]; // materie confermate → guidano i menù a tendina
   classi: string[]; // etichette delle classi del docente (es. "IV A")
+  classeMaterie?: Record<string, string[]>; // SINOLO classe↔materie: le materie che insegni in quella classe
   classiInfo?: Record<string, ClasseInfo>; // anagrafica per classe (numeri di registro + 104/BES/DSA)
   orario: OrarioSlot[]; // tabella oraria di lavoro settimanale
   coloriMaterie?: Record<string, string>;
@@ -111,6 +112,20 @@ export function classiAttive(p: Profile = profile): string[] {
 /** Anagrafica di una classe (vuota se non compilata). */
 export function classeInfo(label: string, p: Profile = profile): ClasseInfo {
   return p.classiInfo?.[label] ?? { studenti: [] };
+}
+
+/** SINOLO: le materie che il docente insegna in quella classe (esplicite dal profilo). */
+export function materieDiClasse(label: string, p: Profile = profile): string[] {
+  return p.classeMaterie?.[label] ?? [];
+}
+
+/**
+ * Materie "effettive" per una classe ai fini dei menù: l'associazione esplicita se c'è,
+ * altrimenti tutte le materie del docente (così resta usabile prima di compilare il sinolo).
+ */
+export function materieClasseEffettive(label: string, p: Profile = profile): string[] {
+  const ms = materieDiClasse(label, p);
+  return ms.length ? ms : materieAttive(p);
 }
 
 /** Conteggi derivati dell'anagrafica di una classe. */
