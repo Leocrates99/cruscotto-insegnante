@@ -129,6 +129,22 @@ export function obiettiviPerMateria(tax: Tassonomia, materiaNome: string, opts: 
   );
 }
 
+export interface NucleoGruppo {
+  nucleo: string;
+  obiettivi: TaxObiettivo[];
+}
+/** Obiettivi di una materia raggruppati per nucleo (palette di pianificazione). */
+export function nucleiConObiettivi(tax: Tassonomia, materiaNome: string, opts: QueryOpts = {}): NucleoGruppo[] {
+  const list = obiettiviPerMateria(tax, materiaNome, opts);
+  const map = new Map<string, TaxObiettivo[]>();
+  for (const o of list) {
+    const a = map.get(o.nucleo) ?? [];
+    a.push(o);
+    map.set(o.nucleo, a);
+  }
+  return [...map.entries()].map(([nucleo, obiettivi]) => ({ nucleo, obiettivi }));
+}
+
 /** Materie insegnate da una classe di concorso in un indirizzo (con le fasi). */
 export function materieInsegnate(tax: Tassonomia, classe: string, indirizzoId?: string): TaxInsegnamento[] {
   const tIndir = indirizzoCodice(indirizzoId);

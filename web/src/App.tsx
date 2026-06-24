@@ -18,6 +18,7 @@ import { TimelineView } from "./ui/TimelineView";
 import { AvanzamentoView } from "./ui/AvanzamentoView";
 import { ValutazioneView } from "./ui/ValutazioneView";
 import { AndamentoView } from "./ui/AndamentoView";
+import { PlannerView } from "./ui/PlannerView";
 import { PromemoriaView } from "./ui/PromemoriaView";
 import { RecordPanel } from "./ui/RecordPanel";
 import { Onboarding } from "./ui/Onboarding";
@@ -30,6 +31,7 @@ export type View =
   | { kind: "avanzamento" }
   | { kind: "valutazione"; sessioneId?: string }
   | { kind: "andamento" }
+  | { kind: "planner" }
   | { kind: "promemoria" }
   | { kind: "home" }
   | { kind: "programmazione" }
@@ -91,6 +93,7 @@ export function App() {
           {view.kind === "avanzamento" && <AvanzamentoView onEdit={onEdit} />}
           {view.kind === "valutazione" && <ValutazioneView sessioneId={view.sessioneId} onView={setView} />}
           {view.kind === "andamento" && <AndamentoView />}
+          {view.kind === "planner" && <PlannerView onView={setView} />}
           {view.kind === "promemoria" && <PromemoriaView onEdit={onEdit} />}
           {view.kind === "home" && (
             <HomeView onSelect={(key) => setView({ kind: "entity", key })} onOpenUda={openUda} />

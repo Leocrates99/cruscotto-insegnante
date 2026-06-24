@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import taxJson from "./tassonomia_3d.json";
-import { bloomLabel, cercaObiettivi, cicloDaFase, materiaCodici, materieInsegnate, obiettiviPerMateria, type Tassonomia } from "./tassonomia";
+import { bloomLabel, cercaObiettivi, cicloDaFase, materiaCodici, materieInsegnate, nucleiConObiettivi, obiettiviPerMateria, type Tassonomia } from "./tassonomia";
 
 const T = taxJson as unknown as Tassonomia;
 
@@ -42,6 +42,13 @@ describe("tassonomia — ponti e query", () => {
     const a13 = materieInsegnate(T, "A-13", "classico");
     expect(a13.length).toBeGreaterThan(0);
     expect(a13.some((i) => i.materia === "GRC")).toBe(true);
+  });
+
+  it("nucleiConObiettivi raggruppa per nucleo senza perdere obiettivi", () => {
+    const gruppi = nucleiConObiettivi(T, "Lingua e cultura greca");
+    expect(gruppi.length).toBeGreaterThan(1);
+    expect(gruppi.every((g) => g.nucleo && g.obiettivi.length > 0)).toBe(true);
+    expect(gruppi.reduce((s, g) => s + g.obiettivi.length, 0)).toBe(35);
   });
 
   it("helper Bloom e ciclo", () => {

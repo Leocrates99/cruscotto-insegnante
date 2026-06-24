@@ -82,6 +82,7 @@ export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: Vie
           <button onClick={() => onEdit("scadenze", undefined, { Data: ymd(anchor) })}>+ Scadenza</button>
           <button onClick={() => onEdit("lezioni", undefined, { "Data prevista": ymd(anchor) })}>+ Lezione</button>
           <button onClick={() => setShowVerifica(true)}>📝 Verifica</button>
+          <button onClick={() => onView({ kind: "planner" })}>🧠 Pianifica</button>
           <button onClick={() => onView({ kind: "avanzamento" })}>🚦 Avanzamento</button>
           <button onClick={() => onView({ kind: "promemoria" })}>📌 Promemoria</button>
           <button onClick={() => onView({ kind: "programmazione" })}>📊 Sostenibilità</button>

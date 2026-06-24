@@ -6,6 +6,7 @@ import { reminderCount } from "../compute/events";
 
 const VIEWS: { v: View; label: string; icon: string }[] = [
   { v: { kind: "calendar" }, label: "Calendario", icon: "📅" },
+  { v: { kind: "planner" }, label: "Pianifica", icon: "🧠" },
   { v: { kind: "kanban" }, label: "Kanban", icon: "🗂️" },
   { v: { kind: "timeline" }, label: "Cronoprogramma", icon: "📈" },
   { v: { kind: "avanzamento" }, label: "Avanzamento", icon: "🚦" },

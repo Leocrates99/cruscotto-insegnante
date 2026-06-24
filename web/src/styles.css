@@ -601,6 +601,35 @@ td .check { color: var(--success); font-weight: 700; }
 .and-bar small { font: 700 0.66rem var(--font-ui); margin-top: 2px; }
 .and-bar em { font-size: 0.6rem; color: var(--ink-muted); font-style: normal; text-align: center; }
 
+/* ── Planner (Pianifica) ─────────────────────────────────────────────────────── */
+.pl-ctx { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: end; margin-bottom: 0.8rem; }
+.seg.sm button { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
+.pl-body { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+@media (max-width: 900px) { .pl-body { grid-template-columns: 1fr; } }
+.pl-palette { border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); padding: 0.6rem; background: var(--cream); max-height: 62vh; overflow-y: auto; }
+.pl-search { width: 100%; margin-bottom: 0.5rem; padding: 0.45rem 0.6rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); font: 0.85rem var(--font-ui); }
+.pl-nucleo { margin-bottom: 0.6rem; }
+.pl-nucleo-h { font: 700 0.74rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-muted); margin-bottom: 0.25rem; }
+.pl-nucleo-h small { color: var(--accent); }
+.pl-ob { display: flex; gap: 0.5rem; align-items: baseline; width: 100%; text-align: left; padding: 0.35rem 0.5rem; border: 1px solid transparent; border-radius: var(--radius); background: var(--parchment); color: var(--ink); cursor: pointer; margin-bottom: 0.2rem; }
+.pl-ob:hover { border-color: var(--parchment-dark); }
+.pl-ob.sel { background: var(--accent-glow); border-color: var(--accent); }
+.pl-ob-add { font-weight: 800; color: var(--accent); width: 1rem; flex-shrink: 0; }
+.pl-ob-txt { flex: 1; font-size: 0.82rem; line-height: 1.25; }
+.pl-ob-txt em { color: var(--ink-muted); font-style: normal; }
+.pl-ob-tipo { font: 700 0.6rem var(--font-ui); padding: 0.1rem 0.35rem; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+.pl-ob-tipo.con { background: var(--parchment-dark); color: var(--ink-muted); }
+.pl-ob-tipo.com { background: var(--accent); color: #fff; }
+.pl-compose { display: flex; flex-direction: column; gap: 0.7rem; }
+.pl-sel { border: 1px solid var(--parchment-dark); border-radius: var(--radius); padding: 0.5rem 0.7rem; background: var(--cream); }
+.pl-sel-h { font: 700 0.78rem var(--font-ui); margin-bottom: 0.3rem; }
+.pl-sel ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.25rem; max-height: 200px; overflow-y: auto; }
+.pl-sel li { display: flex; justify-content: space-between; gap: 0.5rem; align-items: center; font-size: 0.82rem; }
+.pl-sel li button { background: none; border: none; color: var(--ink-muted); cursor: pointer; }
+.pl-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+.pl-msg { font: 600 0.82rem var(--font-ui); color: var(--success); }
+button.link { background: none; border: none; color: var(--accent); cursor: pointer; font: inherit; padding: 0; text-decoration: underline; }
+
 /* ── Hamburger + backdrop (attivi solo su mobile) ───────────────────────────── */
 .nav-toggle {
   display: none; width: 38px; height: 38px; padding: 0; flex-shrink: 0;
