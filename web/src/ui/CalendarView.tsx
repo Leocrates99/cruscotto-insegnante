@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import type { DbKey } from "@model";
 import { upsert, type Rec, type Value } from "../store/store";
 import type { View } from "../App";
 import { useStore } from "../store/useStore";
 import { collectEvents, type CalEvent } from "../compute/events";
-import { setSettings, toMinutes, useSettings, type TimeBand } from "../store/settings";
-import { useProfile, type OrarioSlot } from "../store/profile";
+import { setSettings, toMinutes, useSettings } from "../store/settings";
+import { useProfile } from "../store/profile";
 import { classeColor, materiaColor } from "./materia";
 import { VerificaForm } from "./VerificaForm";
 import { useValutazione } from "../store/valutazione";
@@ -22,12 +22,6 @@ const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.ge
 const addDays = (d: Date, n: number) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 const startOfWeek = (d: Date) => { const x = new Date(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); x.setHours(0, 0, 0, 0); return x; };
 const weekDays = (anchor: Date) => { const s = startOfWeek(anchor); return Array.from({ length: 7 }, (_, i) => addDays(s, i)); };
-
-// ── Finestra oraria fissa 06:00–21:00 (richiesta dell'utente) ────────────────
-const START_H = 6, END_H = 21;
-const START_MIN = START_H * 60, END_MIN = END_H * 60, TOTAL = END_MIN - START_MIN;
-const pctTop = (min: number) => ((Math.max(START_MIN, Math.min(END_MIN, min)) - START_MIN) / TOTAL) * 100;
-const pctH = (a: number, b: number) => ((Math.min(END_MIN, b) - Math.max(START_MIN, a)) / TOTAL) * 100;
 
 // ── Gerarchia cromatica degli eventi ─────────────────────────────────────────
 const C_VERIFICA = "#e11d2b"; // rosso acceso: verifiche
@@ -192,19 +186,22 @@ function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { days: Da
   const profile = useProfile();
   const settings = useSettings();
   const bands = settings.timeBands;
+  const bandLabels = new Set(bands.map((b) => b.label));
   const orarioByKey = new Map(profile.orario.map((s) => [`${s.giorno}:${s.fascia}`, s] as const));
 
   const now = new Date();
   const todayStr = ymd(now);
   const nowMin = now.getHours() * 60 + now.getMinutes();
-  const cols = { gridTemplateColumns: `64px repeat(${days.length}, minmax(0, 1fr))` } as const;
-  const hours: number[] = [];
-  for (let h = START_H; h <= END_H; h++) hours.push(h);
+  // Periodo (fascia) corrente, per evidenziare la riga di "oggi".
+  const curBand = bands.find((b) => toMinutes(b.start) <= nowMin && nowMin < toMinutes(b.end))?.label;
+  const cols = { gridTemplateColumns: `86px repeat(${days.length}, minmax(0, 1fr))` } as const;
+  const bodyStyle = { ...cols, gridTemplateRows: `repeat(${Math.max(1, bands.length)}, minmax(58px, 1fr))` } as const;
 
-  // Sposta un evento "di giornata" su un altro giorno (drag tra colonne).
-  const drop = (ds: string) => {
+  const isFascia = (e: CalEvent) => typeof e.rec["Fascia"] === "string" && bandLabels.has(e.rec["Fascia"] as string);
+  // Drop su una cella → giorno + fascia (in giornata se fascia assente).
+  const drop = (ds: string, fascia?: string) => {
     if (!dragEv) return;
-    upsert(dragEv.dbKey, { ...dragEv.rec, [dragEv.prop]: ds });
+    upsert(dragEv.dbKey, { ...dragEv.rec, [dragEv.prop]: ds, Fascia: fascia });
     setDragEv(null);
     setOver(null);
   };
@@ -213,6 +210,14 @@ function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { days: Da
     onDragStart: () => setDragEv(e),
     onDragEnd: () => { setDragEv(null); setOver(null); },
   });
+  const chip = (e: CalEvent, j: number) => {
+    const bg = eventColor(e);
+    return (
+      <button key={j} className={bg ? "tg-chip" : "tg-chip plain"} {...dragProps(e)} style={bg ? { background: bg, color: contrastText(bg), borderColor: bg } : undefined} title={`${e.title} · ${e.prop}`} onClick={(ev) => { ev.stopPropagation(); onEdit(e.dbKey, e.rec); }}>
+        {e.title}
+      </button>
+    );
+  };
 
   return (
     <div className="tg-wrap">
@@ -229,7 +234,7 @@ function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { days: Da
         <div className="tg-axis-label">giornata</div>
         {days.map((d, i) => {
           const ds = ymd(d);
-          const allday = byDay.get(ds) ?? [];
+          const allday = (byDay.get(ds) ?? []).filter((e) => !isFascia(e));
           const sess = sessByDay.get(ds) ?? [];
           const key = `${i}:allday`;
           return (
@@ -238,73 +243,63 @@ function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { days: Da
               className={over === key ? "tg-allday-cell over" : "tg-allday-cell"}
               onClick={() => onEdit("scadenze", undefined, { Data: ds })}
               onDragOver={(ev) => { ev.preventDefault(); setOver(key); }}
-              onDrop={() => drop(ds)}
+              onDrop={() => drop(ds, undefined)}
             >
               {sess.map((s) => (
                 <button key={s.id} className="tg-chip" style={{ background: C_VERIFICA, color: contrastText(C_VERIFICA), borderColor: C_VERIFICA }} title={`Verifica · ${s.titolo}`} onClick={(ev) => { ev.stopPropagation(); onOpenSessione(s.id); }}>
                   📝 {s.titolo}
                 </button>
               ))}
-              {allday.map((e, j) => {
-                const bg = eventColor(e);
-                return (
-                  <button key={j} className={bg ? "tg-chip" : "tg-chip plain"} {...dragProps(e)} style={bg ? { background: bg, color: contrastText(bg), borderColor: bg } : undefined} title={`${e.title} · ${e.prop}`} onClick={(ev) => { ev.stopPropagation(); onEdit(e.dbKey, e.rec); }}>
-                    {e.title}
-                  </button>
-                );
-              })}
+              {allday.map((e, j) => chip(e, j))}
             </div>
           );
         })}
       </div>
 
-      <div className="tg-grid tg-body" style={cols}>
-        <div className="tg-axis">
-          {hours.map((h) => <div key={h} className="tg-hour" style={{ top: `${pctTop(h * 60)}%` }}>{pad(h)}:00</div>)}
-        </div>
-        {days.map((d, di) => {
-          const ds = ymd(d);
-          const isToday = ds === todayStr;
-          const wd = (d.getDay() + 6) % 7;
-          // Blocchi dell'orario ricorrente: SOLO le fasce con materia/classe assegnata.
-          const blocks: { b: TimeBand; ov: OrarioSlot; bg: string }[] = [];
-          for (const b of bands) {
-            const ov = orarioByKey.get(`${wd}:${b.label}`);
-            if (!ov || (!ov.materia && !ov.classe)) continue;
-            const bg = materiaColor(ov.materia) ?? classeColor(ov.classe) ?? "#6b6660";
-            blocks.push({ b, ov, bg });
-          }
-          return (
-            <div key={di} className={isToday ? "tg-col today" : "tg-col"} onClick={() => onEdit("scadenze", undefined, { Data: ds })}>
-              {hours.map((h) => <div key={h} className="tg-line" style={{ top: `${pctTop(h * 60)}%` }} />)}
-              {blocks.map((blk, bi) => {
-                const a = toMinutes(blk.b.start), z = toMinutes(blk.b.end);
-                const fg = contrastText(blk.bg);
+      {bands.length === 0 ? (
+        <div className="tg-empty">Nessuna ora impostata. Definisci le ore (anche pomeridiane) dal <b>Profilo › Orario &amp; classi › Fasce orarie</b>.</div>
+      ) : (
+        <div className="tg-body" style={bodyStyle}>
+          {bands.map((b) => (
+            <Fragment key={b.label}>
+              <div className="pg-axis">
+                <span className="pg-ora">{b.label}</span>
+                <span className="pg-time">{b.start}–{b.end}</span>
+              </div>
+              {days.map((d, di) => {
+                const ds = ymd(d);
+                const wd = (d.getDay() + 6) % 7;
+                const isToday = ds === todayStr;
+                const ov = orarioByKey.get(`${wd}:${b.label}`);
+                const lessonBg = ov && (ov.materia || ov.classe) ? (materiaColor(ov.materia) ?? classeColor(ov.classe) ?? "#6b6660") : undefined;
+                const evs = (byDay.get(ds) ?? []).filter((e) => e.rec["Fascia"] === b.label);
+                const key = `${di}:${b.label}`;
+                const cls = ["pg-cell"];
+                if (isToday) cls.push("today");
+                if (isToday && curBand === b.label) cls.push("now");
+                if (over === key) cls.push("over");
                 return (
                   <div
-                    key={bi}
-                    className="tg-slot"
-                    style={{ top: `${pctTop(a)}%`, height: `${pctH(a, z)}%`, background: blk.bg, color: fg, borderColor: blk.bg }}
-                    title={`${[blk.ov.materia, blk.ov.classe].filter(Boolean).join(" · ")} · ${blk.b.start}–${blk.b.end}`}
+                    key={di}
+                    className={cls.join(" ")}
+                    onClick={() => onEdit("scadenze", undefined, { Data: ds, Fascia: b.label })}
+                    onDragOver={(ev) => { ev.preventDefault(); setOver(key); }}
+                    onDrop={(ev) => { ev.stopPropagation(); drop(ds, b.label); }}
                   >
-                    <span className="tg-slot-top">
-                      <span className="tg-slot-time">{blk.b.start}</span>
-                      {blk.ov.classe && <span className="tg-slot-cls">{blk.ov.classe}</span>}
-                    </span>
-                    {blk.ov.materia && <span className="tg-slot-mat">{blk.ov.materia}</span>}
+                    {lessonBg && (
+                      <div className="pg-lesson" style={{ background: lessonBg, color: contrastText(lessonBg) }} title={`${[ov?.materia, ov?.classe].filter(Boolean).join(" · ")} · ${b.start}–${b.end}`}>
+                        {ov?.materia && <span className="pg-l-mat">{ov.materia}</span>}
+                        {ov?.classe && <span className="pg-l-cls">{ov.classe}</span>}
+                      </div>
+                    )}
+                    {evs.map((e, j) => chip(e, j))}
                   </div>
                 );
               })}
-              {isToday && nowMin >= START_MIN && nowMin <= END_MIN && (
-                <div className="tg-now" style={{ top: `${pctTop(nowMin)}%` }}><span className="tg-now-dot" /></div>
-              )}
-            </div>
-          );
-        })}
-        {bands.length === 0 && (
-          <div className="tg-empty">Nessuna fascia oraria. Impostale dal <b>Profilo › Orario &amp; classi</b>.</div>
-        )}
-      </div>
+            </Fragment>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
