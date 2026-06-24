@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { BasePropertyDef, DbKey } from "@model";
 import { schemaByKey } from "@model";
 import { newId, records, recordTitle, upsert, type Rec, type Value } from "../store/store";
+import { annoCorrenteId, classeId, classeUnicaPerMateria } from "../store/links";
 import { SearchSelect } from "./SearchSelect";
 import { schoolYearOptions, type SchoolYearOption } from "./schoolYear";
 import { materieAttive, scuoleCorrenti, useProfile } from "../store/profile";
@@ -33,6 +34,25 @@ export function RecordPanel({
   const profile = useProfile();
   const tax = useTassonomia();
   const hasDate = Object.values(def.properties).some((p) => p.type === "date");
+  const isNew = !rec;
+  const relNames = new Set((def.relations ?? []).map((r) => r.name));
+  const materiaSel = str(draft["Materia"]);
+
+  // Anno scolastico automatico (corrente) per i nuovi record che hanno quella relazione.
+  useEffect(() => {
+    if (!isNew || !relNames.has("Anno scolastico")) return;
+    if (Array.isArray(draft["Anno scolastico"]) && draft["Anno scolastico"].length) return;
+    set("Anno scolastico", [annoCorrenteId()]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Classe automatica: se la materia scelta ha UNA sola classe nell'orario, agganciala.
+  useEffect(() => {
+    if (!isNew || !relNames.has("Classe") || !materiaSel) return;
+    if (Array.isArray(draft["Classe"]) && draft["Classe"].length) return;
+    const uc = classeUnicaPerMateria(materiaSel, profile.orario);
+    if (uc) set("Classe", [classeId(uc)]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [materiaSel]);
 
   return (
     <>

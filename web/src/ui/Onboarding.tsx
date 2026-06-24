@@ -10,6 +10,7 @@ import {
   type ScuolaRef,
 } from "../data/concorso";
 import { getProfile, setProfile, type ScuolaProfilo } from "../store/profile";
+import { annoCorrente } from "../store/valutazione";
 import { SearchSelect } from "./SearchSelect";
 import { OrarioLavoro } from "./OrarioLavoro";
 
@@ -32,6 +33,8 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
   const [concorsi, setConcorsi] = useState<string[]>(existing.concorsi);
   const [cdcQuery, setCdcQuery] = useState("");
   const [materie, setMaterie] = useState<MateriaRow[]>(existing.materie.map((l) => ({ label: l, on: true })));
+  const annoCorr = annoCorrente();
+  const [conferma, setConferma] = useState(existing.assettoConfermato === annoCorr);
 
   const refs: ScuolaRef[] = (() => {
     const cur = scuole.filter((s) => s.corrente);
@@ -84,7 +87,14 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
   };
   const save = () => {
     const list = materie.filter((r) => r.on).map((r) => r.label.trim()).filter(Boolean);
-    setProfile({ onboarded: true, docente, scuole, concorsi, materie: Array.from(new Set(list)) });
+    setProfile({
+      onboarded: true,
+      docente,
+      scuole,
+      concorsi,
+      materie: Array.from(new Set(list)),
+      assettoConfermato: conferma ? annoCorr : existing.assettoConfermato,
+    });
     onClose();
   };
 
@@ -211,6 +221,12 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
               importa la griglia. Comparirà sotto agli eventi del calendario.
             </p>
             <OrarioLavoro />
+            <label className="field checkbox conferma-assetto">
+              <input type="checkbox" checked={conferma} onChange={(e) => setConferma(e.target.checked)} />
+              <span>
+                <b>Conferma definitiva l'assetto dell'{annoCorr}</b> <em>· consolida orario, classi e materie per tutto l'anno (resta sempre modificabile)</em>
+              </span>
+            </label>
           </div>
         )}
 

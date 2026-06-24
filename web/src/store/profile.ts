@@ -44,6 +44,8 @@ export interface Profile {
   orario: OrarioSlot[]; // tabella oraria di lavoro settimanale
   coloriMaterie?: Record<string, string>;
   coloriClassi?: Record<string, string>;
+  /** a.s. per cui l'assetto (orario/classi/materie) è stato confermato "definitivo" (sempre modificabile). */
+  assettoConfermato?: string;
 }
 
 const KEY = "cruscotto-profile:v1";

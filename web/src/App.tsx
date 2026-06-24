@@ -24,6 +24,7 @@ import { PromemoriaView } from "./ui/PromemoriaView";
 import { RecordPanel } from "./ui/RecordPanel";
 import { Onboarding } from "./ui/Onboarding";
 import { useProfile } from "./store/profile";
+import { annoCorrente } from "./store/valutazione";
 
 export type View =
   | { kind: "oggi" }
@@ -69,6 +70,12 @@ export function App() {
   const backupStale = hasData && !backup.fileName && (backup.daysSince === null || backup.daysSince >= 7);
   const exportNow = () => { exportJson(getState()); markExported(); };
 
+  // Promemoria d'inizio anno: tra il 25 agosto e il 15 settembre invita a impostare/confermare
+  // l'assetto (orario/classi/materie) una volta per tutto l'anno scolastico.
+  const annoCorr = annoCorrente();
+  const oggiMd = (() => { const d = new Date(); return (d.getMonth() + 1) * 100 + d.getDate(); })();
+  const setupDovuto = profile.onboarded && oggiMd >= 825 && oggiMd <= 915 && profile.assettoConfermato !== annoCorr;
+
   const onEdit = (dbKey: DbKey, rec?: Rec, prefill?: Record<string, Value>) => setEditing({ dbKey, rec, prefill });
   const openUda = (id: string) => setView({ kind: "uda", id });
   const closeProfile = () => { setShowProfile(false); setSkipped(true); };
@@ -80,6 +87,14 @@ export function App() {
   return (
     <div className={editing ? "app panel-open" : "app"}>
       <Toolbar onToggleNav={() => setNavOpen((o) => !o)} onOpenProfile={() => setShowProfile(true)} onOpenBackup={() => setShowBackup(true)} />
+      {setupDovuto && (
+        <div className="setup-banner">
+          <span>📌 Inizio anno: imposta o conferma il tuo orario e le tue classi per l'{annoCorr}. Si fa una volta sola.</span>
+          <span className="bb-actions">
+            <button className="primary" onClick={() => setShowProfile(true)}>Apri il profilo</button>
+          </span>
+        </div>
+      )}
       {backupStale && (
         <div className="backup-banner">
           <span>⚠️ Nessun backup recente: i dati sono solo in questo browser.</span>
