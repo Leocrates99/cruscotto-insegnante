@@ -391,6 +391,65 @@ td .check { color: var(--success); font-weight: 700; }
 .snap-list li { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.4rem 0.6rem; background: var(--cream); border: 1px solid var(--parchment-dark); border-radius: var(--radius); font-size: 0.82rem; }
 .snap-list li button { font: 600 0.76rem var(--font-ui); padding: 0.25rem 0.55rem; }
 
+/* ── Orario di lavoro (editor nel profilo) ──────────────────────────────────── */
+.orario-lavoro { display: flex; flex-direction: column; gap: 1rem; }
+.ol-sec h4 { margin: 0 0 0.4rem; font: 700 0.8rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-muted); }
+.ol-sec h4 em { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 500; }
+.ol-giorni { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.ol-day { display: inline-flex; align-items: center; gap: 0.3rem; font: 600 0.8rem var(--font-ui); padding: 0.3rem 0.55rem; border: 1px solid var(--parchment-dark); border-radius: 999px; background: var(--parchment); cursor: pointer; }
+.ol-day.on { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+.ol-classi { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.4rem; }
+.ol-classe { display: inline-flex; align-items: center; gap: 0.35rem; font: 600 0.8rem var(--font-ui); padding: 0.2rem 0.45rem; border: 2px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); }
+.ol-classe input[type="color"] { width: 18px; height: 18px; border: none; padding: 0; background: none; cursor: pointer; }
+.ol-classe button { background: none; border: none; cursor: pointer; color: var(--ink-muted); padding: 0 0.15rem; }
+.ol-add { display: flex; gap: 0.4rem; }
+.ol-add input { flex: 1; font: 0.85rem var(--font-ui); padding: 0.4rem 0.55rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.ol-nobands { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.ol-preview { margin-top: 0.5rem; padding: 0.5rem 0.7rem; border: 1px solid var(--accent); border-radius: var(--radius); background: var(--accent-glow); }
+.ol-preview ul { margin: 0.3rem 0; padding-left: 1.1rem; font-size: 0.8rem; max-height: 160px; overflow-y: auto; }
+.ol-preview-actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
+.ol-grid-wrap { overflow-x: auto; }
+.ol-grid { border-collapse: collapse; width: 100%; font-size: 0.78rem; }
+.ol-grid th, .ol-grid td { border: 1px solid var(--parchment-dark); padding: 2px; text-align: center; }
+.ol-grid thead th { background: var(--parchment); font: 700 0.74rem var(--font-ui); }
+.ol-ora { background: var(--parchment); white-space: nowrap; font: 600 0.72rem var(--font-ui); }
+.ol-ora small { display: block; color: var(--ink-muted); font-weight: 400; }
+.ol-grid td select { width: 100%; font: 0.72rem var(--font-ui); border: 1px solid transparent; background: transparent; color: var(--ink); padding: 1px; max-width: 92px; }
+.ol-grid td select:focus { outline: none; border-color: var(--accent); background: var(--cream); }
+
+/* overlay dell'orario ricorrente nelle fasce del calendario */
+.tg-band-orario { position: absolute; right: 4px; top: 2px; font: 600 0.62rem var(--font-ui); opacity: 0.55; pointer-events: none; max-width: 92%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Avanzamento lezioni ────────────────────────────────────────────────────── */
+.av-toggle { font: 500 0.8rem var(--font-ui); color: var(--ink-muted); display: inline-flex; align-items: center; gap: 0.3rem; }
+.av-summary { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.4rem 0 1rem; }
+.av-sum { font: 600 0.82rem var(--font-ui); padding: 0.35rem 0.7rem; border-radius: var(--radius); border: 1px solid var(--parchment-dark); background: var(--cream); }
+.av-sum b { margin-left: 0.3rem; }
+.av-sum.r { color: #c0392b; border-color: #e6b0aa; }
+.av-sum.d { color: #b9791f; border-color: #e8c98a; }
+.av-sum.s { color: var(--success); }
+.av-uda { margin-bottom: 1rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); overflow: hidden; }
+.av-uda-head { display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0.8rem; background: var(--parchment); }
+.av-uda-head h3 { margin: 0; font-size: 0.92rem; }
+.av-bar { flex: 1; height: 8px; background: var(--parchment-dark); border-radius: 999px; overflow: hidden; min-width: 80px; }
+.av-bar span { display: block; height: 100%; background: var(--success); }
+.av-frac { font: 600 0.78rem var(--font-ui); color: var(--ink-muted); }
+.av-rows { display: flex; flex-direction: column; }
+.av-row { display: grid; grid-template-columns: minmax(0,1fr) auto auto auto auto; gap: 0.5rem; align-items: center; padding: 0.4rem 0.8rem; border-top: 1px solid var(--parchment-dark); }
+.av-row.st-r { background: #fdecea; }
+[data-theme="dark"] .av-row.st-r { background: #3a1f1c; }
+.av-titolo { text-align: left; background: none; border: none; cursor: pointer; color: var(--ink); font: 500 0.85rem var(--font-ui); display: inline-flex; gap: 0.4rem; align-items: baseline; min-width: 0; }
+.av-seq { color: var(--ink-muted); font-size: 0.75rem; }
+.av-tags { display: inline-flex; gap: 0.3rem; flex-wrap: wrap; }
+.av-data { font: 0.78rem var(--font-ui); color: var(--ink-muted); white-space: nowrap; }
+.av-badge { font: 700 0.68rem var(--font-ui); padding: 0.15rem 0.45rem; border-radius: 999px; white-space: nowrap; }
+.av-badge.r { background: #c0392b; color: #fff; }
+.av-badge.a { background: #2e7d5a; color: #fff; }
+.av-badge.s { color: var(--success); border: 1px solid var(--success); }
+.av-badge.d, .av-badge.x { background: var(--parchment-dark); color: var(--ink-muted); }
+.av-actions { display: inline-flex; gap: 0.3rem; }
+.av-actions button { font: 600 0.72rem var(--font-ui); padding: 0.25rem 0.5rem; }
+
 /* ── Hamburger + backdrop (attivi solo su mobile) ───────────────────────────── */
 .nav-toggle {
   display: none; width: 38px; height: 38px; padding: 0; flex-shrink: 0;

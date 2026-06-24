@@ -11,13 +11,14 @@ import {
 } from "../data/concorso";
 import { getProfile, setProfile, type ScuolaProfilo } from "../store/profile";
 import { SearchSelect } from "./SearchSelect";
+import { OrarioLavoro } from "./OrarioLavoro";
 
 interface MateriaRow {
   label: string;
   on: boolean;
 }
 
-const STEPS = ["Scuole", "Classi di concorso", "Materie"];
+const STEPS = ["Scuole", "Classi di concorso", "Materie", "Orario & classi"];
 
 /**
  * Scheda di profilazione del docente e della/e scuola/e. Compare al primo avvio e
@@ -74,7 +75,12 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
 
   const goNext = () => {
     if (step === 1) proponiMaterie();
-    setStep((s) => Math.min(2, s + 1));
+    // Entrando nell'orario, rendi disponibili le materie confermate nei menù della griglia.
+    if (step === 2) {
+      const list = materie.filter((r) => r.on).map((r) => r.label.trim()).filter(Boolean);
+      setProfile({ materie: Array.from(new Set(list)) });
+    }
+    setStep((s) => Math.min(3, s + 1));
   };
   const save = () => {
     const list = materie.filter((r) => r.on).map((r) => r.label.trim()).filter(Boolean);
@@ -198,11 +204,21 @@ export function Onboarding({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
+        {step === 3 && (
+          <div className="wizard-body">
+            <p className="muted">
+              La tua tabella oraria di lavoro: scegli i giorni, le classi (con colore) e compila o
+              importa la griglia. Comparirà sotto agli eventi del calendario.
+            </p>
+            <OrarioLavoro />
+          </div>
+        )}
+
         <div className="modal-actions wizard-actions">
           <button onClick={onClose}>{existing.onboarded ? "Annulla" : "Salta"}</button>
           <span className="spacer" />
           {step > 0 && <button onClick={() => setStep((s) => s - 1)}>‹ Indietro</button>}
-          {step < 2 ? (
+          {step < 3 ? (
             <button className="primary" onClick={goNext}>Avanti ›</button>
           ) : (
             <button className="primary" onClick={save}>Salva profilo</button>

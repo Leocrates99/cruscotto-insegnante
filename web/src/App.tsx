@@ -15,6 +15,7 @@ import { ProgrammazioneView } from "./ui/ProgrammazioneView";
 import { CalendarView } from "./ui/CalendarView";
 import { KanbanView } from "./ui/KanbanView";
 import { TimelineView } from "./ui/TimelineView";
+import { AvanzamentoView } from "./ui/AvanzamentoView";
 import { PromemoriaView } from "./ui/PromemoriaView";
 import { RecordPanel } from "./ui/RecordPanel";
 import { Onboarding } from "./ui/Onboarding";
@@ -24,6 +25,7 @@ export type View =
   | { kind: "calendar" }
   | { kind: "kanban" }
   | { kind: "timeline" }
+  | { kind: "avanzamento" }
   | { kind: "promemoria" }
   | { kind: "home" }
   | { kind: "programmazione" }
@@ -82,6 +84,7 @@ export function App() {
           {view.kind === "calendar" && <CalendarView onEdit={onEdit} onView={setView} />}
           {view.kind === "kanban" && <KanbanView onEdit={onEdit} onOpenUda={openUda} />}
           {view.kind === "timeline" && <TimelineView onOpenUda={openUda} />}
+          {view.kind === "avanzamento" && <AvanzamentoView onEdit={onEdit} />}
           {view.kind === "promemoria" && <PromemoriaView onEdit={onEdit} />}
           {view.kind === "home" && (
             <HomeView onSelect={(key) => setView({ kind: "entity", key })} onOpenUda={openUda} />

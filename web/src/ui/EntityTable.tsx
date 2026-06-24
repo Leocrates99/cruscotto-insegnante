@@ -2,7 +2,7 @@ import type { BasePropertyDef, DbKey } from "@model";
 import { schemaByKey } from "@model";
 import { records, recordTitle, removeRecord, titleProp, type Rec, type Value } from "../store/store";
 import { useStore } from "../store/useStore";
-import { materiaColor } from "./materia";
+import { classeColor, materiaColor } from "./materia";
 
 function CellValue({ name, prop, value }: { name: string; prop: BasePropertyDef; value: Value }) {
   if (value === undefined || value === "") return null;
@@ -91,7 +91,12 @@ export function EntityTable({
             )}
             {rows.map((rec) => (
               <tr key={rec.id}>
-                <td className="title-cell">{recordTitle(dbKey, rec)}</td>
+                <td
+                  className="title-cell"
+                  style={dbKey === "classi" ? { borderLeft: `4px solid ${classeColor(recordTitle(dbKey, rec))}`, paddingLeft: "0.5rem" } : undefined}
+                >
+                  {recordTitle(dbKey, rec)}
+                </td>
                 {baseCols.map(([name, p]) => (
                   <td key={name}>
                     <CellValue name={name} prop={p} value={rec[name]} />

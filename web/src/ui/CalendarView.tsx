@@ -5,6 +5,8 @@ import type { View } from "../App";
 import { useStore } from "../store/useStore";
 import { collectEvents, type CalEvent } from "../compute/events";
 import { setSettings, toMinutes, useSettings, type TimeBand } from "../store/settings";
+import { useProfile } from "../store/profile";
+import { classeColor, materiaColor } from "./materia";
 import { OrarioSetup } from "./OrarioSetup";
 
 type Mode = "week" | "month" | "day";
@@ -62,6 +64,7 @@ export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: Vie
           <button onClick={() => setShowOrario(true)}>🕒 Orario</button>
           <button onClick={() => onEdit("scadenze", undefined, { Data: ymd(anchor) })}>+ Scadenza</button>
           <button onClick={() => onEdit("lezioni", undefined, { "Data prevista": ymd(anchor) })}>+ Lezione</button>
+          <button onClick={() => onView({ kind: "avanzamento" })}>🚦 Avanzamento</button>
           <button onClick={() => onView({ kind: "promemoria" })}>📌 Promemoria</button>
           <button onClick={() => onView({ kind: "programmazione" })}>📊 Sostenibilità</button>
         </div>
@@ -70,7 +73,7 @@ export function CalendarView({ onEdit, onView }: { onEdit: Edit; onView: (v: Vie
       {mode === "month" ? (
         <MonthGrid anchor={anchor} byDay={byDay} onEdit={onEdit} />
       ) : (
-        <TimeGrid days={mode === "day" ? [anchor] : weekDays(anchor)} byDay={byDay} bands={settings.timeBands} onEdit={onEdit} />
+        <TimeGrid days={mode === "day" ? [anchor] : weekDays(anchor).filter((d) => settings.giorniLezione.includes((d.getDay() + 6) % 7))} byDay={byDay} bands={settings.timeBands} onEdit={onEdit} />
       )}
 
       {showOrario && <OrarioSetup onClose={() => setShowOrario(false)} />}
@@ -115,6 +118,8 @@ function MonthGrid({ anchor, byDay, onEdit }: { anchor: Date; byDay: Map<string,
 function TimeGrid({ days, byDay, bands, onEdit }: { days: Date[]; byDay: Map<string, CalEvent[]>; bands: TimeBand[]; onEdit: Edit }) {
   const [dragEv, setDragEv] = useState<CalEvent | null>(null);
   const [over, setOver] = useState<string | null>(null);
+  const profile = useProfile();
+  const orarioByKey = new Map(profile.orario.map((s) => [`${s.giorno}:${s.fascia}`, s] as const));
   const HOUR_H = 50;
   let startMin = 7 * 60, endMin = 20 * 60;
   if (bands.length) {
@@ -195,6 +200,8 @@ function TimeGrid({ days, byDay, bands, onEdit }: { days: Date[]; byDay: Map<str
               {bands.map((b, bi) => {
                 const t = yOf(toMinutes(b.start));
                 const key = `${di}:${b.label}`;
+                const ov = orarioByKey.get(`${(d.getDay() + 6) % 7}:${b.label}`);
+                const ovColor = materiaColor(ov?.materia) ?? classeColor(ov?.classe);
                 return (
                   <div
                     key={bi}
@@ -205,6 +212,11 @@ function TimeGrid({ days, byDay, bands, onEdit }: { days: Date[]; byDay: Map<str
                     onDrop={(ev) => { ev.stopPropagation(); drop(ds, b.label); }}
                   >
                     <span className="tg-band-label">{b.label}</span>
+                    {ov && (ov.materia || ov.classe) && (
+                      <span className="tg-band-orario" style={ovColor ? { color: ovColor } : undefined}>
+                        {[ov.materia, ov.classe].filter(Boolean).join(" · ")}
+                      </span>
+                    )}
                   </div>
                 );
               })}

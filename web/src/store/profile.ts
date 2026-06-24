@@ -11,6 +11,14 @@ export interface ScuolaProfilo {
   corrente: boolean;
 }
 
+/** Una cella dell'orario di lavoro settimanale ricorrente. */
+export interface OrarioSlot {
+  giorno: number; // 0=lun … 6=dom
+  fascia: string; // label della fascia oraria (es. "1ª ora")
+  materia?: string;
+  classe?: string;
+}
+
 /** Profilo del docente: scuole, classi di concorso e materie pertinenti (web-local). */
 export interface Profile {
   onboarded: boolean;
@@ -18,11 +26,14 @@ export interface Profile {
   scuole: ScuolaProfilo[];
   concorsi: string[]; // codici classe di concorso, es. "A-13"
   materie: string[]; // materie confermate → guidano i menù a tendina
+  classi: string[]; // etichette delle classi del docente (es. "IV A")
+  orario: OrarioSlot[]; // tabella oraria di lavoro settimanale
   coloriMaterie?: Record<string, string>;
+  coloriClassi?: Record<string, string>;
 }
 
 const KEY = "cruscotto-profile:v1";
-const DEFAULTS: Profile = { onboarded: false, docente: "", scuole: [], concorsi: [], materie: [] };
+const DEFAULTS: Profile = { onboarded: false, docente: "", scuole: [], concorsi: [], materie: [], classi: [], orario: [] };
 
 function load(): Profile {
   try {
@@ -74,4 +85,9 @@ export function scuoleCorrenti(p: Profile = profile): ScuolaProfilo[] {
  */
 export function materieAttive(p: Profile = profile): string[] {
   return p.materie.length ? p.materie : MATERIE.map((m) => m.name);
+}
+
+/** Classi del docente (working set per i menù). */
+export function classiAttive(p: Profile = profile): string[] {
+  return p.classi;
 }

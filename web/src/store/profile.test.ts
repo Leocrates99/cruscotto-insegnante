@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { MATERIE } from "@model";
 import { materieAttive, type Profile } from "./profile";
 
-const base: Profile = { onboarded: false, docente: "", scuole: [], concorsi: [], materie: [] };
+const base: Profile = { onboarded: false, docente: "", scuole: [], concorsi: [], materie: [], classi: [], orario: [] };
 
 describe("profile — materieAttive", () => {
   it("senza profilo, ricade sulle materie di default", () => {

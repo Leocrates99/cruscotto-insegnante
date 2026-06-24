@@ -10,10 +10,12 @@ export interface TimeBand {
 export interface Settings {
   timeBands: TimeBand[];
   calendarMode: "week" | "month" | "day";
+  /** Giorni con lezione (0=lun … 6=dom). Default lun–sab: le scuole sono chiuse di domenica. */
+  giorniLezione: number[];
 }
 
 const KEY = "cruscotto-settings:v1";
-const DEFAULTS: Settings = { timeBands: [], calendarMode: "week" };
+const DEFAULTS: Settings = { timeBands: [], calendarMode: "week", giorniLezione: [0, 1, 2, 3, 4, 5] };
 
 function load(): Settings {
   try {
