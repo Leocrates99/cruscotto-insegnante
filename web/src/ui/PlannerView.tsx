@@ -6,7 +6,7 @@ import { newId, records, upsert, type Rec } from "../store/store";
 import { useStore } from "../store/useStore";
 import { classiAttive, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
 import { annoCorrenteId, classeId } from "../store/links";
-import { bloomLabel, cicloDaFase, nucleiConObiettivi, useTassonomia, type TaxObiettivo } from "../data/tassonomia";
+import { bloomLabel, cicloDaFase, materieIndirizzo, nucleiConObiettivi, useTassonomia, type TaxObiettivo } from "../data/tassonomia";
 import { materiaColor } from "./materia";
 
 const oggi = () => new Date().toISOString().slice(0, 10);
@@ -17,7 +17,10 @@ type CompitoRow = { id: string; tipo: string; testo: string };
 const COMPITO_TIPI = ["esercizio in classe", "esercitazione guidata", "compito per casa", "verifica formativa"];
 const MAT_TIPI = ["esercizio", "scheda", "traccia", "versione", "presentazione", "mappa concettuale"];
 
-/** Opzioni (name) di una proprietà select/multi_select dello schema. */
+// Etichette con la maiuscola a inizio parola (minuscole le particelle), solo per la resa.
+const MINOR = new Set(["di", "e", "a", "da", "in", "con", "su", "per", "tra", "fra", "la", "il", "lo", "le", "i", "gli", "un", "una", "del", "della", "dei", "delle", "al", "alla", "allo", "dello", "ed", "o"]);
+const cap = (s: string): string => s.split(" ").map((w, i) => (!w ? w : i > 0 && MINOR.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1))).join(" ");
+
 function optsOf(key: DbKey, prop: string): string[] {
   const p = schemaByKey[key].properties[prop] as { options?: { name: string }[] } | undefined;
   return p?.options?.map((o) => o.name) ?? [];
@@ -25,12 +28,12 @@ function optsOf(key: DbKey, prop: string): string[] {
 const METODOLOGIE = optsOf("lezioni", "Metodologie");
 const STRUMENTI = optsOf("lezioni", "Strumenti e spazi");
 const VERIFICHE_F = optsOf("lezioni", "Verifica formativa");
+const EDCIVICA = optsOf("lezioni", "Educazione civica");
 
 /**
- * Pianifica: superficie di brainstorming e compilazione completa di lezione / laboratorio / UdA.
- * Pesca obiettivi dalla tassonomia (palette per nucleo, filtrabile per area), struttura la
- * progettazione (conoscenze/abilità/competenze, fasi, metodologie, strumenti, compiti/esercizi,
- * inclusione, verifica formativa, materiali) e calendarizza.
+ * Pianifica: composer completo di lezione / laboratorio / UdA, con lo stesso livello di
+ * arricchimento didattico (conoscenze/abilità/competenze, metodologie, strumenti, compiti,
+ * educazione civica, raccordi interdisciplinari, inclusione, verifica) e calendarizzazione.
  */
 export function PlannerView({ onView }: { onView: (v: View) => void }) {
   useStore();
@@ -53,7 +56,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [area, setArea] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
 
-  // Composizione didattica (lezione/laboratorio)
+  // Composizione didattica (condivisa fra lezione/laboratorio/UdA)
   const [prereq, setPrereq] = useState("");
   const [conoscenze, setConoscenze] = useState("");
   const [abilita, setAbilita] = useState("");
@@ -61,6 +64,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [fasi, setFasi] = useState("");
   const [metodologie, setMetodologie] = useState<string[]>([]);
   const [strumenti, setStrumenti] = useState<string[]>([]);
+  const [educiv, setEduciv] = useState<string[]>([]);
+  const [raccordi, setRaccordi] = useState<string[]>([]);
   const [inclusione, setInclusione] = useState("");
   const [verificaF, setVerificaF] = useState("");
   const [compiti, setCompiti] = useState<CompitoRow[]>([]);
@@ -75,6 +80,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
   const isUda = tipo === "uda";
   const materieDisp = !isUda && classe ? materieClasseEffettive(classe, profile) : materie;
+  const raccordiOpts = useMemo(() => (tax ? materieIndirizzo(tax, indir).filter((m) => m !== materia) : []), [tax, indir, materia]);
 
   const aree = useMemo(() => {
     if (!tax || !materia) return [];
@@ -97,7 +103,6 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const toggle = (o: TaxObiettivo) => setSel((s) => (selIds.has(o.id) ? s.filter((x) => x.id !== o.id) : [...s, o]));
   const toggleIn = (arr: string[], v: string) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
-  // Compila conoscenze/competenze dai soli obiettivi pescati (per tipo tassonomico).
   const componiDaObiettivi = () => {
     const con = sel.filter((o) => o.tipo === "conoscenza").map((o) => `• ${o.argomento}`);
     const com = sel.filter((o) => o.tipo === "competenza").map((o) => `• ${o.argomento}`);
@@ -134,17 +139,25 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
   const reset = () => {
     setSel([]); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
-    setFasi(""); setMetodologie([]); setStrumenti([]); setInclusione(""); setVerificaF("");
+    setFasi(""); setMetodologie([]); setStrumenti([]); setEduciv([]); setRaccordi([]); setInclusione(""); setVerificaF("");
     setCompiti([]); setConsegna(""); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
   };
+
+  const compitiText = () => compiti.filter((c) => c.testo.trim()).map((c) => `• [${c.tipo}] ${c.testo.trim()}`).join("\n");
 
   const salva = () => {
     if (sel.length === 0 && !titolo.trim()) { setMsg("Aggiungi un titolo o qualche obiettivo dalla palette."); return; }
     const tit = titolo.trim() || `${materia}${sel[0] ? " — " + sel[0].argomento : ""}`;
+    const cId = classe ? classeId(classe) : undefined;
+    const didattica: Rec = {
+      id: "", Prerequisiti: prereq, Conoscenze: conoscenze, "Abilità": abilita, Competenze: competenzeTxt,
+      Metodologie: metodologie, "Strumenti e spazi": strumenti, "Compiti ed esercizi": compitiText(),
+      "Educazione civica": educiv, "Raccordi interdisciplinari": raccordi, "Inclusione (misure)": inclusione,
+      ...(verificaF ? { "Verifica formativa": verificaF } : {}),
+    };
 
     if (isUda) {
       const obIds = sel.map(obiettivoRecId);
-      const cId = classe ? classeId(classe) : undefined;
       const lezIds: string[] = [];
       const start = Date.parse(`${data}T00:00:00`), end = Date.parse(`${dataFine || data}T00:00:00`);
       for (let i = 0; i < Math.max(0, nLezioni); i++) {
@@ -154,26 +167,20 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
         upsert("lezioni", { id: lid, Titolo: `${tit} — lezione ${i + 1}`, Materia: materia, "Data prevista": d, Stato: "Progettata", Sequenza: i + 1, "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}) } as Rec);
       }
       upsert("uda", {
-        id: newId(), Titolo: tit, "Competenza attesa": competenza, "Prodotto atteso": prodotto, "Compito di realtà": compitoRealta,
-        Ciclo: ciclo, Stato: "Progettata", "Data inizio": data, "Data fine": dataFine, Obiettivi: obIds, ...(lezIds.length ? { Lezioni: lezIds } : {}),
+        ...didattica, id: newId(), Titolo: tit, "Competenza attesa": competenza, "Prodotto atteso": prodotto, "Compito di realtà": compitoRealta,
+        Ciclo: ciclo, Stato: "Progettata", "Data inizio": data, "Data fine": dataFine, Obiettivi: obIds,
+        ...(lezIds.length ? { Lezioni: lezIds } : {}), ...(matSel.length ? { Materiali: matSel } : {}),
       } as Rec);
       setMsg(`✓ UdA creata${lezIds.length ? ` con ${lezIds.length} lezioni calendarizzate` : ""}: ${tit}`);
     } else {
-      const cId = classe ? classeId(classe) : undefined;
-      const compitiText = compiti.filter((c) => c.testo.trim()).map((c) => `• [${c.tipo}] ${c.testo.trim()}`).join("\n");
       upsert("lezioni", {
-        id: newId(),
+        ...didattica, id: newId(),
         Titolo: tipo === "laboratorio" ? `[Laboratorio] ${tit}` : tit,
         Materia: materia, "Data prevista": data, "Durata (ore)": durata, Stato: "Progettata",
-        Prerequisiti: prereq,
         "Obiettivi della lezione": sel.map((o) => `• ${o.argomento}`).join("\n"),
-        Conoscenze: conoscenze, "Abilità": abilita, Competenze: competenzeTxt,
-        Fasi: fasi, Metodologie: metodologie, "Strumenti e spazi": strumenti,
-        "Compiti ed esercizi": compitiText, ...(consegna ? { "Consegna compiti": consegna } : {}),
-        "Inclusione (misure)": inclusione, ...(verificaF ? { "Verifica formativa": verificaF } : {}),
+        Fasi: fasi, ...(consegna ? { "Consegna compiti": consegna } : {}),
         "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}), ...(matSel.length ? { Materiali: matSel } : {}),
       } as Rec);
-      // I compiti per casa con data di consegna diventano una scadenza calendarizzata.
       if (consegna && compiti.some((c) => c.tipo === "compito per casa" && c.testo.trim())) {
         upsert("scadenze", { id: newId(), Titolo: `Compiti ${materia}${classe ? ` · ${classe}` : ""}`, Data: consegna, Stato: "da fare", Tipo: "consegna", "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}) } as Rec);
       }
@@ -181,6 +188,10 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     }
     reset();
   };
+
+  const Chips = ({ opts, val, set, label }: { opts: string[]; val: string[]; set: (a: string[]) => void; label?: boolean }) => (
+    <div className="pl-chips">{opts.map((m) => <button key={m} className={val.includes(m) ? "pl-chip on" : "pl-chip"} onClick={() => set(toggleIn(val, m))}>{label === false ? m : cap(m)}</button>)}</div>
+  );
 
   return (
     <section className="planner">
@@ -265,76 +276,74 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
               </label>
 
               <div className="pl-sel">
-                <div className="pl-sel-h">Obiettivi scelti <b>{sel.length}</b>{sel.length > 0 && !isUda && <button className="link" onClick={componiDaObiettivi}>componi conoscenze/competenze ↓</button>}</div>
+                <div className="pl-sel-h">Obiettivi scelti <b>{sel.length}</b>{sel.length > 0 && <button className="link" onClick={componiDaObiettivi}>componi conoscenze/competenze ↓</button>}</div>
                 {sel.length === 0 ? <p className="muted">Pesca gli obiettivi dalla palette a sinistra.</p> : (
                   <ul>{sel.map((o) => <li key={o.id}><span>{o.argomento}</span><button onClick={() => toggle(o)} aria-label="Togli">✕</button></li>)}</ul>
                 )}
               </div>
 
-              {isUda ? (
+              {isUda && (
                 <>
                   <label className="field"><span>Competenza attesa</span><textarea rows={2} value={competenza} onChange={(e) => setCompetenza(e.target.value)} placeholder="La competenza al termine dell'UdA…" /></label>
-                  <label className="field"><span>Prodotto atteso</span><textarea rows={2} value={prodotto} onChange={(e) => setProdotto(e.target.value)} placeholder="L'elaborato/artefatto finale…" /></label>
-                  <label className="field"><span>Compito di realtà</span><textarea rows={2} value={compitoRealta} onChange={(e) => setCompitoRealta(e.target.value)} placeholder="Situazione autentica in cui agire la competenza…" /></label>
-                  <p className="muted pl-hint">Con «N° lezioni» &gt; 0 vengono create e calendarizzate le lezioni (sequenza + date distribuite tra Da e A).</p>
-                </>
-              ) : (
-                <>
-                  <label className="field"><span>Prerequisiti</span><textarea rows={2} value={prereq} onChange={(e) => setPrereq(e.target.value)} placeholder="Cosa serve sapere/saper fare prima…" /></label>
                   <div className="pl-triade">
-                    <label className="field"><span>Conoscenze</span><textarea rows={2} value={conoscenze} onChange={(e) => setConoscenze(e.target.value)} placeholder="Contenuti…" /></label>
-                    <label className="field"><span>Abilità</span><textarea rows={2} value={abilita} onChange={(e) => setAbilita(e.target.value)} placeholder="Saper fare…" /></label>
-                    <label className="field"><span>Competenze</span><textarea rows={2} value={competenzeTxt} onChange={(e) => setCompetenzeTxt(e.target.value)} placeholder="Agire competente…" /></label>
+                    <label className="field"><span>Prodotto atteso</span><textarea rows={2} value={prodotto} onChange={(e) => setProdotto(e.target.value)} placeholder="L'elaborato finale…" /></label>
+                    <label className="field"><span>Compito di realtà</span><textarea rows={2} value={compitoRealta} onChange={(e) => setCompitoRealta(e.target.value)} placeholder="Situazione autentica…" /></label>
                   </div>
-                  <label className="field"><span>Fasi e tempi</span><textarea rows={3} value={fasi} onChange={(e) => setFasi(e.target.value)} placeholder="Apertura · sviluppo · esercitazione · sintesi/verifica…" /></label>
-
-                  <div className="field"><span>Metodologie</span>
-                    <div className="pl-chips">{METODOLOGIE.map((m) => <button key={m} className={metodologie.includes(m) ? "pl-chip on" : "pl-chip"} onClick={() => setMetodologie((a) => toggleIn(a, m))}>{m}</button>)}</div>
-                  </div>
-                  <div className="field"><span>Strumenti e spazi</span>
-                    <div className="pl-chips">{STRUMENTI.map((m) => <button key={m} className={strumenti.includes(m) ? "pl-chip on" : "pl-chip"} onClick={() => setStrumenti((a) => toggleIn(a, m))}>{m}</button>)}</div>
-                  </div>
-
-                  <div className="field"><span>Compiti ed esercizi <em>· anche attività in classe</em></span>
-                    <div className="pl-compiti">
-                      {compiti.map((c) => (
-                        <div key={c.id} className="pl-compito">
-                          <select value={c.tipo} onChange={(e) => setCompito(c.id, { tipo: e.target.value })}>{COMPITO_TIPI.map((t) => <option key={t} value={t}>{t}</option>)}</select>
-                          <input type="text" value={c.testo} placeholder="Es. tradurre vv. 1-20; esercizi p.45…" onChange={(e) => setCompito(c.id, { testo: e.target.value })} />
-                          <button className="danger" onClick={() => removeCompito(c.id)} aria-label="Rimuovi">✕</button>
-                        </div>
-                      ))}
-                      <div className="pl-compiti-foot">
-                        <button onClick={addCompito}>+ Attività/compito</button>
-                        <label className="field sm inline"><span>Consegna (compiti per casa)</span><input type="date" value={consegna} onChange={(e) => setConsegna(e.target.value)} /></label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="field"><span>Materiali</span>
-                    <div className="pl-mat">
-                      {materialiDisp.length > 0 && (
-                        <div className="pl-chips">{materialiDisp.map((m) => <button key={m.id} className={matSel.includes(m.id) ? "pl-chip on" : "pl-chip"} onClick={() => setMatSel((a) => toggleIn(a, m.id))}>{String(m["Titolo"] ?? "—")}{m["Tipo"] ? ` · ${m["Tipo"]}` : ""}</button>)}</div>
-                      )}
-                      <div className="pl-mat-add">
-                        <input type="text" value={nuovoMat.titolo} placeholder="Nuovo materiale (titolo)…" onChange={(e) => setNuovoMat((s) => ({ ...s, titolo: e.target.value }))} onKeyDown={(e) => { if (e.key === "Enter") creaMateriale(); }} />
-                        <select value={nuovoMat.tipo} onChange={(e) => setNuovoMat((s) => ({ ...s, tipo: e.target.value }))}>{MAT_TIPI.map((t) => <option key={t} value={t}>{t}</option>)}</select>
-                        <button onClick={creaMateriale}>+ Crea e collega</button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pl-triade">
-                    <label className="field"><span>Inclusione (misure)</span><textarea rows={2} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (a livello di classe)…" /></label>
-                    <label className="field"><span>Verifica formativa</span>
-                      <select value={verificaF} onChange={(e) => setVerificaF(e.target.value)}>
-                        <option value="">—</option>
-                        {VERIFICHE_F.map((v) => <option key={v} value={v}>{v}</option>)}
-                      </select>
-                    </label>
-                  </div>
+                  <p className="muted pl-hint">Con «N° lezioni» &gt; 0 vengono create e calendarizzate le lezioni (sequenza + date distribuite).</p>
                 </>
               )}
+
+              <label className="field"><span>Prerequisiti</span><textarea rows={2} value={prereq} onChange={(e) => setPrereq(e.target.value)} placeholder="Cosa serve sapere/saper fare prima…" /></label>
+              <div className="pl-triade">
+                <label className="field"><span>Conoscenze</span><textarea rows={2} value={conoscenze} onChange={(e) => setConoscenze(e.target.value)} placeholder="Contenuti…" /></label>
+                <label className="field"><span>Abilità</span><textarea rows={2} value={abilita} onChange={(e) => setAbilita(e.target.value)} placeholder="Saper fare…" /></label>
+                <label className="field"><span>Competenze</span><textarea rows={2} value={competenzeTxt} onChange={(e) => setCompetenzeTxt(e.target.value)} placeholder="Agire competente…" /></label>
+              </div>
+              {!isUda && <label className="field"><span>Fasi e tempi</span><textarea rows={3} value={fasi} onChange={(e) => setFasi(e.target.value)} placeholder="Apertura · sviluppo · esercitazione · sintesi/verifica…" /></label>}
+
+              <div className="field"><span>Metodologie</span><Chips opts={METODOLOGIE} val={metodologie} set={setMetodologie} /></div>
+              <div className="field"><span>Strumenti e spazi</span><Chips opts={STRUMENTI} val={strumenti} set={setStrumenti} /></div>
+              <div className="field"><span>Educazione civica</span><Chips opts={EDCIVICA} val={educiv} set={setEduciv} /></div>
+              {raccordiOpts.length > 0 && <div className="field"><span>Raccordi interdisciplinari <em>· {indir ? "materie dell'indirizzo" : "materie"}</em></span><Chips opts={raccordiOpts} val={raccordi} set={setRaccordi} label={false} /></div>}
+
+              <div className="field"><span>Compiti ed esercizi <em>· anche attività in classe</em></span>
+                <div className="pl-compiti">
+                  {compiti.map((c) => (
+                    <div key={c.id} className="pl-compito">
+                      <select value={c.tipo} onChange={(e) => setCompito(c.id, { tipo: e.target.value })}>{COMPITO_TIPI.map((t) => <option key={t} value={t}>{cap(t)}</option>)}</select>
+                      <input type="text" value={c.testo} placeholder="Es. tradurre vv. 1-20; esercizi p.45…" onChange={(e) => setCompito(c.id, { testo: e.target.value })} />
+                      <button className="danger" onClick={() => removeCompito(c.id)} aria-label="Rimuovi">✕</button>
+                    </div>
+                  ))}
+                  <div className="pl-compiti-foot">
+                    <button onClick={addCompito}>+ Attività/compito</button>
+                    {!isUda && <label className="field sm inline"><span>Consegna (compiti per casa)</span><input type="date" value={consegna} onChange={(e) => setConsegna(e.target.value)} /></label>}
+                  </div>
+                </div>
+              </div>
+
+              <div className="field"><span>Materiali</span>
+                <div className="pl-mat">
+                  {materialiDisp.length > 0 && (
+                    <div className="pl-chips">{materialiDisp.map((m) => <button key={m.id} className={matSel.includes(m.id) ? "pl-chip on" : "pl-chip"} onClick={() => setMatSel((a) => toggleIn(a, m.id))}>{String(m["Titolo"] ?? "—")}{m["Tipo"] ? ` · ${cap(String(m["Tipo"]))}` : ""}</button>)}</div>
+                  )}
+                  <div className="pl-mat-add">
+                    <input type="text" value={nuovoMat.titolo} placeholder="Nuovo materiale (titolo)…" onChange={(e) => setNuovoMat((s) => ({ ...s, titolo: e.target.value }))} onKeyDown={(e) => { if (e.key === "Enter") creaMateriale(); }} />
+                    <select value={nuovoMat.tipo} onChange={(e) => setNuovoMat((s) => ({ ...s, tipo: e.target.value }))}>{MAT_TIPI.map((t) => <option key={t} value={t}>{cap(t)}</option>)}</select>
+                    <button onClick={creaMateriale}>+ Crea e collega</button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pl-triade">
+                <label className="field"><span>Inclusione (misure)</span><textarea rows={2} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (a livello di classe)…" /></label>
+                <label className="field"><span>Verifica formativa</span>
+                  <select value={verificaF} onChange={(e) => setVerificaF(e.target.value)}>
+                    <option value="">—</option>
+                    {VERIFICHE_F.map((v) => <option key={v} value={v}>{cap(v)}</option>)}
+                  </select>
+                </label>
+              </div>
 
               <div className="pl-actions">
                 <button className="primary" onClick={salva}>📅 Salva &amp; calendarizza</button>

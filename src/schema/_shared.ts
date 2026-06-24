@@ -51,3 +51,58 @@ export const CICLI: OptionDef[] = [
   { name: "Biennio", color: "yellow" },
   { name: "Triennio", color: "purple" },
 ];
+
+/** Metodologie didattiche (lezione, laboratorio, UdA). */
+export const METODOLOGIE: OptionDef[] = [
+  { name: "lezione frontale", color: "gray" },
+  { name: "lezione dialogata", color: "blue" },
+  { name: "cooperative learning", color: "green" },
+  { name: "flipped classroom", color: "purple" },
+  { name: "debate", color: "pink" },
+  { name: "problem solving", color: "orange" },
+  { name: "brainstorming", color: "yellow" },
+  { name: "peer tutoring", color: "green" },
+  { name: "didattica laboratoriale", color: "orange" },
+  { name: "studio guidato", color: "blue" },
+  { name: "role playing", color: "pink" },
+  { name: "EAS (episodio di apprendimento situato)", color: "purple" },
+];
+
+/** Strumenti e spazi della didattica. */
+export const STRUMENTI_SPAZI: OptionDef[] = [
+  { name: "libro di testo", color: "green" },
+  { name: "LIM / monitor", color: "blue" },
+  { name: "fotocopie / schede", color: "gray" },
+  { name: "dizionario", color: "brown" },
+  { name: "dispositivi / BYOD", color: "purple" },
+  { name: "laboratorio", color: "orange" },
+  { name: "audiovisivi", color: "pink" },
+  { name: "mappe / schemi", color: "yellow" },
+  { name: "piattaforma e-learning", color: "blue" },
+  { name: "biblioteca", color: "brown" },
+];
+
+/** Modalità di verifica formativa prevista. */
+export const VERIFICA_FORMATIVA: OptionDef[] = [
+  { name: "domande flash", color: "yellow" },
+  { name: "exit ticket", color: "yellow" },
+  { name: "esercitazione", color: "blue" },
+  { name: "interrogazione breve", color: "green" },
+  { name: "correzione collettiva", color: "green" },
+  { name: "prova semistrutturata", color: "orange" },
+  { name: "autovalutazione", color: "purple" },
+];
+
+/** Nuclei di Educazione civica (L.92/2019): Costituzione, Sviluppo sostenibile, Cittadinanza digitale e temi trasversali. */
+export const EDUCAZIONE_CIVICA: OptionDef[] = [
+  { name: "Costituzione, diritto e legalità", color: "blue" },
+  { name: "Istituzioni dello Stato e Unione Europea", color: "blue" },
+  { name: "Diritti umani e pari opportunità", color: "purple" },
+  { name: "Agenda 2030 e sviluppo sostenibile", color: "green" },
+  { name: "Ambiente, ecologia e territorio", color: "green" },
+  { name: "Educazione alla salute e al benessere", color: "pink" },
+  { name: "Cittadinanza digitale", color: "orange" },
+  { name: "Educazione finanziaria", color: "yellow" },
+  { name: "Patrimonio culturale e paesaggio", color: "brown" },
+  { name: "Cittadinanza attiva e volontariato", color: "red" },
+];

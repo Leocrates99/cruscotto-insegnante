@@ -169,3 +169,11 @@ export function cicloDaFase(fase: string): string | undefined {
   if (fase === "triennio") return "Triennio";
   return undefined;
 }
+
+/** Le materie (label) dell'indirizzo del docente — per i raccordi interdisciplinari. */
+export function materieIndirizzo(tax: Tassonomia, indirizzoId?: string): string[] {
+  const code = indirizzoCodice(indirizzoId);
+  const set = new Set<string>();
+  for (const ins of tax.insegnamenti) if (!code || ins.indirizzo === code) set.add(ins.materia_label);
+  return [...set].sort((a, b) => a.localeCompare(b));
+}

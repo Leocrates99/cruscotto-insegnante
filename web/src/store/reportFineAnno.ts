@@ -30,7 +30,7 @@ function tipoObiettivo(rec: Rec): "conoscenza" | "abilita" | "competenza" {
 // ── Programmazione svolta ────────────────────────────────────────────────────
 export interface UdaR { titolo: string; competenza: string; stato: string; obiettivi: string[] }
 export interface LezR { data: string; titolo: string; stato: string; ore: number; obiettivi: string; esito: string }
-export interface SezioneProg { classe: string; materia: string; finalita: string; monteOre?: number; strumenti: string[]; uda: UdaR[]; lezioni: LezR[]; conoscenze: string[]; abilita: string[]; competenze: string[]; attivita: string[]; raggiunti: string[]; oreSvolte: number }
+export interface SezioneProg { classe: string; materia: string; finalita: string; monteOre?: number; strumenti: string[]; uda: UdaR[]; lezioni: LezR[]; conoscenze: string[]; abilita: string[]; competenze: string[]; edciv: string[]; raccordi: string[]; attivita: string[]; raggiunti: string[]; oreSvolte: number }
 export interface ReportProg { docente: string; scuola: string; anno: string; sezioni: SezioneProg[] }
 
 const classeLabelRel = (rec: Rec): string | undefined => {
@@ -101,15 +101,22 @@ export function buildProgrammazione(): ReportProg {
     lezR.forEach((l) => l.obiettivi.split(/\n+/).map((s) => s.replace(/^[•\-\s]+/, "").trim()).filter(Boolean).forEach((o) => conoscenze.add(o)));
     // Competenze attese delle UdA.
     uda.forEach((u) => { if (u.competenza) competenze.add(u.competenza); });
-    // Campi didattici strutturati compilati sulle lezioni (conoscenze/abilità/competenze/compiti).
+    // Campi didattici strutturati compilati su lezioni e UdA (conoscenze/abilità/competenze/compiti/ed.civica/raccordi).
     const attivita = new Set<string>();
+    const edciv = new Set<string>();
+    const raccordi = new Set<string>();
     const splitL = (v: Value) => str(v).split(/\n+/).map((x) => x.replace(/^[•\-\s]+/, "").trim()).filter(Boolean);
-    for (const l of lez) {
-      splitL(l["Conoscenze"]).forEach((x) => conoscenze.add(x));
-      splitL(l["Abilità"]).forEach((x) => abilita.add(x));
-      splitL(l["Competenze"]).forEach((x) => competenze.add(x));
-      splitL(l["Compiti ed esercizi"]).forEach((x) => attivita.add(x));
-    }
+    const arr = (v: Value): string[] => (Array.isArray(v) ? (v as string[]) : []);
+    const harvest = (r: Rec) => {
+      splitL(r["Conoscenze"]).forEach((x) => conoscenze.add(x));
+      splitL(r["Abilità"]).forEach((x) => abilita.add(x));
+      splitL(r["Competenze"]).forEach((x) => competenze.add(x));
+      splitL(r["Compiti ed esercizi"]).forEach((x) => attivita.add(x));
+      arr(r["Educazione civica"]).forEach((x) => edciv.add(x));
+      arr(r["Raccordi interdisciplinari"]).forEach((x) => raccordi.add(x));
+    };
+    lez.forEach(harvest);
+    udaSet.forEach(harvest);
 
     const oreSvolte = lez.filter((l) => SVOLTE.has(str(l["Stato"]))).reduce((s, l) => s + (typeof l["Durata (ore)"] === "number" ? (l["Durata (ore)"] as number) : 0), 0);
 
@@ -118,7 +125,7 @@ export function buildProgrammazione(): ReportProg {
       finalita: prog ? str(prog["Finalità generali"]) : "",
       monteOre: prog && typeof prog["Monte ore"] === "number" ? (prog["Monte ore"] as number) : undefined,
       strumenti: prog ? (Array.isArray(prog["Strumenti di verifica"]) ? (prog["Strumenti di verifica"] as string[]) : []) : [],
-      uda, lezioni: lezR, conoscenze: [...conoscenze], abilita: [...abilita], competenze: [...competenze], attivita: [...attivita], raggiunti: [...raggiunti], oreSvolte,
+      uda, lezioni: lezR, conoscenze: [...conoscenze], abilita: [...abilita], competenze: [...competenze], edciv: [...edciv], raccordi: [...raccordi], attivita: [...attivita], raggiunti: [...raggiunti], oreSvolte,
     });
   }
   sezioni.sort((a, b) => a.classe.localeCompare(b.classe) || a.materia.localeCompare(b.materia));
@@ -168,6 +175,8 @@ export function progToMarkdown(r: ReportProg): string {
     lista("Conoscenze e contenuti", s.conoscenze);
     lista("Abilità", s.abilita);
     lista("Competenze", s.competenze);
+    lista("Educazione civica", s.edciv);
+    lista("Raccordi interdisciplinari", s.raccordi);
     lista("Attività, compiti ed esercizi", s.attivita);
     lista("Obiettivi raggiunti (verificati)", s.raggiunti);
     if (s.lezioni.length) {
@@ -214,6 +223,8 @@ export function progToHtml(r: ReportProg): string {
     lista("Conoscenze e contenuti", s.conoscenze);
     lista("Abilità", s.abilita);
     lista("Competenze", s.competenze);
+    lista("Educazione civica", s.edciv);
+    lista("Raccordi interdisciplinari", s.raccordi);
     lista("Attività, compiti ed esercizi", s.attivita);
     lista("Obiettivi raggiunti (verificati)", s.raggiunti);
     if (s.lezioni.length) {

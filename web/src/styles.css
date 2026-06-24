@@ -733,9 +733,9 @@ td .check { color: var(--success); font-weight: 700; }
 /* ── Planner (Pianifica) ─────────────────────────────────────────────────────── */
 .pl-ctx { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: end; margin-bottom: 0.8rem; }
 .seg.sm button { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
-.pl-body { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
-@media (max-width: 900px) { .pl-body { grid-template-columns: 1fr; } }
-.pl-palette { border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); padding: 0.6rem; background: var(--cream); max-height: 62vh; overflow-y: auto; }
+.pl-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+@media (max-width: 900px) { .pl-body { grid-template-columns: minmax(0, 1fr); } }
+.pl-palette { border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); padding: 0.6rem; background: var(--cream); max-height: 62vh; overflow-y: auto; overflow-x: hidden; min-width: 0; }
 .pl-search { width: 100%; margin-bottom: 0.5rem; padding: 0.45rem 0.6rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); font: 0.85rem var(--font-ui); }
 .pl-nucleo { margin-bottom: 0.6rem; }
 .pl-nucleo-h { font: 700 0.74rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-muted); margin-bottom: 0.25rem; }
@@ -744,7 +744,7 @@ td .check { color: var(--success); font-weight: 700; }
 .pl-ob:hover { border-color: var(--parchment-dark); }
 .pl-ob.sel { background: var(--accent-glow); border-color: var(--accent); }
 .pl-ob-add { font-weight: 800; color: var(--accent); width: 1rem; flex-shrink: 0; }
-.pl-ob-txt { flex: 1; font-size: 0.82rem; line-height: 1.25; }
+.pl-ob-txt { flex: 1; min-width: 0; font-size: 0.82rem; line-height: 1.25; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .pl-ob-txt em { color: var(--ink-muted); font-style: normal; }
 .pl-ob-tipo { font: 700 0.6rem var(--font-ui); padding: 0.1rem 0.35rem; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
 .pl-ob-tipo.con { background: var(--parchment-dark); color: var(--ink-muted); }
