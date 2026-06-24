@@ -3,6 +3,7 @@ import { generateBands, setSettings, useSettings, type TimeBand } from "../store
 import { classeInfo, classiAttive, contiClasse, materieAttive, setProfile, useProfile, type OrarioSlot, type StudenteAnon } from "../store/profile";
 import { classeColor, materiaColor } from "./materia";
 import { classiFromSlots, mergeSlots, parseOrarioFile } from "../store/orarioImport";
+import { classeUnicaPerMateria, materiaUnicaPerClasse, materiePerClasse } from "../store/links";
 
 const GIORNI = [
   { i: 0, short: "Lun" },
@@ -70,6 +71,9 @@ export function OrarioLavoro() {
   const setSlot = (g: number, fascia: string, patch: Partial<OrarioSlot>) => {
     const others = profile.orario.filter((s) => !(s.giorno === g && s.fascia === fascia));
     const next: OrarioSlot = { giorno: g, fascia, ...slotAt(g, fascia), ...patch };
+    // Aggancio automatico materia↔classe (riempie solo il campo ancora vuoto, mai sovrascrive).
+    if (patch.classe && !next.materia) { const m = materiaUnicaPerClasse(patch.classe, profile.orario); if (m) next.materia = m; }
+    if (patch.materia && !next.classe) { const c = classeUnicaPerMateria(patch.materia, profile.orario); if (c) next.classe = c; }
     setProfile({ orario: next.materia || next.classe ? [...others, next] : others });
   };
 
@@ -238,10 +242,23 @@ export function OrarioLavoro() {
                       const cc = classeColor(s?.classe);
                       return (
                         <td key={g.i} style={{ background: mc ? `${mc}1f` : undefined, borderLeft: cc ? `3px solid ${cc}` : undefined }}>
-                          <select value={s?.materia ?? ""} onChange={(e) => setSlot(g.i, b.label, { materia: e.target.value || undefined })}>
-                            <option value="">—</option>
-                            {materie.map((m) => <option key={m} value={m}>{m}</option>)}
-                          </select>
+                          {(() => {
+                            const inClasse = s?.classe ? materiePerClasse(s.classe, profile.orario) : [];
+                            const altre = materie.filter((m) => !inClasse.includes(m));
+                            return (
+                              <select value={s?.materia ?? ""} onChange={(e) => setSlot(g.i, b.label, { materia: e.target.value || undefined })}>
+                                <option value="">—</option>
+                                {inClasse.length > 0 && (
+                                  <optgroup label="In questa classe">
+                                    {inClasse.map((m) => <option key={m} value={m}>{m}</option>)}
+                                  </optgroup>
+                                )}
+                                <optgroup label={inClasse.length > 0 ? "Altre materie" : "Materie"}>
+                                  {altre.map((m) => <option key={m} value={m}>{m}</option>)}
+                                </optgroup>
+                              </select>
+                            );
+                          })()}
                           <select value={s?.classe ?? ""} onChange={(e) => setSlot(g.i, b.label, { classe: e.target.value || undefined })}>
                             <option value="">—</option>
                             {classi.map((c) => <option key={c} value={c}>{c}</option>)}

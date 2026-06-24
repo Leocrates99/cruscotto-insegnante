@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { BasePropertyDef, DbKey } from "@model";
 import { schemaByKey } from "@model";
-import { newId, records, recordTitle, upsert, type Rec, type Value } from "../store/store";
-import { annoCorrenteId, classeId, classeUnicaPerMateria } from "../store/links";
+import { getRecord, newId, records, recordTitle, upsert, type Rec, type Value } from "../store/store";
+import { annoCorrenteId, classeId, classeUnicaPerMateria, materiaUnicaPerClasse } from "../store/links";
 import { SearchSelect } from "./SearchSelect";
 import { schoolYearOptions, type SchoolYearOption } from "./schoolYear";
 import { materieAttive, scuoleCorrenti, useProfile } from "../store/profile";
@@ -53,6 +53,19 @@ export function RecordPanel({
     if (uc) set("Classe", [classeId(uc)]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [materiaSel]);
+  // Materia automatica (inverso): se in quella classe si insegna UNA sola materia, agganciala.
+  const hasMateria = "Materia" in def.properties;
+  const classeKey = Array.isArray(draft["Classe"]) ? (draft["Classe"] as string[]).join(",") : "";
+  useEffect(() => {
+    if (!isNew || !hasMateria || materiaSel) return;
+    const ids = Array.isArray(draft["Classe"]) ? (draft["Classe"] as string[]) : [];
+    if (!ids.length) return;
+    const label = getRecord("classi", ids[0])?.["Titolo"];
+    if (typeof label !== "string") return;
+    const m = materiaUnicaPerClasse(label, profile.orario);
+    if (m) set("Materia", m);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classeKey]);
 
   return (
     <>

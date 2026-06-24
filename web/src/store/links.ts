@@ -28,8 +28,21 @@ export function annoCorrenteId(): string {
   return id;
 }
 
+type OrSlot = { materia?: string; classe?: string };
+
 /** Se nell'orario quella materia è associata a UNA sola classe, restituisce la sua etichetta. */
-export function classeUnicaPerMateria(materia: string, orario: { materia?: string; classe?: string }[]): string | undefined {
+export function classeUnicaPerMateria(materia: string, orario: OrSlot[]): string | undefined {
   const set = new Set(orario.filter((s) => s.materia === materia && s.classe).map((s) => s.classe as string));
   return set.size === 1 ? [...set][0] : undefined;
+}
+
+/** Le materie che (secondo l'orario) si insegnano in quella classe. */
+export function materiePerClasse(classe: string, orario: OrSlot[]): string[] {
+  return [...new Set(orario.filter((s) => s.classe === classe && s.materia).map((s) => s.materia as string))];
+}
+
+/** Se in quella classe si insegna UNA sola materia, restituisce il suo nome (per l'aggancio automatico). */
+export function materiaUnicaPerClasse(classe: string, orario: OrSlot[]): string | undefined {
+  const m = materiePerClasse(classe, orario);
+  return m.length === 1 ? m[0] : undefined;
 }
