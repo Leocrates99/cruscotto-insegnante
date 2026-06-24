@@ -17,6 +17,7 @@ import {
   archiviaAnno,
   getSessione,
   newId,
+  nuovaGriglia,
   removeSessione,
   sessioniDi,
   upsertSessione,
@@ -401,13 +402,16 @@ function ModelliModal({ onEdit, onClose }: { onEdit: (g: Griglia) => void; onClo
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="panel-head"><h2>📐 Modelli di griglia</h2><button className="icon-btn" onClick={onClose}>✕</button></div>
-        <p className="muted">Strutture riutilizzabili (esercizi, rubriche, condotta) da personalizzare col tuo PTOF.</p>
+        <p className="muted">Strutture riutilizzabili (esercizi, rubriche, scrutinio voto-materia, condotta) da personalizzare col tuo PTOF.</p>
         <ul className="modelli-list">
           {griglie.map((g) => (
-            <li key={g.id}><span>{g.nome}</span><button onClick={() => onEdit(g)}>Modifica</button></li>
+            <li key={g.id}><span>{g.nome} <em>· {categoriaLabel(g.categoria)}</em></span><button onClick={() => onEdit(g)}>Modifica</button></li>
           ))}
         </ul>
-        <div className="modal-actions"><button onClick={onClose}>Chiudi</button></div>
+        <div className="modal-actions">
+          <button onClick={onClose}>Chiudi</button>
+          <button className="primary" onClick={() => onEdit(nuovaGriglia("scrutinio-materia"))}>+ Nuovo modello</button>
+        </div>
       </div>
     </div>
   );
