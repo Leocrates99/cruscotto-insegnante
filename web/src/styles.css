@@ -758,6 +758,27 @@ td .check { color: var(--success); font-weight: 700; }
 .pl-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
 .pl-msg { font: 600 0.82rem var(--font-ui); color: var(--success); }
 button.link { background: none; border: none; color: var(--accent); cursor: pointer; font: inherit; padding: 0; text-decoration: underline; }
+.pl-sel-h .link { margin-left: auto; font-size: 0.74rem; }
+
+/* Composer didattico ricco */
+.pl-area { width: 100%; margin: 0.4rem 0; font: 500 0.82rem var(--font-ui); padding: 0.35rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.pl-hint { font-size: 0.78rem; }
+.pl-triade { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; }
+.pl-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
+.pl-chip { font: 600 0.74rem var(--font-ui); padding: 0.2rem 0.55rem; border: 1px solid var(--parchment-dark); border-radius: 99px; background: var(--parchment); color: var(--ink-muted); cursor: pointer; }
+.pl-chip:hover { border-color: var(--accent); color: var(--accent); transform: none; box-shadow: none; }
+.pl-chip.on { background: var(--accent-pale); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.pl-compiti { display: flex; flex-direction: column; gap: 0.35rem; }
+.pl-compito { display: grid; grid-template-columns: minmax(140px, 0.5fr) 1fr auto; gap: 0.4rem; align-items: center; }
+.pl-compito select, .pl-compito input { font: 0.84rem var(--font-ui); padding: 0.35rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.pl-compito button { padding: 0.3rem 0.55rem; }
+.pl-compiti-foot { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: end; }
+.field.sm.inline { flex-direction: row; align-items: center; gap: 0.4rem; }
+.field.sm.inline > span { white-space: nowrap; }
+.pl-mat { display: flex; flex-direction: column; gap: 0.4rem; }
+.pl-mat-add { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.pl-mat-add input { flex: 1 1 180px; font: 0.84rem var(--font-ui); padding: 0.35rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
+.pl-mat-add select { font: 0.84rem var(--font-ui); padding: 0.35rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
 
 /* ── Hamburger + backdrop (attivi solo su mobile) ───────────────────────────── */
 .nav-toggle {

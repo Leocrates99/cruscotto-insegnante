@@ -16,6 +16,8 @@ export const uda: SchemaDef = {
   properties: {
     Titolo: { type: "title" },
     "Competenza attesa": { type: "rich_text" },
+    "Prodotto atteso": { type: "rich_text" },
+    "Compito di realtà": { type: "rich_text" },
     "Anno di corso": { type: "select", options: ANNI_CORSO },
     Ciclo: { type: "select", options: CICLI },
     Stato: { type: "select", options: STATO_CICLO },
