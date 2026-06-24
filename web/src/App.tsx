@@ -23,6 +23,7 @@ import { OggiView } from "./ui/OggiView";
 import { PromemoriaView } from "./ui/PromemoriaView";
 import { RecordPanel } from "./ui/RecordPanel";
 import { Onboarding } from "./ui/Onboarding";
+import { ExportFineAnno } from "./ui/ExportFineAnno";
 import { useProfile } from "./store/profile";
 import { annoCorrente } from "./store/valutazione";
 
@@ -56,6 +57,7 @@ export function App() {
   const [skipped, setSkipped] = useState(false);
   const showOnboarding = showProfile || (!profile.onboarded && !skipped);
   const [showBackup, setShowBackup] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const state = useStore();
   const backup = useBackup();
 
@@ -75,6 +77,8 @@ export function App() {
   const annoCorr = annoCorrente();
   const oggiMd = (() => { const d = new Date(); return (d.getMonth() + 1) * 100 + d.getDate(); })();
   const setupDovuto = profile.onboarded && oggiMd >= 825 && oggiMd <= 915 && profile.assettoConfermato !== annoCorr;
+  // Fine anno (giugno): suggerisci di esportare il resoconto della programmazione svolta.
+  const exportSuggerito = hasData && oggiMd >= 601 && oggiMd <= 630;
 
   const onEdit = (dbKey: DbKey, rec?: Rec, prefill?: Record<string, Value>) => setEditing({ dbKey, rec, prefill });
   const openUda = (id: string) => setView({ kind: "uda", id });
@@ -86,7 +90,15 @@ export function App() {
 
   return (
     <div className={editing ? "app panel-open" : "app"}>
-      <Toolbar onToggleNav={() => setNavOpen((o) => !o)} onOpenProfile={() => setShowProfile(true)} onOpenBackup={() => setShowBackup(true)} />
+      <Toolbar onToggleNav={() => setNavOpen((o) => !o)} onOpenProfile={() => setShowProfile(true)} onOpenBackup={() => setShowBackup(true)} onOpenExport={() => setShowExport(true)} />
+      {exportSuggerito && (
+        <div className="setup-banner">
+          <span>📦 Fine anno: esporta il resoconto della programmazione svolta (per classe e materia) da rielaborare nella relazione finale.</span>
+          <span className="bb-actions">
+            <button className="primary" onClick={() => setShowExport(true)}>Esporta</button>
+          </span>
+        </div>
+      )}
       {setupDovuto && (
         <div className="setup-banner">
           <span>📌 Inizio anno: imposta o conferma il tuo orario e le tue classi per l'{annoCorr}. Si fa una volta sola.</span>
@@ -132,6 +144,7 @@ export function App() {
       )}
       {showOnboarding && <Onboarding onClose={closeProfile} />}
       {showBackup && <BackupPanel onClose={() => setShowBackup(false)} />}
+      {showExport && <ExportFineAnno onClose={() => setShowExport(false)} />}
     </div>
   );
 }

@@ -9,10 +9,12 @@ export function Toolbar({
   onToggleNav,
   onOpenProfile,
   onOpenBackup,
+  onOpenExport,
 }: {
   onToggleNav: () => void;
   onOpenProfile: () => void;
   onOpenBackup: () => void;
+  onOpenExport: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [theme, setThemeState] = useState(getTheme());
@@ -40,6 +42,7 @@ export function Toolbar({
             <button onClick={(e) => { closeDd(e.currentTarget); exportJson(getState()); markExported(); }}>⬇️ Esporta</button>
             <button onClick={(e) => { closeDd(e.currentTarget); fileRef.current?.click(); }}>⬆️ Importa</button>
             <button onClick={(e) => { closeDd(e.currentTarget); onOpenBackup(); }}>💾 Backup</button>
+            <button onClick={(e) => { closeDd(e.currentTarget); onOpenExport(); }}>📦 Esporta fine anno</button>
             <hr />
             <button className="danger" onClick={(e) => { closeDd(e.currentTarget); if (confirm("Azzerare tutti i dati di questo browser? (ne viene salvato prima un punto di ripristino)")) { snapshotNow(); clearState(); } }}>Azzera tutto</button>
           </div>
