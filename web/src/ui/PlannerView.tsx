@@ -31,6 +31,17 @@ const ROM: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4, V: 5 };
 const MINOR = new Set(["di", "e", "a", "da", "in", "con", "su", "per", "tra", "fra", "la", "il", "lo", "le", "i", "gli", "un", "una", "del", "della", "dei", "delle", "al", "alla", "allo", "dello", "ed", "o"]);
 const cap = (s: string): string => s.split(" ").map((w, i) => (!w ? w : i > 0 && MINOR.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1))).join(" ");
 const annoDaClasse = (l: string): number => { const m = l.trim().match(/^(III|II|IV|V|I)\b/i); return m ? ROM[m[0].toUpperCase()] ?? 0 : 0; };
+// Porta un colore in una banda di luminanza media: leggibile su sfondo chiaro E scuro.
+function coloreLeggibile(hex: string): string {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim());
+  if (!m) return hex;
+  const h = m[1];
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  const f = lum > 0.58 ? 0.55 / lum : lum < 0.34 ? 0.42 / lum : 1;
+  const cl = (x: number) => Math.max(0, Math.min(255, Math.round(x * f)));
+  return `rgb(${cl(r)}, ${cl(g)}, ${cl(b)})`;
+}
 const cicloDi = (l: string): "Biennio" | "Triennio" => (annoDaClasse(l) >= 3 ? "Triennio" : "Biennio");
 const fmtIt = (d: string): string => { const [y, m, g] = d.split("-"); return g ? `${g}/${m}/${y}` : d; };
 const escH = (s: string): string => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -71,12 +82,12 @@ function Step({ n, tot, titolo, hint, badge, children }: { n: number; tot: numbe
     </section>
   );
 }
-function DCard({ icon, top, title, desc, on, onClick }: { icon?: ReactNode; top?: ReactNode; title: string; desc?: string; on?: boolean; onClick: () => void }) {
+function DCard({ icon, top, title, desc, on, onClick, accent }: { icon?: ReactNode; top?: ReactNode; title: string; desc?: string; on?: boolean; onClick: () => void; accent?: string }) {
   return (
     <button className={on ? "pl-dcard on" : "pl-dcard"} onClick={onClick}>
       {on !== undefined && <span className="pl-dcard-check">{on ? "✓" : "+"}</span>}
       {top && <span className="pl-dcard-top">{top}</span>}
-      <span className="pl-dcard-h">{icon && <span className="pl-dcard-ico">{icon}</span>}<span className="pl-dcard-t">{title}</span></span>
+      <span className="pl-dcard-h">{icon && <span className="pl-dcard-ico">{icon}</span>}<span className="pl-dcard-t" style={accent ? { color: accent } : undefined}>{title}</span></span>
       {desc && <span className="pl-dcard-d">{desc}</span>}
     </button>
   );
@@ -527,13 +538,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                     {educiv.includes("Agenda 2030 e sviluppo sostenibile") && arch && agenda2030(arch).length > 0 && (
                       <div className="pl-sdg-wrap">
                         <div className="pl-sub">Obiettivi dell'Agenda 2030 <small>{educiv.filter((x) => x.startsWith("SDG ")).length}/17</small> <em>· scegli le missioni pertinenti</em></div>
-                        <div className="pl-sdg-grid">
-                          {agenda2030(arch).map((s) => { const lab = `SDG ${s.numero} · ${s.titolo}`; const on = educiv.includes(lab); return (
-                            <button key={s.id} className={on ? "pl-sdg on" : "pl-sdg"} style={{ background: s.colore }} title={s.descrizione} onClick={() => setEduciv(toggleIn(educiv, lab))}>
-                              {on && <span className="pl-sdg-ck">✓</span>}
-                              <span className="pl-sdg-top"><span className="pl-sdg-n">{s.numero}</span><span className="pl-sdg-ico" aria-hidden="true">{s.icona}</span></span>
-                              <span className="pl-sdg-t">{s.titolo}</span>
-                            </button>
+                        <div className="pl-dgrid">
+                          {agenda2030(arch).map((s) => { const lab = `SDG ${s.numero} · ${s.titolo}`; return (
+                            <DCard key={s.id} icon={s.icona} title={`${s.numero} · ${s.titolo}`} desc={s.descrizione} accent={coloreLeggibile(s.colore)} on={educiv.includes(lab)} onClick={() => setEduciv(toggleIn(educiv, lab))} />
                           ); })}
                         </div>
                       </div>

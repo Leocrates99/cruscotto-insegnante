@@ -832,17 +832,8 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .chip.ctx { background: var(--parchment-dark); color: var(--ink-muted); }
 .pl-incl-menu { margin-bottom: 0.4rem; }
 
-/* Agenda 2030 · tessere-missione (loghi SDG ricostruiti) */
+/* Agenda 2030 · le missioni come drill-card (riusano .pl-dcard; colore sul titolo) */
 .pl-sdg-wrap { margin-top: 0.9rem; padding-top: 0.7rem; border-top: 1px dashed var(--accent-border); }
-.pl-sdg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 0.5rem; }
-.pl-sdg { position: relative; display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start; text-align: left; min-height: 92px; padding: 0.55rem 0.65rem; border: none; border-radius: var(--radius); color: #fff; cursor: pointer; transition: transform var(--transition), filter var(--transition); }
-.pl-sdg:hover { filter: brightness(1.07); transform: translateY(-1px); box-shadow: none; }
-.pl-sdg.on { box-shadow: 0 0 0 3px var(--ink); }
-.pl-sdg-top { display: flex; align-items: center; justify-content: space-between; align-self: stretch; }
-.pl-sdg-n { font: 800 1.5rem var(--font-ui); line-height: 1; }
-.pl-sdg-ico { font-size: 1.55rem; line-height: 1; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25)); }
-.pl-sdg-t { font: 700 0.7rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.18; }
-.pl-sdg-ck { position: absolute; top: 0.35rem; right: 0.5rem; font-weight: 800; font-size: 0.95rem; }
 .pl-compito select, .pl-compito input { font: 0.84rem var(--font-ui); padding: 0.35rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
 .pl-compito button { padding: 0.3rem 0.55rem; }
 .pl-compiti-foot { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: end; }
