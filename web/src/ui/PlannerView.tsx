@@ -7,7 +7,7 @@ import { useStore } from "../store/useStore";
 import { classiAttive, contiClasse, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
 import { annoCorrenteId, classeId } from "../store/links";
 import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia";
-import { antenati, materiaCodice, perPeso, useArchivio, voce, type Voce } from "../data/archivio";
+import { antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, misureInclusione as repInclusione, perPeso, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
 import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI, ICON_COMPITI, ICON_EDCIVICA, ICON_METODOLOGIE, ICON_STRUMENTI } from "../data/glossario";
 import { downloadWord } from "../store/reportFineAnno";
 import { AlberoConoscenze } from "./AlberoConoscenze";
@@ -172,12 +172,6 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   };
   const righe = (campo: "con" | "ab" | "com", testo: string): string[] => derivato(campo, testo).split("\n").filter(Boolean).map((s) => s.replace(/^•\s*/, ""));
 
-  // ── Ganci automatizzati (suggerimenti dal contesto) ──────────────────────────
-  const suggPrereq = () => {
-    const ante = new Set<string>();
-    if (arch) for (const v of selVoci) for (const an of antenati(arch, v.id)) if (CONO.has(an.blocco)) ante.add(an.testo);
-    setPrereq(ante.size ? `Conoscere: ${[...ante].slice(0, 6).join("; ")}.` : "Prerequisiti di base della disciplina (lettura, lessico, riferimenti di contesto).");
-  };
   // Fasi della lezione (widget): durata per fase + metodi per fase + barra colorata.
   const minPrev = Math.round((durata || 0) * 60);
   const fasiMinTot = fasiRows.reduce((a, b) => a + (Number(b.minuti) || 0), 0);
@@ -193,6 +187,36 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     setFasiRows(FASI_DEFAULT.map((nome, i) => ({ id: newId(), nome, minuti: mins[i], metodi: i === 1 ? metodologie.slice(0, 2) : [] })));
   };
   const fasiText = (): string => fasiRows.filter((f) => f.nome.trim() || f.minuti).map((f) => `${f.nome.trim() || "Fase"} (${f.minuti || 0}')${f.metodi.length ? ` · ${f.metodi.map(cap).join(", ")}` : ""}`).join("\n");
+
+  // ── Repertori del lesson-builder (data-driven dall'archivio) ───────────────
+  const metRep: Metodologia[] = arch && code ? repMetodologie(arch) : [];
+  const metByGruppo = useMemo(() => { const g: Record<string, Metodologia[]> = {}; for (const m of metRep) (g[m.gruppo] ??= []).push(m); return g; }, [metRep]);
+  const metNomi = metRep.length ? metRep.map((m) => m.nome) : METODOLOGIE;
+  const arrRep = arch && code ? repArrangiamenti(arch) : [];
+  const applicaArrangiamento = (arrId: string) => {
+    if (!arch) return;
+    const tl = espandiArrangiamento(arch, arrId, minPrev || 60);
+    setFasiRows(tl.fasi.map((ft) => ({ id: newId(), nome: ft.fase.fase, minuti: ft.minuti, metodi: ft.metodologie.slice(0, 2).map((m) => m.nome) })));
+  };
+  const prereqAgg = useMemo(() => {
+    const da = new Map<string, PrereqRisolto>(), co = new Map<string, PrereqRisolto>(), ctx = new Map<string, Voce>();
+    if (arch) for (const v of selVoci.filter((x) => CONO.has(x.blocco))) {
+      const p = prerequisitiDiVoce(arch, v);
+      for (const r of p.daAccertare) da.set(r.regola.id, r);
+      for (const r of p.consolidate) co.set(r.regola.id, r);
+      for (const c of p.contesto) ctx.set(c.id, c);
+    }
+    return { daAccertare: [...da.values()], consolidate: [...co.values()], contesto: [...ctx.values()] };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [arch, [...selIds].join(",")]);
+  const inserisciPrereq = () => {
+    const righe = [...prereqAgg.daAccertare.map((r) => `• ${r.etichetta}${r.regola.obbligatorio ? " — da accertare (micro-verifica)" : ""}`), ...prereqAgg.consolidate.map((r) => `• ${r.etichetta} (competenza consolidata)`)];
+    if (righe.length) setPrereq((t) => [...new Set([...t.split("\n").filter(Boolean), ...righe])].join("\n"));
+  };
+  const inclRep = arch && code ? repInclusione(arch, { materia: code }) : [];
+  const matRep = arch && code ? repMateriali(arch, { materia: code }) : [];
+  const verRep = arch && code ? repValutazioni(arch, { graduata: false }).map((v) => v.metodo) : [];
+  const verOptions = verRep.length ? [...new Set(verRep)] : VERIFICHE_F;
   const suggInclusione = () => {
     const c = classe ? contiClasse(classe, profile) : { tot: 0, l104: 0, bes: 0, dsa: 0 };
     const parts: string[] = [];
@@ -226,6 +250,11 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const removeCompito = (id: string) => setCompiti((c) => c.filter((x) => x.id !== id));
 
   const materialiDisp = records("materiali").filter((m) => !materia || !m["Materia"] || m["Materia"] === materia);
+  const creaDaCatalogo = (m: { tipo: string; categoria: string }) => {
+    const id = newId();
+    upsert("materiali", { id, Titolo: m.tipo, Tipo: m.categoria, Materia: materia, Ciclo: ciclo } as Rec);
+    setMatSel((s) => [...s, id]);
+  };
   const creaMateriale = () => {
     const t = nuovoMat.titolo.trim();
     if (!t) return;
@@ -436,7 +465,12 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                   </div>
                 )}
 
-                {stepDefs[idx].key === "metodologie" && <DrillCards opts={METODOLOGIE} val={metodologie} onToggle={(m) => setMetodologie(toggleIn(metodologie, m))} desc={(o) => DESCR_METODOLOGIE[o]} icon={(o) => ICON_METODOLOGIE[o]} />}
+                {stepDefs[idx].key === "metodologie" && (metRep.length
+                  ? <div className="pl-mgruppi">{Object.entries(metByGruppo).map(([g, ms]) => (
+                      <div key={g}><div className="pl-sub">{cap(g)} <small>{ms.length}</small></div>
+                        <div className="pl-dgrid">{ms.map((m) => <DCard key={m.id} icon={ICON_METODOLOGIE[m.nome.toLowerCase()] ?? "🎓"} title={m.nome} desc={m.aggancio_classico} on={metodologie.includes(m.nome)} onClick={() => setMetodologie(toggleIn(metodologie, m.nome))} />)}</div>
+                      </div>))}</div>
+                  : <DrillCards opts={METODOLOGIE} val={metodologie} onToggle={(m) => setMetodologie(toggleIn(metodologie, m))} desc={(o) => DESCR_METODOLOGIE[o]} icon={(o) => ICON_METODOLOGIE[o]} />)}
                 {stepDefs[idx].key === "strumenti" && <DrillCards opts={STRUMENTI} val={strumenti} onToggle={(m) => setStrumenti(toggleIn(strumenti, m))} desc={(o) => DESCR_STRUMENTI[o]} icon={(o) => ICON_STRUMENTI[o]} />}
                 {stepDefs[idx].key === "edciv" && (
                   <div className="pl-dgrid">
@@ -495,7 +529,16 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       </>
                     )}
 
-                    <label className="field"><span>Prerequisiti <button className="link" onClick={suggPrereq}>💡 dai contenuti</button></span><textarea rows={2} value={prereq} onChange={(e) => setPrereq(e.target.value)} placeholder="Cosa serve sapere/saper fare prima…" /></label>
+                    <div className="field"><span>Prerequisiti <em>· regola di prossimità (orizzonte circoscritto)</em> {(prereqAgg.daAccertare.length + prereqAgg.consolidate.length > 0) && <button className="link" onClick={inserisciPrereq}>inserisci nel testo ↓</button>}</span>
+                      {(prereqAgg.daAccertare.length + prereqAgg.consolidate.length + prereqAgg.contesto.length > 0) && (
+                        <div className="pl-prereq">
+                          {prereqAgg.daAccertare.length > 0 && <div className="pl-prereq-grp"><b>Da accertare</b>{prereqAgg.daAccertare.map((r) => <span key={r.regola.id} className={r.regola.obbligatorio ? "chip oblig" : "chip"} title={r.regola.nota || r.regola.tipo}>{r.etichetta}{r.regola.obbligatorio ? " · micro-verifica" : ""}</span>)}</div>}
+                          {prereqAgg.consolidate.length > 0 && <div className="pl-prereq-grp"><b>Consolidate</b>{prereqAgg.consolidate.map((r) => <span key={r.regola.id} className="chip ok" title={`orizzonte: ${r.regola.orizzonte}`}>{r.etichetta}</span>)}</div>}
+                          {prereqAgg.contesto.length > 0 && <div className="pl-prereq-grp"><b>Contesto</b>{prereqAgg.contesto.map((v) => <span key={v.id} className="chip ctx">{v.testo}</span>)}</div>}
+                        </div>
+                      )}
+                      <textarea rows={2} value={prereq} onChange={(e) => setPrereq(e.target.value)} placeholder="Cosa serve sapere/saper fare prima…" />
+                    </div>
                     {!isUda && (
                       <div className="field"><span>Fasi e tempi della lezione</span>
                         <div className="pl-fasi">
@@ -504,6 +547,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                             <span>· assegnato <b>{fasiMinTot}′</b></span>
                             <span className={minRim < 0 ? "pl-fasi-over" : "pl-fasi-ok"}>{minRim >= 0 ? `${minRim}′ ancora liberi` : `${-minRim}′ in eccesso`}</span>
                             <span className="spacer" />
+                            {arrRep.length > 0 && <select className="pl-arr-sel" value="" onChange={(e) => { if (e.target.value) applicaArrangiamento(e.target.value); }}><option value="">↳ preset timeline…</option>{arrRep.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}</select>}
                             <button className="link" onClick={struttFasi}>struttura tipo</button>
                             <button className="link" onClick={addFase}>+ fase</button>
                           </div>
@@ -516,7 +560,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                                     <span className="pl-fase-dur"><input type="number" min={0} step={5} value={f.minuti} onChange={(e) => setFase(f.id, { minuti: Number(e.target.value) })} />′</span>
                                     <button className="danger" onClick={() => removeFase(f.id)} aria-label="Rimuovi">✕</button>
                                   </div>
-                                  <div className="pl-fase-metodi">{METODOLOGIE.map((m) => <button key={m} className={f.metodi.includes(m) ? "pl-mbtn xs on" : "pl-mbtn xs"} onClick={() => setFase(f.id, { metodi: toggleIn(f.metodi, m) })}>{cap(m)}</button>)}</div>
+                                  <div className="pl-fase-metodi">{metNomi.map((m) => <button key={m} className={f.metodi.includes(m) ? "pl-mbtn xs on" : "pl-mbtn xs"} onClick={() => setFase(f.id, { metodi: toggleIn(f.metodi, m) })}>{cap(m)}</button>)}</div>
                                 </div>
                               ))}
                             </div>
@@ -534,8 +578,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       </div>
                     </div>
 
-                    <div className="field"><span>Materiali</span>
+                    <div className="field"><span>Materiali{matRep.length ? <em> · dall'archivio</em> : null}</span>
                       <div className="pl-mat">
+                        {matRep.length > 0 && <div className="pl-menu pl-incl-menu">{matRep.slice(0, 16).map((m) => <button key={m.id} className="pl-mbtn xs" title={`${m.categoria} · ${m.supporto} — ${m.descrizione}`} onClick={() => creaDaCatalogo(m)}>+ {m.tipo}</button>)}</div>}
                         {materialiDisp.length > 0 && (
                           <div className="pl-menu">{materialiDisp.map((m) => <button key={m.id} className={matSel.includes(m.id) ? "pl-mbtn on" : "pl-mbtn"} onClick={() => setMatSel((a) => toggleIn(a, m.id))}><span className="pl-mb-tick">{matSel.includes(m.id) ? "✓" : "+"}</span>{String(m["Titolo"] ?? "—")}</button>)}</div>
                         )}
@@ -555,14 +600,15 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                         if (classe) return <div className="pl-remind ok">✓ {classe}: nessun alunno con BES/DSA/L.104 in anagrafica.</div>;
                         return null;
                       })()}
-                      <textarea rows={2} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (a livello di classe)…" />
+                      {inclRep.length > 0 && <div className="pl-menu pl-incl-menu">{inclRep.slice(0, 14).map((m) => <button key={m.id} className="pl-mbtn xs" title={`${m.ambito} · ${m.categoria} — ${m.descrizione}`} onClick={() => setInclusione((t) => [...new Set([...t.split("\n").filter(Boolean), `• [${m.ambito}/${m.categoria}] ${m.misura}`])].join("\n"))}>+ {m.misura}</button>)}</div>}
+                      <textarea rows={2} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (modello anonimo, per situazione)…" />
                     </div>
 
                     <div className="pl-triade">
-                      <label className="field"><span>Verifica formativa <em>· in itinere</em></span>
+                      <label className="field"><span>Verifica formativa <em>· in itinere{verRep.length ? ", dall'archivio" : ""}</em></span>
                         <select value={verificaF} onChange={(e) => setVerificaF(e.target.value)}>
                           <option value="">—</option>
-                          {VERIFICHE_F.map((v) => <option key={v} value={v}>{cap(v)}</option>)}
+                          {verOptions.map((v) => <option key={v} value={v}>{cap(v)}</option>)}
                         </select>
                       </label>
                       <div className="field"><span>Verifica sommativa <em>· dialoga col calcolatore</em></span>

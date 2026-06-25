@@ -794,6 +794,17 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-remind.ok { background: var(--success-light); color: var(--success); border: 1px solid color-mix(in srgb, var(--success) 30%, transparent); }
 .pl-remind b { color: inherit; }
 .pl-verifica { display: flex; flex-direction: column; gap: 0.3rem; }
+
+/* ── Repertori del lesson-builder nella UI ──────────────────────────────────── */
+.pl-mgruppi { display: flex; flex-direction: column; gap: 1rem; }
+.pl-arr-sel { font: 600 0.78rem var(--font-ui); padding: 0.25rem 0.5rem; border: 1px solid var(--accent-border); border-radius: var(--radius); background: var(--accent-pale); color: var(--accent); cursor: pointer; }
+.pl-prereq { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.5rem 0.6rem; margin-bottom: 0.4rem; border: 1px dashed var(--accent-border); border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 3%, transparent); }
+.pl-prereq-grp { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
+.pl-prereq-grp b { font: 700 0.68rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-muted); margin-right: 0.3rem; }
+.chip.oblig { background: var(--danger-light); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent); font-weight: 700; }
+.chip.ok { background: var(--success-light); color: var(--success); }
+.chip.ctx { background: var(--parchment-dark); color: var(--ink-muted); }
+.pl-incl-menu { margin-bottom: 0.4rem; }
 .pl-compito select, .pl-compito input { font: 0.84rem var(--font-ui); padding: 0.35rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
 .pl-compito button { padding: 0.3rem 0.55rem; }
 .pl-compiti-foot { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: end; }
