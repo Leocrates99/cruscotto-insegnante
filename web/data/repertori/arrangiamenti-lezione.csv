@@ -6,3 +6,5 @@ ARR-04,EAS - Episodio di Apprendimento Situato,eas,FAS-10|FAS-11|FAS-12,90,MET-1
 ARR-05,Laboratorio (traduzione/analisi/scrittura),laboratorio,FAS-01|FAS-02|FAS-03|FAS-09|FAS-05,90,MET-09|MET-04|MET-20,"scaffolding in calo dalla terza alla quinta","Apertura-consegna, modellamento, lavoro autonomo, restituzione"
 ARR-06,Cooperativa a mosaico (Jigsaw),cooperativo,FAS-01|FAS-02|FAS-03|FAS-09|FAS-05,90,MET-05|MET-04,"un'epoca o un autore divisi per nuclei","Gruppi-esperti, poi gruppi-base con insegnamento reciproco, restituzione"
 ARR-07,Debate,dibattito,FAS-01|FAS-03|FAS-04|FAS-05,90,MET-08,"triennio","Preparazione e documentazione, dibattito PRO/CONTRO regolato, debriefing"
+ARR-08,Rilascio graduale (modellamento e pratica),rilascio-graduale,FAS-01|FAS-15|FAS-16|FAS-17|FAS-04|FAS-05,60,MET-20|MET-01|MET-18,"biennio e triennio","Io faccio / noi facciamo / tu fai: dal modellamento alla pratica autonoma"
+ARR-09,Lezione sul testo (lettura e officina),testuale,FAS-01|FAS-20|FAS-21|FAS-09|FAS-05,90,MET-02|MET-09|MET-24,"triennio (lingue classiche)","Lettura analitica del testo, poi laboratorio di traduzione/scrittura e restituzione"

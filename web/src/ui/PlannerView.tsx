@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { View } from "../App";
 import type { DbKey } from "@model";
 import { schemaByKey } from "@model";
@@ -18,7 +18,7 @@ import { classeColor, materiaColor, materiaSigla } from "./materia";
 const oggi = () => new Date().toISOString().slice(0, 10);
 type Tipo = "lezione" | "laboratorio" | "uda";
 type CompitoRow = { id: string; tipo: string; testo: string; data: string };
-type FaseRow = { id: string; nome: string; minuti: number; metodi: string[]; funzione?: string };
+type FaseRow = { id: string; nome: string; minuti: number; metodi: string[]; funzione?: string; centratura?: string };
 type StepKey = "conoscenze" | "abilita" | "prerequisiti" | "metodologie" | "strumenti" | "fasi" | "edciv" | "raccordi" | "materiali" | "inclusione" | "compiti" | "dettagli";
 const FASI_DEFAULT = ["Apertura", "Sviluppo", "Esercitazione", "Sintesi e verifica"];
 const FASE_COLORS = ["#1800ac", "#2f7d5a", "#b9791f", "#a22e37", "#7c3aed", "#0891b2", "#be185d", "#4d7c0f"];
@@ -123,6 +123,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [fasiRows, setFasiRows] = useState<FaseRow[]>([]);
   const [oraInizio, setOraInizio] = useState("08:00");
   const [faseMetodi, setFaseMetodi] = useState<string | null>(null);
+  const [faseEvidenzia, setFaseEvidenzia] = useState<string | null>(null);
+  const dragFase = useRef<number | null>(null);
   const [metodologie, setMetodologie] = useState<string[]>([]);
   const [strumenti, setStrumenti] = useState<string[]>([]);
   const [educiv, setEduciv] = useState<string[]>([]);
@@ -196,6 +198,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const addFase = () => setFasiRows((r) => [...r, { id: newId(), nome: FASI_DEFAULT[r.length] ?? `Fase ${r.length + 1}`, minuti: 0, metodi: [] }]);
   const setFase = (id: string, patch: Partial<FaseRow>) => setFasiRows((r) => r.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   const removeFase = (id: string) => setFasiRows((r) => r.filter((x) => x.id !== id));
+  const spostaFase = (from: number, to: number) => setFasiRows((r) => { if (from === to || from < 0 || to < 0 || from >= r.length || to >= r.length) return r; const a = [...r]; const [m] = a.splice(from, 1); a.splice(to, 0, m); return a; });
+  const vaiAFase = (id: string) => { setFaseEvidenzia(id); document.getElementById(`pl-fase-${id}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" }); window.setTimeout(() => setFaseEvidenzia((c) => (c === id ? null : c)), 1300); };
   const struttFasi = () => {
     const tot = minPrev || 60;
     const quote = [0.15, 0.4, 0.3, 0.15];
@@ -220,7 +224,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const applicaArrangiamento = (arrId: string) => {
     if (!arch) return;
     const tl = espandiArrangiamento(arch, arrId, minPrev || 60);
-    setFasiRows(tl.fasi.map((ft) => ({ id: newId(), nome: ft.fase.fase, minuti: ft.minuti, funzione: ft.fase.funzione, metodi: ft.metodologie.slice(0, 2).map((m) => m.nome) })));
+    setFasiRows(tl.fasi.map((ft) => ({ id: newId(), nome: ft.fase.fase, minuti: ft.minuti, funzione: ft.fase.funzione, centratura: ft.fase.centratura, metodi: ft.metodologie.slice(0, 2).map((m) => m.nome) })));
   };
   const metIcone = useMemo(() => iconaUniche(metNomi, ICON_METODOLOGIE), [metNomi]);
   const prereqAgg = useMemo(() => {
@@ -546,7 +550,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
                     {fasiRows.length > 0 && (
                       <div className="pl-binario" role="img" aria-label={`Ripartizione del tempo: ${fasiRows.map((f) => `${f.nome} ${f.minuti}′`).join(", ")}`}>
-                        {fasiRows.map((f, i) => <div key={f.id} className="pl-bin-seg" style={{ flexGrow: Math.max(f.minuti || 0, 0.001), background: FASE_COLORS[i % FASE_COLORS.length] }} title={`${f.nome || `Fase ${i + 1}`} · ${f.minuti || 0}′`}>{(f.minuti || 0) >= 8 ? `${f.minuti}′` : ""}</div>)}
+                        {fasiRows.map((f, i) => <div key={f.id} className="pl-bin-seg" onClick={() => vaiAFase(f.id)} style={{ flexGrow: Math.max(f.minuti || 0, 0.001), background: FASE_COLORS[i % FASE_COLORS.length] }} title={`${f.nome || `Fase ${i + 1}`} · ${f.minuti || 0}′ — clic per la riga`}>{(f.minuti || 0) >= 8 ? `${f.minuti}′` : ""}</div>)}
                         {minRim < 0 && <div className="pl-bin-over" style={{ flexGrow: -minRim }} title={`${-minRim}′ in eccesso`} />}
                       </div>
                     )}
@@ -554,9 +558,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                     {fasiRows.length === 0 ? <p className="muted">Scegli un preset «timeline» dall'archivio o aggiungi le fasi a mano: per ciascuna durata, orario e metodi.</p> : (
                       <div className="pl-fasi-list">
                         {fasiRows.map((f, i) => { const s = inizioFase(i); const col = FASE_COLORS[i % FASE_COLORS.length]; return (
-                          <div key={f.id} className="pl-fase" style={{ borderLeftColor: col }}>
+                          <div key={f.id} id={`pl-fase-${f.id}`} className={faseEvidenzia === f.id ? "pl-fase evidenzia" : "pl-fase"} style={{ borderLeftColor: col }} onDragOver={(e) => e.preventDefault()} onDrop={() => { const from = dragFase.current; if (from != null) spostaFase(from, i); dragFase.current = null; }}>
                             <div className="pl-fase-main">
-                              <span className="pl-fase-n" style={{ background: col }}>{i + 1}</span>
+                              <span className="pl-fase-n" draggable onDragStart={() => { dragFase.current = i; }} onDragEnd={() => { dragFase.current = null; }} title="Trascina per riordinare" style={{ background: col, cursor: "grab" }}>{i + 1}</span>
                               <span className="pl-fase-ora">{fmtOra(s)}–{fmtOra(s + (f.minuti || 0))}</span>
                               <input className="pl-fase-nome" type="text" value={f.nome} placeholder={`Fase ${i + 1}`} onChange={(e) => setFase(f.id, { nome: e.target.value })} />
                               <span className="pl-fase-step">
@@ -567,7 +571,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                               <button className={faseMetodi === f.id ? "pl-fase-met on" : "pl-fase-met"} onClick={() => setFaseMetodi(faseMetodi === f.id ? null : f.id)}>metodi · {f.metodi.length} ▾</button>
                               <button className="danger" onClick={() => removeFase(f.id)} aria-label="Rimuovi">✕</button>
                             </div>
-                            {f.funzione && <div className="pl-fase-fn">{f.funzione}</div>}
+                            {(f.funzione || f.centratura) && <div className="pl-fase-fn">{f.centratura && <span className="pl-fase-cen">{cap(f.centratura)}</span>}{f.funzione}</div>}
                             {f.metodi.length > 0 && faseMetodi !== f.id && <div className="pl-fase-sel">{f.metodi.map((m) => cap(m)).join(" · ")}</div>}
                             {faseMetodi === f.id && <div className="pl-fase-metodi">{metNomi.map((m) => <button key={m} className={f.metodi.includes(m) ? "pl-mbtn xs on" : "pl-mbtn xs"} onClick={() => setFase(f.id, { metodi: toggleIn(f.metodi, m) })}>{cap(m)}</button>)}</div>}
                           </div>

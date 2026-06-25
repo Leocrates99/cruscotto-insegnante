@@ -798,7 +798,8 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-fasi-ora { display: inline-flex; align-items: center; gap: 0.3rem; font: 600 0.78rem var(--font-ui); color: var(--ink-muted); }
 .pl-fasi-ora input { width: 5.5rem; padding: 0.2rem 0.4rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); color: var(--ink); }
 .pl-binario { display: flex; height: 30px; border-radius: var(--radius); overflow: hidden; gap: 2px; margin: 0.2rem 0 0.6rem; }
-.pl-bin-seg { min-width: 0; display: flex; align-items: center; justify-content: center; font: 700 0.7rem var(--font-ui); color: #fff; overflow: hidden; }
+.pl-bin-seg { min-width: 0; display: flex; align-items: center; justify-content: center; font: 700 0.7rem var(--font-ui); color: #fff; overflow: hidden; cursor: pointer; transition: filter var(--transition); }
+.pl-bin-seg:hover { filter: brightness(1.08); }
 .pl-bin-over { min-width: 6px; background: var(--danger); opacity: 0.85; }
 .pl-fase-ora { flex-shrink: 0; min-width: 6.2rem; font: 600 0.74rem var(--font-ui); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
 .pl-fase-step { display: inline-flex; align-items: center; border: 1px solid var(--parchment-dark); border-radius: var(--radius); overflow: hidden; flex-shrink: 0; }
@@ -809,6 +810,9 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-fase-met { flex-shrink: 0; font: 600 0.74rem var(--font-ui); padding: 0.28rem 0.6rem; border: 1px solid var(--parchment-dark); border-radius: 99px; background: var(--parchment); color: var(--ink-light); cursor: pointer; }
 .pl-fase-met:hover, .pl-fase-met.on { border-color: var(--accent); color: var(--accent); background: var(--accent-pale); box-shadow: none; transform: none; }
 .pl-fase-sel { font-size: 0.78rem; color: var(--ink-muted); padding-left: 0.2rem; }
+.pl-fase-cen { display: inline-block; font: 700 0.62rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.03em; color: var(--accent); background: var(--accent-pale); padding: 0.05rem 0.45rem; border-radius: 99px; margin-right: 0.45rem; vertical-align: 1px; }
+.pl-fase { transition: box-shadow var(--transition); }
+.pl-fase.evidenzia { box-shadow: 0 0 0 2px var(--accent); }
 
 /* ── Reminder (inclusione / verifica) ──────────────────────────────────────── */
 .pl-remind { font-size: 0.82rem; line-height: 1.4; padding: 0.4rem 0.6rem; border-radius: var(--radius); margin-bottom: 0.4rem; }

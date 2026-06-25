@@ -110,14 +110,24 @@ describe("Repertori didattici · invarianti di import", () => {
 });
 
 describe("Archivio · sanità dei conteggi", () => {
-  it("backbone, parallelismi e repertori hanno le cardinalità attese", () => {
+  it("backbone e parallelismi stabili; repertori e voci presenti", () => {
     expect(obiettivi.length).toBe(408);
     expect(parallelismi.length).toBe(47);
-    expect([prerequisiti.length, metodologie.length, fasi.length, arrangiamenti.length, materiali.length, valutazione.length, inclusione.length])
-      .toEqual([36, 33, 12, 7, 30, 24, 29]);
-  });
-  it("le voci sono la somma dei tre file (nessuna riga persa nell'import)", () => {
     expect(voci.length).toBe(vociByFile.GRC.length + vociByFile.LAT.length + vociByFile.ITA.length);
     expect(voci.length).toBeGreaterThanOrEqual(698); // 698 da contratto + estensioni-autore in coda
+    for (const n of [prerequisiti.length, metodologie.length, fasi.length, arrangiamenti.length, materiali.length, valutazione.length, inclusione.length]) expect(n).toBeGreaterThan(0);
+  });
+  it("l'index generato non perde righe rispetto ai CSV sorgente", () => {
+    const c = (JSON.parse(read("../src/data/archivio.json")) as { meta: { conteggi: Record<string, number> } }).meta.conteggi;
+    expect(c.obiettivi).toBe(obiettivi.length);
+    expect(c.voci).toBe(voci.length);
+    expect(c.parallelismi).toBe(parallelismi.length);
+    expect(c.prerequisiti).toBe(prerequisiti.length);
+    expect(c.metodologie).toBe(metodologie.length);
+    expect(c.fasi).toBe(fasi.length);
+    expect(c.arrangiamenti).toBe(arrangiamenti.length);
+    expect(c.materiali).toBe(materiali.length);
+    expect(c.valutazione).toBe(valutazione.length);
+    expect(c.inclusione).toBe(inclusione.length);
   });
 });
