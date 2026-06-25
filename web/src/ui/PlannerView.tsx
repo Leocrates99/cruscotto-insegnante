@@ -11,12 +11,16 @@ import { antenati, materiaCodice, perPeso, useArchivio, voce, type Voce } from "
 import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI, ICON_COMPITI, ICON_EDCIVICA, ICON_METODOLOGIE, ICON_STRUMENTI } from "../data/glossario";
 import { downloadWord } from "../store/reportFineAnno";
 import { AlberoConoscenze } from "./AlberoConoscenze";
+import { VerificaForm } from "./VerificaForm";
 import { classeColor, materiaColor, materiaSigla } from "./materia";
 
 const oggi = () => new Date().toISOString().slice(0, 10);
 type Tipo = "lezione" | "laboratorio" | "uda";
 type CompitoRow = { id: string; tipo: string; testo: string; data: string };
+type FaseRow = { id: string; nome: string; minuti: number; metodi: string[] };
 type StepKey = "conoscenze" | "abilita" | "metodologie" | "strumenti" | "edciv" | "raccordi" | "compiti" | "dettagli";
+const FASI_DEFAULT = ["Apertura", "Sviluppo", "Esercitazione", "Sintesi e verifica"];
+const FASE_COLORS = ["#1800ac", "#2f7d5a", "#b9791f", "#a22e37", "#7c3aed", "#0891b2", "#be185d", "#4d7c0f"];
 
 const COMPITO_TIPI = ["esercizio in classe", "esercitazione guidata", "compito per casa", "verifica formativa"];
 const MAT_TIPI = ["esercizio", "scheda", "traccia", "versione", "presentazione", "mappa concettuale"];
@@ -101,7 +105,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [conoscenze, setConoscenze] = useState("");
   const [abilita, setAbilita] = useState("");
   const [competenzeTxt, setCompetenzeTxt] = useState("");
-  const [fasi, setFasi] = useState("");
+  const [fasiRows, setFasiRows] = useState<FaseRow[]>([]);
   const [metodologie, setMetodologie] = useState<string[]>([]);
   const [strumenti, setStrumenti] = useState<string[]>([]);
   const [educiv, setEduciv] = useState<string[]>([]);
@@ -116,6 +120,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [prodotto, setProdotto] = useState("");
   const [compitoRealta, setCompitoRealta] = useState("");
   const [nLezioni, setNLezioni] = useState(0);
+  const [showVerifica, setShowVerifica] = useState(false);
+  const [verificaSessId, setVerificaSessId] = useState<string | null>(null);
 
   const isUda = tipo === "uda";
   const scuolaSel = scuole.find((s) => s.id === scuolaId);
@@ -144,8 +150,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
   const resetTutto = () => {
     setSelIds(new Set()); setNucleo(""); setStepIdx(0); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
-    setFasi(""); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
+    setFasiRows([]); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
     setCompiti([]); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
+    setShowVerifica(false); setVerificaSessId(null);
   };
   const cambiaMateria = (m: string) => { setMateria(m); setNucleo(""); setSelIds(new Set()); setStepIdx(0); };
   const cambiaClasse = (c: string) => { setClasse(c); setCiclo(cicloDi(c)); setStepIdx(0); };
@@ -171,10 +178,21 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     if (arch) for (const v of selVoci) for (const an of antenati(arch, v.id)) if (CONO.has(an.blocco)) ante.add(an.testo);
     setPrereq(ante.size ? `Conoscere: ${[...ante].slice(0, 6).join("; ")}.` : "Prerequisiti di base della disciplina (lettura, lessico, riferimenti di contesto).");
   };
-  const suggFasi = () => {
-    const m = metodologie.length ? metodologie.map(cap).join(", ") : "lezione dialogata";
-    setFasi(`Apertura (10'): richiamo dei prerequisiti e degli obiettivi.\nSviluppo (25'): ${m}.\nEsercitazione (15'): applicazione guidata.\nSintesi e verifica (10'): ricapitolazione e domande flash.`);
+  // Fasi della lezione (widget): durata per fase + metodi per fase + barra colorata.
+  const minPrev = Math.round((durata || 0) * 60);
+  const fasiMinTot = fasiRows.reduce((a, b) => a + (Number(b.minuti) || 0), 0);
+  const minRim = minPrev - fasiMinTot;
+  const addFase = () => setFasiRows((r) => [...r, { id: newId(), nome: FASI_DEFAULT[r.length] ?? `Fase ${r.length + 1}`, minuti: 0, metodi: [] }]);
+  const setFase = (id: string, patch: Partial<FaseRow>) => setFasiRows((r) => r.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+  const removeFase = (id: string) => setFasiRows((r) => r.filter((x) => x.id !== id));
+  const struttFasi = () => {
+    const tot = minPrev || 60;
+    const quote = [0.15, 0.4, 0.3, 0.15];
+    const mins = quote.map((q) => Math.round(tot * q));
+    mins[3] = tot - (mins[0] + mins[1] + mins[2]);
+    setFasiRows(FASI_DEFAULT.map((nome, i) => ({ id: newId(), nome, minuti: mins[i], metodi: i === 1 ? metodologie.slice(0, 2) : [] })));
   };
+  const fasiText = (): string => fasiRows.filter((f) => f.nome.trim() || f.minuti).map((f) => `${f.nome.trim() || "Fase"} (${f.minuti || 0}')${f.metodi.length ? ` · ${f.metodi.map(cap).join(", ")}` : ""}`).join("\n");
   const suggInclusione = () => {
     const c = classe ? contiClasse(classe, profile) : { tot: 0, l104: 0, bes: 0, dsa: 0 };
     const parts: string[] = [];
@@ -240,7 +258,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     metodologie: metodologie.map(cap), strumenti: strumenti.map(cap), educiv: educivView, raccordi,
     compiti: compiti.filter((c) => c.testo.trim()).map((c) => `[${cap(c.tipo)}] ${c.testo.trim()}${c.data ? ` (entro ${fmtIt(c.data)})` : ""}`),
     compitiCal: compitiDaCal.map((c) => `${fmtIt(c.data)} · ${cap(c.tipo)}: ${c.testo.trim()}`),
-    prereq, fasi, inclusione, verificaF: verificaF ? cap(verificaF) : "", competenza, prodotto, compitoRealta,
+    prereq, fasi: fasiText(), inclusione, verificaF: verificaF ? cap(verificaF) : "", competenza, prodotto, compitoRealta,
   });
 
   const esportaWord = () => {
@@ -308,7 +326,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
         Titolo: tipo === "laboratorio" ? `[Laboratorio] ${tit}` : tit,
         Materia: materia, "Data prevista": data, "Durata (ore)": durata, Stato: "Calendarizzata",
         "Obiettivi della lezione": selVoci.map((v) => `• ${v.testo}`).join("\n"),
-        Fasi: fasi, "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}), ...(matSel.length ? { Materiali: matSel } : {}),
+        Fasi: fasiText(), "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}), ...(matSel.length ? { Materiali: matSel } : {}),
       } as Rec);
       setMsg(`✓ ${tipoLabel} salvata in archivio e calendarizzata: ${tit}`);
     }
@@ -478,7 +496,34 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                     )}
 
                     <label className="field"><span>Prerequisiti <button className="link" onClick={suggPrereq}>💡 dai contenuti</button></span><textarea rows={2} value={prereq} onChange={(e) => setPrereq(e.target.value)} placeholder="Cosa serve sapere/saper fare prima…" /></label>
-                    {!isUda && <label className="field"><span>Fasi e tempi <button className="link" onClick={suggFasi}>💡 struttura</button></span><textarea rows={3} value={fasi} onChange={(e) => setFasi(e.target.value)} placeholder="Apertura · sviluppo · esercitazione · sintesi/verifica…" /></label>}
+                    {!isUda && (
+                      <div className="field"><span>Fasi e tempi della lezione</span>
+                        <div className="pl-fasi">
+                          <div className="pl-fasi-head">
+                            <span>Tempo lezione <b>{minPrev}′</b></span>
+                            <span>· assegnato <b>{fasiMinTot}′</b></span>
+                            <span className={minRim < 0 ? "pl-fasi-over" : "pl-fasi-ok"}>{minRim >= 0 ? `${minRim}′ ancora liberi` : `${-minRim}′ in eccesso`}</span>
+                            <span className="spacer" />
+                            <button className="link" onClick={struttFasi}>struttura tipo</button>
+                            <button className="link" onClick={addFase}>+ fase</button>
+                          </div>
+                          {fasiRows.length === 0 ? <p className="muted">Aggiungi le fasi: per ciascuna durata e metodi; la barra colorata a sinistra la identifica.</p> : (
+                            <div className="pl-fasi-list">
+                              {fasiRows.map((f, i) => (
+                                <div key={f.id} className="pl-fase" style={{ borderLeftColor: FASE_COLORS[i % FASE_COLORS.length] }}>
+                                  <div className="pl-fase-main">
+                                    <input className="pl-fase-nome" type="text" value={f.nome} placeholder={`Fase ${i + 1}`} onChange={(e) => setFase(f.id, { nome: e.target.value })} />
+                                    <span className="pl-fase-dur"><input type="number" min={0} step={5} value={f.minuti} onChange={(e) => setFase(f.id, { minuti: Number(e.target.value) })} />′</span>
+                                    <button className="danger" onClick={() => removeFase(f.id)} aria-label="Rimuovi">✕</button>
+                                  </div>
+                                  <div className="pl-fase-metodi">{METODOLOGIE.map((m) => <button key={m} className={f.metodi.includes(m) ? "pl-mbtn xs on" : "pl-mbtn xs"} onClick={() => setFase(f.id, { metodi: toggleIn(f.metodi, m) })}>{cap(m)}</button>)}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="pl-rifinitura">
                       <div className="pl-sub">Rifinitura testuale {selVoci.length > 0 && <button className="link" onClick={componi}>componi dai flag ↓</button>}</div>
@@ -502,14 +547,29 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       </div>
                     </div>
 
+                    <div className="field"><span>Inclusione (misure) <button className="link" onClick={suggInclusione}>💡 dall'anagrafica</button></span>
+                      {(() => {
+                        const c = classe ? contiClasse(classe, profile) : { tot: 0, l104: 0, bes: 0, dsa: 0 };
+                        const need = c.l104 + c.bes + c.dsa;
+                        if (need > 0) return <div className="pl-remind warn">⚠️ In <b>{classe}</b> ci sono alunni con differenziazioni: {[c.dsa ? `${c.dsa} DSA` : "", c.bes ? `${c.bes} BES` : "", c.l104 ? `${c.l104} con L.104` : ""].filter(Boolean).join(", ")}. Prevedi le misure (anagrafica nel <b>Profilo</b>).</div>;
+                        if (classe) return <div className="pl-remind ok">✓ {classe}: nessun alunno con BES/DSA/L.104 in anagrafica.</div>;
+                        return null;
+                      })()}
+                      <textarea rows={2} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (a livello di classe)…" />
+                    </div>
+
                     <div className="pl-triade">
-                      <label className="field"><span>Inclusione (misure) <button className="link" onClick={suggInclusione}>💡 dall'anagrafica</button></span><textarea rows={2} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (a livello di classe)…" /></label>
-                      <label className="field"><span>Verifica formativa</span>
+                      <label className="field"><span>Verifica formativa <em>· in itinere</em></span>
                         <select value={verificaF} onChange={(e) => setVerificaF(e.target.value)}>
                           <option value="">—</option>
                           {VERIFICHE_F.map((v) => <option key={v} value={v}>{cap(v)}</option>)}
                         </select>
                       </label>
+                      <div className="field"><span>Verifica sommativa <em>· dialoga col calcolatore</em></span>
+                        {verificaSessId
+                          ? <div className="pl-remind ok">✓ Verifica pianificata e messa in calendario. <button className="link" onClick={() => onView({ kind: "valutazione", sessioneId: verificaSessId })}>apri la correzione →</button></div>
+                          : <div className="pl-verifica"><button onClick={() => setShowVerifica(true)}>📝 Pianifica verifica da zero…</button><p className="muted pl-hint">Definisci la prova (struttura mista), va in calendario e si apre poi per la correzione.</p></div>}
+                      </div>
                     </div>
 
                     {/* Panoramica */}
@@ -533,6 +593,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       <button className="primary" onClick={salva}>💾 Salva &amp; calendarizza</button>
                       {msg && <span className="pl-msg">{msg} <button className="link" onClick={() => onView({ kind: "calendar" })}>calendario →</button> <button className="link" onClick={() => onView({ kind: "archivio" })}>archivio →</button></span>}
                     </div>
+
+                    {showVerifica && <VerificaForm prefill={{ classe, data, materia, titolo: titoloEff }} onClose={() => setShowVerifica(false)} onOpen={(id) => { setVerificaSessId(id); setShowVerifica(false); }} />}
                   </>
                 )}
 

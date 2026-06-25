@@ -19,15 +19,15 @@ const oggi = () => new Date().toISOString().slice(0, 10);
  * aperta = tipologia mista) e crea una Sessione legata alla classe, precompilando le righe dai
  * numeri di registro dell'anagrafica. Si apre poi nel calcolatore.
  */
-export function VerificaForm({ prefill, onClose, onOpen }: { prefill?: { classe?: string; data?: string }; onClose: () => void; onOpen: (id: string) => void }) {
+export function VerificaForm({ prefill, onClose, onOpen }: { prefill?: { classe?: string; data?: string; materia?: string; titolo?: string }; onClose: () => void; onOpen: (id: string) => void }) {
   const profile = useProfile();
   const { griglie } = useValutazione();
   const classi = classiAttive(profile);
   const materie = materieAttive(profile);
 
-  const [titolo, setTitolo] = useState("");
+  const [titolo, setTitolo] = useState(prefill?.titolo ?? "");
   const [classe, setClasse] = useState(prefill?.classe ?? classi[0] ?? "");
-  const [materia, setMateria] = useState(materie[0] ?? "");
+  const [materia, setMateria] = useState(prefill?.materia ?? materie[0] ?? "");
   const [data, setData] = useState(prefill?.data ?? oggi());
   const [esercizi, setEsercizi] = useState<ExRow[]>([{ nome: "Esercizio 1", max: 5 }, { nome: "Esercizio 2", max: 5 }]);
   const [includiAperti, setIncludiAperti] = useState(false);

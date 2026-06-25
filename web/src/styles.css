@@ -771,6 +771,29 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-compiti { display: flex; flex-direction: column; gap: 0.35rem; }
 .pl-compito { display: grid; grid-template-columns: minmax(140px, 0.5fr) 1fr auto auto; gap: 0.4rem; align-items: center; }
 .pl-compito-data { width: 9.5rem; }
+
+/* ── Widget Fasi della lezione ──────────────────────────────────────────────── */
+.pl-fasi { border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); padding: 0.6rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.pl-fasi-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.84rem; color: var(--ink-light); }
+.pl-fasi-head b { color: var(--ink); }
+.pl-fasi-head .spacer { flex: 1; }
+.pl-fasi-ok { color: var(--success); font-weight: 700; }
+.pl-fasi-over { color: var(--danger); font-weight: 700; }
+.pl-fasi-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.pl-fase { border: 1px solid var(--parchment-dark); border-left: 5px solid var(--accent); border-radius: var(--radius); background: var(--parchment); padding: 0.5rem 0.6rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.pl-fase-main { display: flex; align-items: center; gap: 0.5rem; }
+.pl-fase-nome { flex: 1; min-width: 0; font: 600 0.9rem var(--font-ui); padding: 0.3rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); color: var(--ink); }
+.pl-fase-dur { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.82rem; color: var(--ink-muted); flex-shrink: 0; }
+.pl-fase-dur input { width: 4rem; text-align: right; padding: 0.3rem 0.4rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); color: var(--ink); }
+.pl-fase-metodi { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.pl-mbtn.xs { font-size: 0.68rem; padding: 0.12rem 0.42rem; gap: 0.2rem; }
+
+/* ── Reminder (inclusione / verifica) ──────────────────────────────────────── */
+.pl-remind { font-size: 0.82rem; line-height: 1.4; padding: 0.4rem 0.6rem; border-radius: var(--radius); margin-bottom: 0.4rem; }
+.pl-remind.warn { background: var(--warning-light); color: var(--warning); border: 1px solid color-mix(in srgb, var(--warning) 38%, transparent); }
+.pl-remind.ok { background: var(--success-light); color: var(--success); border: 1px solid color-mix(in srgb, var(--success) 30%, transparent); }
+.pl-remind b { color: inherit; }
+.pl-verifica { display: flex; flex-direction: column; gap: 0.3rem; }
 .pl-compito select, .pl-compito input { font: 0.84rem var(--font-ui); padding: 0.35rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
 .pl-compito button { padding: 0.3rem 0.55rem; }
 .pl-compiti-foot { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: end; }
