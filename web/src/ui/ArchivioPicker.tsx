@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { figli, opzioni, perPeso, type ArchivioIndex, type Voce } from "../data/archivio";
+import { opzioni, perPeso, type ArchivioIndex, type Voce } from "../data/archivio";
+import { AlberoConoscenze } from "./AlberoConoscenze";
 
 const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const CONO = new Set(["conoscenza", "contenuto"]); // ciò che forma l'albero dei contenuti
@@ -16,8 +17,6 @@ export function ArchivioPicker({ a, materia, selez, onToggle, onDettaglio }: {
   const [fase, setFase] = useState("");
   const [anno, setAnno] = useState("");
   const [nucleo, setNucleo] = useState("");
-  const [exp, setExp] = useState<Set<string>>(new Set());
-  const toggleExp = (id: string) => setExp((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const vMat = useMemo(() => a.voci.filter((v) => v.materia === materia), [a, materia]);
   const fasi = useMemo(() => opzioni(vMat, "fase"), [vMat]);
@@ -31,24 +30,6 @@ export function ArchivioPicker({ a, materia, selez, onToggle, onDettaglio }: {
   // Abilità e competenze: trasversali (per materia + nucleo, indipendenti dall'anno) → sempre sotto.
   const abilita = vMat.filter((v) => v.blocco === "abilita" && (!nucleo || v.nucleo === nucleo)).sort(perPeso);
   const competenze = vMat.filter((v) => v.blocco === "competenza" && (!nucleo || v.nucleo === nucleo)).sort(perPeso);
-
-  const Nodo = ({ v, depth }: { v: Voce; depth: number }) => {
-    const kids = figli(a, v.id);
-    const open = exp.has(v.id);
-    return (
-      <div className="ap-node">
-        <div className="ap-row" style={{ paddingLeft: `${depth * 0.9}rem` }}>
-          {kids.length > 0 ? <button className="ap-tw" onClick={() => toggleExp(v.id)} aria-label={open ? "Chiudi" : "Apri"}>{open ? "▾" : "▸"}</button> : <span className="ap-tw" />}
-          <button className={selez.has(v.id) ? "ap-leaf on" : "ap-leaf"} onClick={() => { onToggle(v); onDettaglio?.(v); }} title={v.tipo_contenuto ?? v.blocco}>
-            <span className="ap-flag">{selez.has(v.id) ? "✓" : "+"}</span>
-            <span className="ap-leaf-t">{v.testo}</span>
-            {v.tipo_contenuto && v.tipo_contenuto !== "opera" && <span className="ap-tc">{v.tipo_contenuto}</span>}
-          </button>
-        </div>
-        {open && kids.slice().sort(perPeso).map((k) => <Nodo key={k.id} v={k} depth={depth + 1} />)}
-      </div>
-    );
-  };
 
   const Flag = ({ v }: { v: Voce }) => (
     <button className={selez.has(v.id) ? "ap-chip on" : "ap-chip"} onClick={() => { onToggle(v); onDettaglio?.(v); }} title={v.competenza_europea || v.nucleo}>
@@ -75,9 +56,7 @@ export function ArchivioPicker({ a, materia, selez, onToggle, onDettaglio }: {
 
       <div className="ap-sec">
         <div className="ap-sec-h">Conoscenze e contenuti <small>{radici.length}</small></div>
-        {radici.length === 0 ? <p className="muted">Nessun contenuto per questo filtro.</p> : (
-          <div className="ap-tree">{radici.map((v) => <Nodo key={v.id} v={v} depth={0} />)}</div>
-        )}
+        <AlberoConoscenze a={a} radici={radici} selez={selez} onToggle={onToggle} onDettaglio={onDettaglio} />
       </div>
 
       {abilita.length > 0 && (

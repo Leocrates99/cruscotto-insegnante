@@ -94,6 +94,15 @@ const FACET = new Set(["biografia", "stile", "poetica", "ipertestualita"]);
 export const radiciLetteratura = (a: ArchivioIndex, materia: string): Voce[] =>
   a.voci.filter((v) => v.materia === materia && !v.parent && v.tipo_contenuto !== null && RADICE.has(v.tipo_contenuto));
 export const figli = (a: ArchivioIndex, parentId: string): Voce[] => resolveVoci(a, a.indici.figliByParent[parentId] ?? []);
+// Ordine didattico dei figli di un nodo-autore: prima la scheda (biografia → stile →
+// poetica → ipertestualità), poi le opere; il resto a seguire, per centralità.
+const ORD_FIGLIO: Record<string, number> = { biografia: 0, stile: 1, poetica: 2, ipertestualita: 3, opera: 4 };
+export const figliOrdinati = (a: ArchivioIndex, parentId: string): Voce[] =>
+  figli(a, parentId).slice().sort((x, y) => {
+    const rx = x.tipo_contenuto ? ORD_FIGLIO[x.tipo_contenuto] ?? 9 : 9;
+    const ry = y.tipo_contenuto ? ORD_FIGLIO[y.tipo_contenuto] ?? 9 : 9;
+    return rx - ry || perPeso(x, y);
+  });
 export const autoriDi = (a: ArchivioIndex, radiceId: string): Voce[] => figli(a, radiceId).filter((v) => v.tipo_contenuto === "autore");
 export const opereDi = (a: ArchivioIndex, autoreId: string): Voce[] => figli(a, autoreId).filter((v) => v.tipo_contenuto === "opera");
 export const schedaAutore = (a: ArchivioIndex, autoreId: string): Voce[] => figli(a, autoreId).filter((v) => v.tipo_contenuto !== null && FACET.has(v.tipo_contenuto));

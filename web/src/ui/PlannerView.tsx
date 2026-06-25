@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { View } from "../App";
 import type { DbKey } from "@model";
 import { schemaByKey } from "@model";
@@ -7,8 +7,8 @@ import { useStore } from "../store/useStore";
 import { classiAttive, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
 import { annoCorrenteId, classeId } from "../store/links";
 import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia";
-import { copertura, materiaCodice, useArchivio, voce, type Voce } from "../data/archivio";
-import { ArchivioPicker } from "./ArchivioPicker";
+import { materiaCodice, perPeso, useArchivio, voce, type Voce } from "../data/archivio";
+import { AlberoConoscenze } from "./AlberoConoscenze";
 import { materiaColor } from "./materia";
 
 const oggi = () => new Date().toISOString().slice(0, 10);
@@ -31,10 +31,32 @@ const STRUMENTI = optsOf("lezioni", "Strumenti e spazi");
 const VERIFICHE_F = optsOf("lezioni", "Verifica formativa");
 const EDCIVICA = optsOf("lezioni", "Educazione civica");
 
+// Mattoni UI a livello di modulo: stabili fra i render (niente remount → l'albero
+// non si richiude e i campi non perdono il focus).
+function Step({ n, titolo, hint, badge, children }: { n: number; titolo: string; hint?: string; badge?: string; children: ReactNode }) {
+  return (
+    <section className="pl-step">
+      <header className="pl-step-h">
+        <span className="pl-step-n">{n}</span>
+        <div className="pl-step-tt"><h3>{titolo}</h3>{hint && <p>{hint}</p>}</div>
+        {badge && <span className="pl-step-badge">{badge}</span>}
+      </header>
+      <div className="pl-step-body">{children}</div>
+    </section>
+  );
+}
+function Menu({ opts, val, onToggle, label }: { opts: string[]; val: string[]; onToggle: (v: string) => void; label?: boolean }) {
+  return <div className="pl-menu">{opts.map((m) => <button key={m} className={val.includes(m) ? "pl-mbtn on" : "pl-mbtn"} onClick={() => onToggle(m)}><span className="pl-mb-tick">{val.includes(m) ? "✓" : "+"}</span>{label === false ? m : cap(m)}</button>)}</div>;
+}
+function FlagVoce({ v, on, onToggle }: { v: Voce; on: boolean; onToggle: (v: Voce) => void }) {
+  return <button className={on ? "pl-mbtn on" : "pl-mbtn"} onClick={() => onToggle(v)} title={v.competenza_europea || v.nucleo}><span className="pl-mb-tick">{on ? "✓" : "+"}</span>{v.testo}</button>;
+}
+
 /**
- * Pianifica: composer di lezione / laboratorio / UdA guidato dall'ARCHIVIO (ArchivioPicker:
- * albero ramificato di conoscenze/contenuti + abilità/competenze flaggabili). Le voci flaggate
- * compongono conoscenze/abilità/competenze e, salvando, creano gli obiettivi del backbone.
+ * Pianifica: composer guidato a «menù di pulsanti». Drill di contesto
+ * (Scuola → Materia → Classe), poi i passaggi in sequenza: Settore + albero
+ * conoscenze/contenuti → Abilità/Competenze → Metodologie → Strumenti/Spazi →
+ * Educazione civica → Raccordi → Compiti → Dettagli & salva.
  */
 export function PlannerView({ onView }: { onView: (v: View) => void }) {
   useStore();
@@ -43,12 +65,16 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const arch = useArchivio();
   const materie = materieAttive(profile);
   const classi = classiAttive(profile);
-  const indir = scuoleCorrenti(profile)[0]?.indirizzo;
+
+  const scuole = profile.scuole;
+  const multiScuola = scuole.length >= 2;
 
   const [tipo, setTipo] = useState<Tipo>("lezione");
-  const [materia, setMateria] = useState(materie[0] ?? "");
-  const [classe, setClasse] = useState(classi[0] ?? "");
-  const [ciclo, setCiclo] = useState<"Biennio" | "Triennio">("Biennio");
+  const [scuolaId, setScuolaId] = useState(() => (scuole.length >= 2 ? "" : scuoleCorrenti(profile)[0]?.id ?? ""));
+  const [materia, setMateria] = useState("");
+  const [classe, setClasse] = useState("");
+  const [nucleo, setNucleo] = useState("");
+  const [ciclo, setCiclo] = useState<"Biennio" | "Triennio">("Triennio");
   const [data, setData] = useState(oggi());
   const [dataFine, setDataFine] = useState(oggi());
   const [durata, setDurata] = useState(2);
@@ -77,26 +103,44 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [nLezioni, setNLezioni] = useState(0);
 
   const isUda = tipo === "uda";
-  const materieDisp = !isUda && classe ? materieClasseEffettive(classe, profile) : materie;
+  const scuolaSel = scuole.find((s) => s.id === scuolaId);
+  const indir = (multiScuola ? scuolaSel?.indirizzo : scuoleCorrenti(profile)[0]?.indirizzo);
   const raccordiOpts = useMemo(() => (tax ? materieIndirizzo(tax, indir).filter((m) => m !== materia) : []), [tax, indir, materia]);
 
   const code = arch ? materiaCodice(arch, materia) : undefined;
+  const vMatPl = useMemo(() => (arch && code ? arch.voci.filter((v) => v.materia === code) : []), [arch, code]);
+  const nucleiPl = useMemo(() => [...new Set(vMatPl.map((v) => v.nucleo).filter(Boolean))].sort((a, b) => a.localeCompare(b)), [vMatPl]);
+  const radici = vMatPl.filter((v) => CONO.has(v.blocco) && !v.parent && (!nucleo || v.nucleo === nucleo)).sort(perPeso);
+  const abilitaV = vMatPl.filter((v) => v.blocco === "abilita" && (!nucleo || v.nucleo === nucleo)).sort(perPeso);
+  const competenzeV = vMatPl.filter((v) => v.blocco === "competenza" && (!nucleo || v.nucleo === nucleo)).sort(perPeso);
+
   const selVoci: Voce[] = arch ? [...selIds].map((id) => voce(arch, id)).filter((v): v is Voce => !!v) : [];
-  const cop = arch && code ? copertura(arch, code, undefined, [...selIds]) : null;
   const toggleVoce = (v: Voce) => setSelIds((s) => { const n = new Set(s); n.has(v.id) ? n.delete(v.id) : n.add(v.id); return n; });
   const toggleIn = (arr: string[], v: string) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
+
+  const resetTutto = () => {
+    setSelIds(new Set()); setNucleo(""); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
+    setFasi(""); setMetodologie([]); setStrumenti([]); setEduciv([]); setRaccordi([]); setInclusione(""); setVerificaF("");
+    setCompiti([]); setConsegna(""); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
+  };
+  const cambiaMateria = (m: string) => { setMateria(m); setNucleo(""); setSelIds(new Set()); };
 
   // Le voci flaggate compongono i tre campi (per blocco): si possono poi rifinire a mano.
   const componi = () => {
     const con = selVoci.filter((v) => CONO.has(v.blocco)).map((v) => `• ${v.testo}`);
     const ab = selVoci.filter((v) => v.blocco === "abilita").map((v) => `• ${v.testo}`);
     const com = selVoci.filter((v) => v.blocco === "competenza").map((v) => `• ${v.testo}`);
-    if (con.length) setConoscenze((c) => [c.trim(), ...con].filter(Boolean).join("\n"));
-    if (ab.length) setAbilita((c) => [c.trim(), ...ab].filter(Boolean).join("\n"));
-    if (com.length) setCompetenzeTxt((c) => [c.trim(), ...com].filter(Boolean).join("\n"));
+    setConoscenze((c) => [...new Set([...c.split("\n").filter(Boolean), ...con])].join("\n"));
+    setAbilita((c) => [...new Set([...c.split("\n").filter(Boolean), ...ab])].join("\n"));
+    setCompetenzeTxt((c) => [...new Set([...c.split("\n").filter(Boolean), ...com])].join("\n"));
+  };
+  // Testo effettivo del campo (esplicito, altrimenti derivato dai flag) per il salvataggio.
+  const derivato = (campo: "con" | "ab" | "com", testo: string): string => {
+    if (testo.trim()) return testo;
+    const f = campo === "con" ? selVoci.filter((v) => CONO.has(v.blocco)) : selVoci.filter((v) => v.blocco === (campo === "ab" ? "abilita" : "competenza"));
+    return f.map((v) => `• ${v.testo}`).join("\n");
   };
 
-  // Crea (o riusa) i record-obiettivo dal backbone agganciato alle voci flaggate.
   const obiettiviDaVoci = (): string[] => {
     if (!arch) return [];
     const backbone = new Set<string>();
@@ -114,7 +158,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     return ids;
   };
 
-  const addCompito = () => setCompiti((c) => [...c, { id: newId(), tipo: COMPITO_TIPI[0], testo: "" }]);
+  const addCompito = (t: string) => setCompiti((c) => [...c, { id: newId(), tipo: t, testo: "" }]);
   const setCompito = (id: string, patch: Partial<CompitoRow>) => setCompiti((c) => c.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   const removeCompito = (id: string) => setCompiti((c) => c.filter((x) => x.id !== id));
 
@@ -127,12 +171,6 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     setMatSel((s) => [...s, id]);
     setNuovoMat({ titolo: "", tipo: nuovoMat.tipo });
   };
-
-  const reset = () => {
-    setSelIds(new Set()); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
-    setFasi(""); setMetodologie([]); setStrumenti([]); setEduciv([]); setRaccordi([]); setInclusione(""); setVerificaF("");
-    setCompiti([]); setConsegna(""); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
-  };
   const compitiText = () => compiti.filter((c) => c.testo.trim()).map((c) => `• [${c.tipo}] ${c.testo.trim()}`).join("\n");
 
   const salva = () => {
@@ -140,7 +178,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     const tit = titolo.trim() || `${materia}${selVoci[0] ? " — " + selVoci[0].testo : ""}`;
     const cId = classe ? classeId(classe) : undefined;
     const didattica: Rec = {
-      id: "", Prerequisiti: prereq, Conoscenze: conoscenze, "Abilità": abilita, Competenze: competenzeTxt,
+      id: "", Prerequisiti: prereq, Conoscenze: derivato("con", conoscenze), "Abilità": derivato("ab", abilita), Competenze: derivato("com", competenzeTxt),
       Metodologie: metodologie, "Strumenti e spazi": strumenti, "Compiti ed esercizi": compitiText(),
       "Educazione civica": educiv, "Raccordi interdisciplinari": raccordi, "Inclusione (misure)": inclusione,
       ...(verificaF ? { "Verifica formativa": verificaF } : {}),
@@ -175,15 +213,15 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
       }
       setMsg(`✓ ${tipo === "laboratorio" ? "Laboratorio" : "Lezione"} calendarizzata: ${tit}`);
     }
-    reset();
+    resetTutto();
   };
 
-  const Chips = ({ opts, val, set, label }: { opts: string[]; val: string[]; set: (a: string[]) => void; label?: boolean }) => (
-    <div className="pl-chips">{opts.map((m) => <button key={m} className={val.includes(m) ? "pl-chip on" : "pl-chip"} onClick={() => set(toggleIn(val, m))}>{label === false ? m : cap(m)}</button>)}</div>
-  );
+  const scuolaOk = !multiScuola || !!scuolaId;
+  const ctxReady = scuolaOk && !!materia && (isUda || !!classe);
+  const classiPerMateria = materia ? classi.filter((c) => materieClasseEffettive(c, profile).includes(materia)) : classi;
 
   return (
-    <section className="planner">
+    <section className="planner pl-wizard">
       <div className="view-head">
         <h1>🧠 Pianifica</h1>
         <div className="seg">
@@ -197,127 +235,169 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
         <p className="muted">Imposta materie e classi nel <b>Profilo</b>, poi torna qui a pianificare.</p>
       ) : (
         <>
-          <div className="pl-ctx">
-            <label className="field sm"><span>Materia</span>
-              <select value={materieDisp.includes(materia) ? materia : ""} onChange={(e) => { setMateria(e.target.value); setSelIds(new Set()); }}>
-                {!materieDisp.includes(materia) && <option value="">—</option>}
-                {materieDisp.map((m) => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </label>
-            {!isUda && (
-              <label className="field sm"><span>Classe</span>
-                <select value={classe} onChange={(e) => { const c = e.target.value; setClasse(c); const ms = materieClasseEffettive(c, profile); if (!ms.includes(materia)) { setMateria(ms[0] ?? ""); setSelIds(new Set()); } }}>
-                  {classi.length === 0 && <option value="">—</option>}
-                  {classi.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </label>
+          {/* ── DRILL DI CONTESTO ─────────────────────────────────────────── */}
+          <div className="pl-drill">
+            {multiScuola && (scuolaId
+              ? <button className="pl-crumb" onClick={() => setScuolaId("")}><b>Scuola</b> {scuolaSel?.nome} <span>✕</span></button>
+              : <div className="pl-pick"><span className="pl-pick-q">Per quale scuola?</span><div className="pl-menu lg">{scuole.map((s) => <button key={s.id} className="pl-mcard" onClick={() => setScuolaId(s.id)}><b>{s.nome}</b><em>{s.indirizzo ?? s.ordine}</em></button>)}</div></div>
             )}
-            <div className="seg sm">
-              <button className={ciclo === "Biennio" ? "active" : ""} onClick={() => setCiclo("Biennio")}>Biennio</button>
-              <button className={ciclo === "Triennio" ? "active" : ""} onClick={() => setCiclo("Triennio")}>Triennio</button>
-            </div>
-            {isUda ? (
-              <>
-                <label className="field sm"><span>Da</span><input type="date" value={data} onChange={(e) => setData(e.target.value)} /></label>
-                <label className="field sm"><span>A</span><input type="date" value={dataFine} onChange={(e) => setDataFine(e.target.value)} /></label>
-                <label className="field sm"><span>N° lezioni</span><input type="number" min={0} max={60} value={nLezioni} onChange={(e) => setNLezioni(Number(e.target.value))} /></label>
-              </>
-            ) : (
-              <>
-                <label className="field sm"><span>Data</span><input type="date" value={data} onChange={(e) => setData(e.target.value)} /></label>
-                <label className="field sm"><span>Ore</span><input type="number" min={0} step="0.5" value={durata} onChange={(e) => setDurata(Number(e.target.value))} /></label>
-              </>
+
+            {scuolaOk && (materia
+              ? <button className="pl-crumb" onClick={() => cambiaMateria("")}><b>Materia</b> {materia} <span>✕</span></button>
+              : <div className="pl-pick"><span className="pl-pick-q">Quale materia?</span><div className="pl-menu lg">{materie.map((m) => <button key={m} className="pl-mcard" onClick={() => cambiaMateria(m)} style={{ borderLeft: `4px solid ${materiaColor(m) ?? "var(--rule)"}` }}><b>{m}</b>{arch && materiaCodice(arch, m) ? <em>in archivio</em> : <em>compilazione libera</em>}</button>)}</div></div>
+            )}
+
+            {scuolaOk && materia && !isUda && (classe
+              ? <button className="pl-crumb" onClick={() => setClasse("")}><b>Classe</b> {classe} <span>✕</span></button>
+              : <div className="pl-pick"><span className="pl-pick-q">Quale classe?</span><div className="pl-menu lg">{classiPerMateria.length === 0 ? <p className="muted">Nessuna classe associata a {materia} (vedi sinolo nel Profilo).</p> : classiPerMateria.map((c) => <button key={c} className="pl-mcard" onClick={() => setClasse(c)}><b>{c}</b></button>)}</div></div>
             )}
           </div>
 
-          <div className="pl-body">
-            <div className="pl-archivio">
-              {!arch ? <p className="muted">Carico l'archivio…</p>
-                : !code ? <p className="muted">Nessun dato d'archivio per <b>{materia}</b>: compila i campi a destra a mano.</p>
-                : <ArchivioPicker a={arch} materia={code} selez={selIds} onToggle={toggleVoce} />}
-            </div>
-
-            <div className="pl-compose">
-              <label className="field"><span>Titolo</span>
-                <input type="text" value={titolo} placeholder={`${isUda ? "UdA" : tipo === "laboratorio" ? "Laboratorio" : "Lezione"} di ${materia || "…"}`} onChange={(e) => setTitolo(e.target.value)} style={{ borderLeft: `3px solid ${materiaColor(materia) ?? "var(--parchment-dark)"}` }} />
-              </label>
-
-              <div className="pl-sel">
-                <div className="pl-sel-h">Voci flaggate <b>{selVoci.length}</b>{cop && cop.totali > 0 && <span className="pl-cop">copertura {cop.pct}%</span>}{selVoci.length > 0 && <button className="link" onClick={componi}>componi C/A/C ↓</button>}</div>
-                {selVoci.length === 0 ? <p className="muted">Flagga voci dall'archivio a sinistra (conoscenze, abilità, competenze).</p> : (
-                  <ul>{selVoci.map((v) => <li key={v.id}><span>{v.testo}</span><button onClick={() => toggleVoce(v)} aria-label="Togli">✕</button></li>)}</ul>
-                )}
-              </div>
-
-              {isUda && (
-                <>
-                  <label className="field"><span>Competenza attesa</span><textarea rows={2} value={competenza} onChange={(e) => setCompetenza(e.target.value)} placeholder="La competenza al termine dell'UdA…" /></label>
-                  <div className="pl-triade">
-                    <label className="field"><span>Prodotto atteso</span><textarea rows={2} value={prodotto} onChange={(e) => setProdotto(e.target.value)} placeholder="L'elaborato finale…" /></label>
-                    <label className="field"><span>Compito di realtà</span><textarea rows={2} value={compitoRealta} onChange={(e) => setCompitoRealta(e.target.value)} placeholder="Situazione autentica…" /></label>
-                  </div>
-                  <p className="muted pl-hint">Con «N° lezioni» &gt; 0 vengono create e calendarizzate le lezioni (sequenza + date distribuite).</p>
-                </>
+          {ctxReady && (
+            <div className="pl-steps">
+              {/* ① Conoscenze e contenuti */}
+              {code ? (
+                <Step n={1} titolo="Conoscenze e contenuti" hint="Scegli il settore, poi espandi i rami: prima la biografia, poi le opere." badge={`${selVoci.filter((v) => CONO.has(v.blocco)).length} scelte`}>
+                  {nucleiPl.length > 0 && (
+                    <div className="pl-menu" role="tablist">
+                      <button className={!nucleo ? "pl-mbtn on" : "pl-mbtn"} onClick={() => setNucleo("")}>Tutti i settori</button>
+                      {nucleiPl.map((n) => <button key={n} className={nucleo === n ? "pl-mbtn on" : "pl-mbtn"} onClick={() => setNucleo(n)}>{n}</button>)}
+                    </div>
+                  )}
+                  <AlberoConoscenze a={arch!} radici={radici} selez={selIds} onToggle={toggleVoce} />
+                </Step>
+              ) : (
+                <Step n={1} titolo="Conoscenze e contenuti" hint="Materia senza archivio: scrivi i contenuti nei Dettagli, in fondo.">
+                  <p className="muted">Per <b>{materia}</b> non c'è ancora un archivio: i campi si compilano a mano nello step finale.</p>
+                </Step>
               )}
 
-              <label className="field"><span>Prerequisiti</span><textarea rows={2} value={prereq} onChange={(e) => setPrereq(e.target.value)} placeholder="Cosa serve sapere/saper fare prima…" /></label>
-              <div className="pl-triade">
-                <label className="field"><span>Conoscenze</span><textarea rows={2} value={conoscenze} onChange={(e) => setConoscenze(e.target.value)} placeholder="Contenuti…" /></label>
-                <label className="field"><span>Abilità</span><textarea rows={2} value={abilita} onChange={(e) => setAbilita(e.target.value)} placeholder="Saper fare…" /></label>
-                <label className="field"><span>Competenze</span><textarea rows={2} value={competenzeTxt} onChange={(e) => setCompetenzeTxt(e.target.value)} placeholder="Agire competente…" /></label>
-              </div>
-              {!isUda && <label className="field"><span>Fasi e tempi</span><textarea rows={3} value={fasi} onChange={(e) => setFasi(e.target.value)} placeholder="Apertura · sviluppo · esercitazione · sintesi/verifica…" /></label>}
+              {/* ② Abilità e competenze */}
+              {code && (abilitaV.length > 0 || competenzeV.length > 0) && (
+                <Step n={2} titolo="Abilità e competenze" hint="Il completamento: ciò che si sa fare e l'agire competente. Si flaggano di continuo." badge={`${selVoci.filter((v) => v.blocco === "abilita" || v.blocco === "competenza").length} scelte`}>
+                  {abilitaV.length > 0 && <><div className="pl-sub">Abilità</div><div className="pl-menu">{abilitaV.map((v) => <FlagVoce key={v.id} v={v} on={selIds.has(v.id)} onToggle={toggleVoce} />)}</div></>}
+                  {competenzeV.length > 0 && <><div className="pl-sub">Competenze</div><div className="pl-menu">{competenzeV.map((v) => <FlagVoce key={v.id} v={v} on={selIds.has(v.id)} onToggle={toggleVoce} />)}</div></>}
+                </Step>
+              )}
 
-              <div className="field"><span>Metodologie</span><Chips opts={METODOLOGIE} val={metodologie} set={setMetodologie} /></div>
-              <div className="field"><span>Strumenti e spazi</span><Chips opts={STRUMENTI} val={strumenti} set={setStrumenti} /></div>
-              <div className="field"><span>Educazione civica</span><Chips opts={EDCIVICA} val={educiv} set={setEduciv} /></div>
-              {raccordiOpts.length > 0 && <div className="field"><span>Raccordi interdisciplinari <em>· {indir ? "materie dell'indirizzo" : "materie"}</em></span><Chips opts={raccordiOpts} val={raccordi} set={setRaccordi} label={false} /></div>}
+              {/* ③ Metodologie */}
+              <Step n={3} titolo="Metodologie" hint="Come si conduce: i metodi didattici dell'attività." badge={metodologie.length ? `${metodologie.length}` : undefined}>
+                <Menu opts={METODOLOGIE} val={metodologie} onToggle={(m) => setMetodologie(toggleIn(metodologie, m))} />
+              </Step>
 
-              <div className="field"><span>Compiti ed esercizi <em>· anche attività in classe</em></span>
-                <div className="pl-compiti">
-                  {compiti.map((c) => (
-                    <div key={c.id} className="pl-compito">
-                      <select value={c.tipo} onChange={(e) => setCompito(c.id, { tipo: e.target.value })}>{COMPITO_TIPI.map((t) => <option key={t} value={t}>{cap(t)}</option>)}</select>
-                      <input type="text" value={c.testo} placeholder="Es. tradurre vv. 1-20; esercizi p.45…" onChange={(e) => setCompito(c.id, { testo: e.target.value })} />
-                      <button className="danger" onClick={() => removeCompito(c.id)} aria-label="Rimuovi">✕</button>
-                    </div>
-                  ))}
-                  <div className="pl-compiti-foot">
-                    <button onClick={addCompito}>+ Attività/compito</button>
-                    {!isUda && <label className="field sm inline"><span>Consegna (compiti per casa)</span><input type="date" value={consegna} onChange={(e) => setConsegna(e.target.value)} /></label>}
+              {/* ④ Strumenti e spazi */}
+              <Step n={4} titolo="Strumenti e spazi" hint="Con cosa e dove: supporti, ambienti, tecnologie." badge={strumenti.length ? `${strumenti.length}` : undefined}>
+                <Menu opts={STRUMENTI} val={strumenti} onToggle={(m) => setStrumenti(toggleIn(strumenti, m))} />
+              </Step>
+
+              {/* ⑤ Educazione civica */}
+              <Step n={5} titolo="Educazione civica" hint="L'eventuale ampliamento trasversale di cittadinanza." badge={educiv.length ? `${educiv.length}` : undefined}>
+                <Menu opts={EDCIVICA} val={educiv} onToggle={(m) => setEduciv(toggleIn(educiv, m))} />
+              </Step>
+
+              {/* ⑥ Raccordi interdisciplinari */}
+              {raccordiOpts.length > 0 && (
+                <Step n={6} titolo="Raccordi interdisciplinari" hint={indir ? "Le materie dell'indirizzo con cui dialoga." : "Le altre materie con cui dialoga."} badge={raccordi.length ? `${raccordi.length}` : undefined}>
+                  <Menu opts={raccordiOpts} val={raccordi} onToggle={(m) => setRaccordi(toggleIn(raccordi, m))} label={false} />
+                </Step>
+              )}
+
+              {/* ⑦ Compiti ed esercizi */}
+              <Step n={7} titolo="Compiti ed esercizi" hint="Aggiungi attività in classe e a casa scegliendo il tipo." badge={compiti.length ? `${compiti.length}` : undefined}>
+                <div className="pl-menu">{COMPITO_TIPI.map((t) => <button key={t} className="pl-mbtn add" onClick={() => addCompito(t)}>+ {cap(t)}</button>)}</div>
+                {compiti.length > 0 && (
+                  <div className="pl-compiti">
+                    {compiti.map((c) => (
+                      <div key={c.id} className="pl-compito">
+                        <span className="pl-compito-tag">{cap(c.tipo)}</span>
+                        <input type="text" value={c.testo} placeholder="Es. tradurre vv. 1-20; esercizi p.45…" onChange={(e) => setCompito(c.id, { testo: e.target.value })} />
+                        <button className="danger" onClick={() => removeCompito(c.id)} aria-label="Rimuovi">✕</button>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              </div>
+                )}
+                {!isUda && <label className="field sm inline"><span>Consegna (compiti per casa)</span><input type="date" value={consegna} onChange={(e) => setConsegna(e.target.value)} /></label>}
+              </Step>
 
-              <div className="field"><span>Materiali</span>
-                <div className="pl-mat">
-                  {materialiDisp.length > 0 && (
-                    <div className="pl-chips">{materialiDisp.map((m) => <button key={m.id} className={matSel.includes(m.id) ? "pl-chip on" : "pl-chip"} onClick={() => setMatSel((a) => toggleIn(a, m.id))}>{String(m["Titolo"] ?? "—")}{m["Tipo"] ? ` · ${cap(String(m["Tipo"]))}` : ""}</button>)}</div>
-                  )}
-                  <div className="pl-mat-add">
-                    <input type="text" value={nuovoMat.titolo} placeholder="Nuovo materiale (titolo)…" onChange={(e) => setNuovoMat((s) => ({ ...s, titolo: e.target.value }))} onKeyDown={(e) => { if (e.key === "Enter") creaMateriale(); }} />
-                    <select value={nuovoMat.tipo} onChange={(e) => setNuovoMat((s) => ({ ...s, tipo: e.target.value }))}>{MAT_TIPI.map((t) => <option key={t} value={t}>{cap(t)}</option>)}</select>
-                    <button onClick={creaMateriale}>+ Crea e collega</button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pl-triade">
-                <label className="field"><span>Inclusione (misure)</span><textarea rows={2} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (a livello di classe)…" /></label>
-                <label className="field"><span>Verifica formativa</span>
-                  <select value={verificaF} onChange={(e) => setVerificaF(e.target.value)}>
-                    <option value="">—</option>
-                    {VERIFICHE_F.map((v) => <option key={v} value={v}>{cap(v)}</option>)}
-                  </select>
+              {/* ⑧ Dettagli & salva */}
+              <Step n={8} titolo="Dettagli & salva" hint="Titolo, tempi e rifinitura; poi salva e calendarizza.">
+                <label className="field"><span>Titolo</span>
+                  <input type="text" value={titolo} placeholder={`${isUda ? "UdA" : tipo === "laboratorio" ? "Laboratorio" : "Lezione"} di ${materia}`} onChange={(e) => setTitolo(e.target.value)} style={{ borderLeft: `3px solid ${materiaColor(materia) ?? "var(--rule)"}` }} />
                 </label>
-              </div>
 
-              <div className="pl-actions">
-                <button className="primary" onClick={salva}>📅 Salva &amp; calendarizza</button>
-                {msg && <span className="pl-msg">{msg} <button className="link" onClick={() => onView({ kind: "calendar" })}>vai al calendario →</button></span>}
-              </div>
+                <div className="pl-when">
+                  <div className="seg sm">
+                    <button className={ciclo === "Biennio" ? "active" : ""} onClick={() => setCiclo("Biennio")}>Biennio</button>
+                    <button className={ciclo === "Triennio" ? "active" : ""} onClick={() => setCiclo("Triennio")}>Triennio</button>
+                  </div>
+                  {isUda ? (
+                    <>
+                      <label className="field sm"><span>Da</span><input type="date" value={data} onChange={(e) => setData(e.target.value)} /></label>
+                      <label className="field sm"><span>A</span><input type="date" value={dataFine} onChange={(e) => setDataFine(e.target.value)} /></label>
+                      <label className="field sm"><span>N° lezioni</span><input type="number" min={0} max={60} value={nLezioni} onChange={(e) => setNLezioni(Number(e.target.value))} /></label>
+                    </>
+                  ) : (
+                    <>
+                      <label className="field sm"><span>Data</span><input type="date" value={data} onChange={(e) => setData(e.target.value)} /></label>
+                      <label className="field sm"><span>Ore</span><input type="number" min={0} step="0.5" value={durata} onChange={(e) => setDurata(Number(e.target.value))} /></label>
+                    </>
+                  )}
+                </div>
+
+                {isUda && (
+                  <>
+                    <label className="field"><span>Competenza attesa</span><textarea rows={2} value={competenza} onChange={(e) => setCompetenza(e.target.value)} placeholder="La competenza al termine dell'UdA…" /></label>
+                    <div className="pl-triade">
+                      <label className="field"><span>Prodotto atteso</span><textarea rows={2} value={prodotto} onChange={(e) => setProdotto(e.target.value)} placeholder="L'elaborato finale…" /></label>
+                      <label className="field"><span>Compito di realtà</span><textarea rows={2} value={compitoRealta} onChange={(e) => setCompitoRealta(e.target.value)} placeholder="Situazione autentica…" /></label>
+                    </div>
+                    <p className="muted pl-hint">Con «N° lezioni» &gt; 0 vengono create e calendarizzate le lezioni (sequenza + date distribuite).</p>
+                  </>
+                )}
+
+                <label className="field"><span>Prerequisiti</span><textarea rows={2} value={prereq} onChange={(e) => setPrereq(e.target.value)} placeholder="Cosa serve sapere/saper fare prima…" /></label>
+                {!isUda && <label className="field"><span>Fasi e tempi</span><textarea rows={3} value={fasi} onChange={(e) => setFasi(e.target.value)} placeholder="Apertura · sviluppo · esercitazione · sintesi/verifica…" /></label>}
+
+                <div className="pl-rifinitura">
+                  <div className="pl-sub">Rifinitura testuale {selVoci.length > 0 && <button className="link" onClick={componi}>componi dai flag ↓</button>}</div>
+                  <div className="pl-triade">
+                    <label className="field"><span>Conoscenze</span><textarea rows={3} value={conoscenze} onChange={(e) => setConoscenze(e.target.value)} placeholder={derivato("con", "") || "Contenuti…"} /></label>
+                    <label className="field"><span>Abilità</span><textarea rows={3} value={abilita} onChange={(e) => setAbilita(e.target.value)} placeholder={derivato("ab", "") || "Saper fare…"} /></label>
+                    <label className="field"><span>Competenze</span><textarea rows={3} value={competenzeTxt} onChange={(e) => setCompetenzeTxt(e.target.value)} placeholder={derivato("com", "") || "Agire competente…"} /></label>
+                  </div>
+                  <p className="muted pl-hint">Vuoti = compilati in automatico dalle voci flaggate. Scrivi per rifinire.</p>
+                </div>
+
+                <div className="field"><span>Materiali</span>
+                  <div className="pl-mat">
+                    {materialiDisp.length > 0 && (
+                      <div className="pl-menu">{materialiDisp.map((m) => <button key={m.id} className={matSel.includes(m.id) ? "pl-mbtn on" : "pl-mbtn"} onClick={() => setMatSel((a) => toggleIn(a, m.id))}><span className="pl-mb-tick">{matSel.includes(m.id) ? "✓" : "+"}</span>{String(m["Titolo"] ?? "—")}{m["Tipo"] ? ` · ${cap(String(m["Tipo"]))}` : ""}</button>)}</div>
+                    )}
+                    <div className="pl-mat-add">
+                      <input type="text" value={nuovoMat.titolo} placeholder="Nuovo materiale (titolo)…" onChange={(e) => setNuovoMat((s) => ({ ...s, titolo: e.target.value }))} onKeyDown={(e) => { if (e.key === "Enter") creaMateriale(); }} />
+                      <select value={nuovoMat.tipo} onChange={(e) => setNuovoMat((s) => ({ ...s, tipo: e.target.value }))}>{MAT_TIPI.map((t) => <option key={t} value={t}>{cap(t)}</option>)}</select>
+                      <button onClick={creaMateriale}>+ Crea e collega</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pl-triade">
+                  <label className="field"><span>Inclusione (misure)</span><textarea rows={2} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (a livello di classe)…" /></label>
+                  <label className="field"><span>Verifica formativa</span>
+                    <select value={verificaF} onChange={(e) => setVerificaF(e.target.value)}>
+                      <option value="">—</option>
+                      {VERIFICHE_F.map((v) => <option key={v} value={v}>{cap(v)}</option>)}
+                    </select>
+                  </label>
+                </div>
+
+                <div className="pl-actions">
+                  <button className="primary" onClick={salva}>📅 Salva &amp; calendarizza</button>
+                  {msg && <span className="pl-msg">{msg} <button className="link" onClick={() => onView({ kind: "calendar" })}>vai al calendario →</button></span>}
+                </div>
+              </Step>
             </div>
-          </div>
+          )}
         </>
       )}
     </section>
