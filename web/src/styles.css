@@ -839,6 +839,7 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-fase-addbtn:hover, .pl-fase-addbtn.on { background: var(--accent); color: #fff; border-color: var(--accent); transform: none; box-shadow: none; }
 .pl-fase-add { border: 1px dashed var(--accent-border); border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 3%, transparent); padding: 0.7rem; display: flex; flex-direction: column; gap: 0.55rem; }
 .pl-fase-add-hint { font-size: 0.8rem; color: var(--ink-light); }
+.pl-fase-blocco { display: flex; flex-direction: column; gap: 0.45rem; }
 
 /* ── Reminder (inclusione / verifica) ──────────────────────────────────────── */
 .pl-remind { font-size: 0.82rem; line-height: 1.4; padding: 0.4rem 0.6rem; border-radius: var(--radius); margin-bottom: 0.4rem; }
@@ -1081,6 +1082,7 @@ button.ap-tw:hover { background: var(--accent-pale); border-radius: 5px; box-sha
 .pl-cnt.zero { color: var(--ink-muted); background: var(--parchment-dark); }
 .pl-dgrid.full { grid-template-columns: 1fr; }
 .pl-dgrid.full .pl-dcard-t { font-size: 0.95rem; font-weight: 600; }
+.pl-dgrid.mini { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; }
 
 /* ── Stepper: traccia numerata + navigazione ───────────────────────────────── */
 .pl-track { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; margin: 0 0 0.9rem; padding: 0; }

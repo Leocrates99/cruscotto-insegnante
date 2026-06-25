@@ -43,6 +43,17 @@ const MOMENTI: { id: string; label: string; icona: string; desc: string }[] = [
 ];
 const MOM_ORDER = MOMENTI.map((m) => m.id);
 const momIdx = (m?: string) => { const i = m ? MOM_ORDER.indexOf(m) : -1; return i < 0 ? MOM_ORDER.length : i; };
+// Durate-tipo della lezione (drill in cima allo step). `h` = ore → monte = h*60′.
+const DURATE: { h: number; lab: string; icona: string }[] = [
+  { h: 1, lab: "1 ora", icona: "🟩" },
+  { h: 2, lab: "2 ore", icona: "🟦" },
+  { h: 3, lab: "3 ore", icona: "🟪" },
+];
+// Icone dei preset-timeline (per modello di arrangiamento).
+const ICON_ARRANGIAMENTO: Record<string, string> = {
+  classico: "🗣️", scoperta: "🔍", flipped: "🔄", eas: "🎯", laboratorio: "🔬",
+  cooperativo: "🧩", dibattito: "⚖️", "rilascio-graduale": "🪜", testuale: "📖",
+};
 
 const COMPITO_TIPI = ["esercizio in classe", "esercitazione guidata", "compito per casa", "verifica formativa"];
 const MAT_TIPI = ["esercizio", "scheda", "traccia", "versione", "presentazione", "mappa concettuale"];
@@ -188,11 +199,11 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [abilita, setAbilita] = useState("");
   const [competenzeTxt, setCompetenzeTxt] = useState("");
   const [fasiRows, setFasiRows] = useState<FaseRow[]>([]);
-  const [oraInizio, setOraInizio] = useState("08:00");
   const [faseMetodi, setFaseMetodi] = useState<string | null>(null);
   const [faseDett, setFaseDett] = useState<string | null>(null);
   const [faseEvidenzia, setFaseEvidenzia] = useState<string | null>(null);
   const [addFaseOpen, setAddFaseOpen] = useState(false);
+  const [presetOpen, setPresetOpen] = useState(false);
   const [faseMomento, setFaseMomento] = useState<string | null>(null);
   const dragFase = useRef<number | null>(null);
   const [metodologie, setMetodologie] = useState<string[]>([]);
@@ -242,7 +253,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
   const resetTutto = () => {
     setSelIds(new Set()); setCatCono([]); setCatAC([]); setStepIdx(0); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
-    setFasiRows([]); setFaseMetodi(null); setFaseDett(null); setAddFaseOpen(false); setFaseMomento(null); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
+    setFasiRows([]); setFaseMetodi(null); setFaseDett(null); setAddFaseOpen(false); setPresetOpen(false); setFaseMomento(null); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
     setCompiti([]); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
     setShowVerifica(false); setVerificaSessId(null);
   };
@@ -306,14 +317,12 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     mins[3] = tot - (mins[0] + mins[1] + mins[2]);
     setFasiRows(FASI_DEFAULT.map((nome, i) => ({ id: newId(), nome, minuti: mins[i], metodi: i === 1 ? metodologie.slice(0, 2) : [] })));
   };
-  // Orari reali delle fasi, calcolati dall'ora di inizio + minuti cumulati.
-  const parseOra = (s: string): number => { const [h, m] = s.split(":").map(Number); return (h || 0) * 60 + (m || 0); };
-  const fmtOra = (min: number): string => `${String(Math.floor(min / 60) % 24).padStart(2, "0")}:${String(((min % 60) + 60) % 60).padStart(2, "0")}`;
-  const inizioFase = (i: number): number => parseOra(oraInizio) + fasiRows.slice(0, i).reduce((a, b) => a + (Number(b.minuti) || 0), 0);
+  // Posizione delle fasi nell'arco: minuti cumulati dall'inizio della lezione (no orologio).
+  const inizioFase = (i: number): number => fasiRows.slice(0, i).reduce((a, b) => a + (Number(b.minuti) || 0), 0);
   const fasiText = (): string => fasiRows.filter((f) => f.nome.trim() || f.minuti).map((f) => {
     const i = fasiRows.indexOf(f); const s = inizioFase(i);
     const c = centr(f.centratura);
-    return `${f.nome.trim() || "Fase"} (${f.minuti || 0}', ${fmtOra(s)}–${fmtOra(s + (f.minuti || 0))})${c ? ` · ${c.lab.toLowerCase()}` : ""}${f.metodi.length ? ` · ${f.metodi.map(cap).join(", ")}` : ""}`;
+    return `${f.nome.trim() || "Fase"} (${f.minuti || 0}', min ${s}–${s + (f.minuti || 0)})${c ? ` · ${c.lab.toLowerCase()}` : ""}${f.metodi.length ? ` · ${f.metodi.map(cap).join(", ")}` : ""}`;
   }).join("\n");
 
   // ── Repertori del lesson-builder (data-driven dall'archivio) ───────────────
@@ -636,19 +645,30 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
                 {stepDefs[idx].key === "fasi" && (
                   <div className="pl-fasi">
+                    <div className="pl-fase-blocco">
+                      <div className="pl-sub">⏳ Durata della lezione</div>
+                      <div className="pl-dgrid mini">{DURATE.map((d) => <DCard key={d.h} icon={d.icona} title={d.lab} desc={`${d.h * 60}′ di monte ore`} on={durata === d.h} onClick={() => setDurata(d.h)} />)}</div>
+                    </div>
+
                     <div className="pl-fasi-head">
                       <span>Monte ora <b>{minPrev}′</b></span>
                       <span>· assegnati <b>{fasiMinTot}′</b></span>
                       <span className={minRim < 0 ? "pl-fasi-over" : "pl-fasi-ok"}>{minRim >= 0 ? `${minRim}′ liberi` : `${-minRim}′ in eccesso`}</span>
                       <span className="spacer" />
-                      <label className="pl-fasi-ora">inizio <input type="time" value={oraInizio} onChange={(e) => setOraInizio(e.target.value)} /></label>
                       {fasiRows.length > 0 && minPrev > 0 && minRim !== 0 && <button className="link" onClick={bilanciaFasi} title="Riscala le durate proporzionalmente fino a coprire il monte ore">⚖ bilancia</button>}
-                      {arrRep.length > 0 && <select className="pl-arr-sel" value="" onChange={(e) => { if (e.target.value) applicaArrangiamento(e.target.value); }}><option value="">↳ preset timeline…</option>{arrRep.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}</select>}
                       <button className="link" onClick={struttFasi}>struttura tipo</button>
+                      {arrRep.length > 0 && <button className={presetOpen ? "pl-fase-addbtn on" : "pl-fase-addbtn"} onClick={() => { setPresetOpen((o) => !o); setAddFaseOpen(false); }}>{presetOpen ? "× chiudi" : "↳ preset timeline"}</button>}
                       {arch && repFasi(arch).length > 0
-                        ? <button className={addFaseOpen ? "pl-fase-addbtn on" : "pl-fase-addbtn"} onClick={() => { setAddFaseOpen((o) => !o); setFaseMomento(null); }}>{addFaseOpen ? "× chiudi" : "＋ aggiungi fase"}</button>
+                        ? <button className={addFaseOpen ? "pl-fase-addbtn on" : "pl-fase-addbtn"} onClick={() => { setAddFaseOpen((o) => !o); setFaseMomento(null); setPresetOpen(false); }}>{addFaseOpen ? "× chiudi" : "＋ aggiungi fase"}</button>
                         : <button className="link" onClick={addFase}>+ fase</button>}
                     </div>
+
+                    {presetOpen && arrRep.length > 0 && (
+                      <div className="pl-fase-add">
+                        <div className="pl-fase-add-hint">Applica una <b>timeline completa</b> già pronta: sostituisce le fasi correnti con la sequenza del modello.</div>
+                        <div className="pl-dgrid">{arrRep.map((ar) => <DCard key={ar.id} icon={ICON_ARRANGIAMENTO[ar.modello] ?? "🧭"} title={ar.nome} desc={ar.note} top={<span className="pl-cnt">{ar.sequenza_fasi.length} fasi · {ar.durata_riferimento_min}′</span>} onClick={() => { applicaArrangiamento(ar.id); setPresetOpen(false); }} />)}</div>
+                      </div>
+                    )}
 
                     {addFaseOpen && arch && (
                       <div className="pl-fase-add">
@@ -681,7 +701,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       </div>
                     )}
 
-                    {fasiRows.length === 0 ? <p className="muted">Scegli un preset «timeline» dall'archivio o aggiungi le fasi a mano: per ciascuna durata, orario e metodi.</p> : (
+                    {fasiRows.length === 0 ? <p className="muted">Applica un <b>preset timeline</b> oppure <b>aggiungi le fasi</b> per momento: per ciascuna scegli durata e metodi.</p> : (
                       <div className="pl-fasi-list">
                         {fasiRows.map((f, i) => { const s = inizioFase(i); const col = FASE_COLORS[i % FASE_COLORS.length]; const c = centr(f.centratura); const rng = rangeFase(f); const fuori = fuoriRange(f); const hasDett = !!(f.attDoc || f.attStu || rng); return (
                           <div key={f.id} id={`pl-fase-${f.id}`} className={faseEvidenzia === f.id ? "pl-fase evidenzia" : "pl-fase"} style={{ borderLeftColor: col }} onDragOver={(e) => e.preventDefault()} onDrop={() => { const from = dragFase.current; if (from != null) spostaFase(from, i); dragFase.current = null; }}>
@@ -694,7 +714,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                             <div className="pl-fase-body">
                               <div className="pl-fase-row1">
                                 <input className="pl-fase-nome" type="text" value={f.nome} placeholder={`Fase ${i + 1}`} onChange={(e) => setFase(f.id, { nome: e.target.value })} />
-                                <span className="pl-fase-ora">{fmtOra(s)}–{fmtOra(s + (f.minuti || 0))}</span>
+                                <span className="pl-fase-ora" title="Posizione nell'arco della lezione (minuti dall'inizio)">min {s}–{s + (f.minuti || 0)}</span>
                                 <span className="spacer" />
                                 <span className="pl-fase-rik"><button onClick={() => spostaFase(i, i - 1)} disabled={i === 0} aria-label="Sposta su">▲</button><button onClick={() => spostaFase(i, i + 1)} disabled={i === fasiRows.length - 1} aria-label="Sposta giù">▼</button></span>
                                 <button className={faseMetodi === f.id ? "pl-fase-met on" : "pl-fase-met"} onClick={() => setFaseMetodi(faseMetodi === f.id ? null : f.id)}>metodi · {f.metodi.length} ▾</button>
