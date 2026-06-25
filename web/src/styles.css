@@ -769,7 +769,8 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-chip:hover { border-color: var(--accent); color: var(--accent); transform: none; box-shadow: none; }
 .pl-chip.on { background: var(--accent-pale); border-color: var(--accent); color: var(--accent); font-weight: 700; }
 .pl-compiti { display: flex; flex-direction: column; gap: 0.35rem; }
-.pl-compito { display: grid; grid-template-columns: minmax(140px, 0.5fr) 1fr auto; gap: 0.4rem; align-items: center; }
+.pl-compito { display: grid; grid-template-columns: minmax(140px, 0.5fr) 1fr auto auto; gap: 0.4rem; align-items: center; }
+.pl-compito-data { width: 9.5rem; }
 .pl-compito select, .pl-compito input { font: 0.84rem var(--font-ui); padding: 0.35rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--parchment); color: var(--ink); }
 .pl-compito button { padding: 0.3rem 0.55rem; }
 .pl-compiti-foot { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: end; }
@@ -945,6 +946,15 @@ button.ap-tw:hover { background: var(--accent-pale); border-radius: 5px; box-sha
 .pl-step-body { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; }
 .pl-sub { font: 700 0.72rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); display: flex; align-items: center; gap: 0.6rem; }
 .pl-step-body .ap-tree { max-height: 52vh; }
+/* Abilità/competenze: stessa resa ad albero delle conoscenze, su due colonne */
+.pl-ac { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.pl-ac-col { min-width: 0; }
+/* Albero conoscenze: separazione fra gruppi di primo livello + linee-guida di nidificazione */
+.ap-tree > .ap-node { padding: 0.15rem 0; }
+.ap-tree > .ap-node:not(:last-child) { border-bottom: 1px solid var(--parchment-dark); }
+.ap-tree > .ap-node > .ap-row .ap-leaf-t { font-weight: 600; }
+.ap-node .ap-node { border-left: 1px solid var(--rule); margin-left: 0.55rem; }
+.ap-node .ap-node .ap-leaf-t { font-weight: 400; }
 
 .pl-when { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.7rem; }
 .pl-rifinitura { border: 1px dashed var(--accent-border); border-radius: var(--radius); padding: 0.7rem 0.8rem; background: color-mix(in srgb, var(--accent) 3%, transparent); display: flex; flex-direction: column; gap: 0.6rem; }
@@ -958,10 +968,13 @@ button.ap-tw:hover { background: var(--accent-pale); border-radius: 5px; box-sha
 .pl-dcard-check { position: absolute; top: 0.55rem; right: 0.6rem; width: 1.3rem; height: 1.3rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font: 800 0.8rem var(--font-ui); color: var(--ink-muted); background: var(--parchment-dark); }
 .pl-dcard.on .pl-dcard-check { color: #fff; background: var(--accent); }
 .pl-dcard-top { margin-bottom: 0.1rem; }
+.pl-dcard-h { display: flex; align-items: center; gap: 0.45rem; padding-right: 1.4rem; }
+.pl-dcard-ico { font-size: 1.2rem; line-height: 1; flex-shrink: 0; }
 .pl-ico { font-size: 1.7rem; line-height: 1; }
 .pl-sigla { display: inline-flex; align-items: center; justify-content: center; min-width: 2.6rem; height: 2.1rem; padding: 0 0.5rem; border-radius: 8px; color: #fff; font: 800 1rem var(--font-ui); letter-spacing: 0.04em; }
 .pl-sigla.cls { font-size: 0.95rem; }
-.pl-dcard-t { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; line-height: 1.2; padding-right: 1.4rem; }
+.pl-dcard-t { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; line-height: 1.2; min-width: 0; }
+.pl-sigla.mini { min-width: 2.2rem; height: 1.6rem; font-size: 0.72rem; padding: 0 0.35rem; }
 .pl-dcard-d { font-size: 0.8rem; color: var(--ink-muted); line-height: 1.35; }
 
 /* ── Stepper: traccia numerata + navigazione ───────────────────────────────── */

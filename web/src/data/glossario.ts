@@ -42,6 +42,25 @@ export const DESCR_EDCIVICA: Record<string, string> = {
   "Cittadinanza attiva e volontariato": "Partecipazione, solidarietà, impegno civico.",
 };
 
+// Icone a sinistra dei titoli dei pulsanti-drill.
+export const ICON_METODOLOGIE: Record<string, string> = {
+  "lezione frontale": "🗣️", "lezione dialogata": "💬", "cooperative learning": "👥", "flipped classroom": "🔄",
+  "debate": "⚖️", "problem solving": "🧩", "brainstorming": "💡", "peer tutoring": "🤝",
+  "didattica laboratoriale": "🔬", "studio guidato": "📖", "role playing": "🎭", "EAS (episodio di apprendimento situato)": "🎯",
+};
+export const ICON_STRUMENTI: Record<string, string> = {
+  "libro di testo": "📕", "LIM / monitor": "🖥️", "fotocopie / schede": "📄", "dizionario": "📔", "dispositivi / BYOD": "📱",
+  "laboratorio": "🔬", "audiovisivi": "🎬", "mappe / schemi": "🗺️", "piattaforma e-learning": "💻", "biblioteca": "📚",
+};
+export const ICON_EDCIVICA: Record<string, string> = {
+  "Costituzione, diritto e legalità": "⚖️", "Istituzioni dello Stato e Unione Europea": "🏛️", "Diritti umani e pari opportunità": "🕊️",
+  "Agenda 2030 e sviluppo sostenibile": "🌍", "Ambiente, ecologia e territorio": "🌱", "Educazione alla salute e al benessere": "❤️",
+  "Cittadinanza digitale": "🔌", "Educazione finanziaria": "💶", "Patrimonio culturale e paesaggio": "🏺", "Cittadinanza attiva e volontariato": "🤲",
+};
+export const ICON_COMPITI: Record<string, string> = {
+  "esercizio in classe": "✏️", "esercitazione guidata": "🧑‍🏫", "compito per casa": "🏠", "verifica formativa": "✅",
+};
+
 export const DESCR_COMPITI: Record<string, string> = {
   "esercizio in classe": "Applicazione immediata e guidata di quanto appena spiegato.",
   "esercitazione guidata": "Pratica strutturata passo-passo, con il docente che accompagna.",

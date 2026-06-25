@@ -40,3 +40,31 @@ export function classeColor(classe?: string): string | undefined {
   if (custom) return custom;
   return PALETTE_CLASSI[hashIndex(classe, PALETTE_CLASSI.length)];
 }
+
+// Sigle/trigrammi delle materie (per i pulsanti di Pianifica). Le note esplicite;
+// le altre derivate dalle iniziali delle parole significative.
+const MATERIA_SIGLE: Record<string, string> = {
+  "Lingua e letteratura italiana": "ITA",
+  "Lingua e cultura latina": "LAT",
+  "Lingua e cultura greca": "GRC",
+  "Storia e geografia (biennio)": "STOGEO",
+  "Storia (triennio)": "STO",
+  Storia: "STO",
+  Geografia: "GEO",
+  Filosofia: "FIL",
+  Matematica: "MATE",
+  Fisica: "FIS",
+  "Scienze naturali": "SCN",
+  "Storia dell'arte": "ARTE",
+  "Lingua e cultura straniera": "LING",
+  "Lingua e cultura straniera (Inglese)": "ING",
+  "Scienze motorie e sportive": "SCM",
+  "Religione cattolica o attività alternative": "REL",
+};
+const STOP = new Set(["e", "di", "del", "della", "dei", "delle", "la", "il", "lo", "le", "o", "ed", "cultura", "lingua"]);
+export function materiaSigla(nome: string): string {
+  if (MATERIA_SIGLE[nome]) return MATERIA_SIGLE[nome];
+  const parole = nome.replace(/\(.*?\)/g, "").split(/\s+/).filter((w) => w.length > 1 && !STOP.has(w.toLowerCase()));
+  if (parole.length >= 2) return (parole[0].slice(0, 3) + parole[1].slice(0, 3)).toUpperCase();
+  return (parole[0] ?? nome).slice(0, 4).toUpperCase();
+}

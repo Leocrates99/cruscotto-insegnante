@@ -1,21 +1,21 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { View } from "../App";
 import type { DbKey } from "@model";
 import { schemaByKey } from "@model";
 import { newId, records, upsert, type Rec } from "../store/store";
 import { useStore } from "../store/useStore";
-import { classiAttive, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
+import { classiAttive, contiClasse, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
 import { annoCorrenteId, classeId } from "../store/links";
 import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia";
 import { antenati, materiaCodice, perPeso, useArchivio, voce, type Voce } from "../data/archivio";
-import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI } from "../data/glossario";
+import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI, ICON_COMPITI, ICON_EDCIVICA, ICON_METODOLOGIE, ICON_STRUMENTI } from "../data/glossario";
 import { downloadWord } from "../store/reportFineAnno";
 import { AlberoConoscenze } from "./AlberoConoscenze";
-import { materiaColor } from "./materia";
+import { classeColor, materiaColor, materiaSigla } from "./materia";
 
 const oggi = () => new Date().toISOString().slice(0, 10);
 type Tipo = "lezione" | "laboratorio" | "uda";
-type CompitoRow = { id: string; tipo: string; testo: string };
+type CompitoRow = { id: string; tipo: string; testo: string; data: string };
 type StepKey = "conoscenze" | "abilita" | "metodologie" | "strumenti" | "edciv" | "raccordi" | "compiti" | "dettagli";
 
 const COMPITO_TIPI = ["esercizio in classe", "esercitazione guidata", "compito per casa", "verifica formativa"];
@@ -52,29 +52,26 @@ function Step({ n, tot, titolo, hint, badge, children }: { n: number; tot: numbe
     </section>
   );
 }
-function DCard({ top, title, desc, on, onClick }: { top?: ReactNode; title: string; desc?: string; on?: boolean; onClick: () => void }) {
+function DCard({ icon, top, title, desc, on, onClick }: { icon?: ReactNode; top?: ReactNode; title: string; desc?: string; on?: boolean; onClick: () => void }) {
   return (
     <button className={on ? "pl-dcard on" : "pl-dcard"} onClick={onClick}>
       {on !== undefined && <span className="pl-dcard-check">{on ? "✓" : "+"}</span>}
       {top && <span className="pl-dcard-top">{top}</span>}
-      <span className="pl-dcard-t">{title}</span>
+      <span className="pl-dcard-h">{icon && <span className="pl-dcard-ico">{icon}</span>}<span className="pl-dcard-t">{title}</span></span>
       {desc && <span className="pl-dcard-d">{desc}</span>}
     </button>
   );
 }
-function DrillCards({ opts, val, onToggle, desc }: { opts: string[]; val: string[]; onToggle: (v: string) => void; desc: (o: string) => string | undefined }) {
-  return <div className="pl-dgrid">{opts.map((o) => <DCard key={o} title={cap(o)} desc={desc(o)} on={val.includes(o)} onClick={() => onToggle(o)} />)}</div>;
-}
-function FlagVoce({ v, on, onToggle }: { v: Voce; on: boolean; onToggle: (v: Voce) => void }) {
-  return <button className={on ? "pl-mbtn on" : "pl-mbtn"} onClick={() => onToggle(v)} title={v.competenza_europea || v.nucleo}><span className="pl-mb-tick">{on ? "✓" : "+"}</span>{v.testo}</button>;
+function DrillCards({ opts, val, onToggle, desc, icon }: { opts: string[]; val: string[]; onToggle: (v: string) => void; desc: (o: string) => string | undefined; icon?: (o: string) => ReactNode }) {
+  return <div className="pl-dgrid">{opts.map((o) => <DCard key={o} icon={icon?.(o)} title={cap(o)} desc={desc(o)} on={val.includes(o)} onClick={() => onToggle(o)} />)}</div>;
 }
 
 /**
- * Pianifica: wizard a finestre. Drill di contesto a card (Scuola → Materia → Classe),
- * poi step navigabili con Avanti/Indietro: conoscenze/contenuti e abilità/competenze
- * (clic sulla foglia → flag automatico degli antenati), poi i drill a card di
- * metodologie / strumenti / ed. civica / raccordi / compiti, infine panoramica +
- * export Word + salvataggio (che archivia e calendarizza la lezione).
+ * Pianifica: wizard a finestre. Drill di contesto a card (Scuola → Materia → Classe,
+ * con icona/sigla/colore coerenti col calendario), poi step con Avanti/Indietro:
+ * conoscenze e abilità/competenze (stessa resa ad albero; foglia → flag antenati),
+ * metodologie / strumenti / ed. civica / raccordi / compiti come drill a card con
+ * icona e descrizione, infine panoramica + export Word + salvataggio.
  */
 export function PlannerView({ onView }: { onView: (v: View) => void }) {
   useStore();
@@ -108,11 +105,11 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [metodologie, setMetodologie] = useState<string[]>([]);
   const [strumenti, setStrumenti] = useState<string[]>([]);
   const [educiv, setEduciv] = useState<string[]>([]);
+  const [edcivSkip, setEdcivSkip] = useState(false);
   const [raccordi, setRaccordi] = useState<string[]>([]);
   const [inclusione, setInclusione] = useState("");
   const [verificaF, setVerificaF] = useState("");
   const [compiti, setCompiti] = useState<CompitoRow[]>([]);
-  const [consegna, setConsegna] = useState("");
   const [matSel, setMatSel] = useState<string[]>([]);
   const [nuovoMat, setNuovoMat] = useState<{ titolo: string; tipo: string }>({ titolo: "", tipo: "esercizio" });
   const [competenza, setCompetenza] = useState("");
@@ -131,8 +128,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const nucleiPl = useMemo(() => [...new Set(vMatPl.map((v) => v.nucleo).filter(Boolean))].sort((a, b) => a.localeCompare(b)), [vMatPl]);
   const haAbilitaComp = vMatPl.some((v) => v.blocco === "abilita" || v.blocco === "competenza");
   const radici = vMatPl.filter((v) => CONO.has(v.blocco) && !v.parent && (!nucleo || v.nucleo === nucleo)).sort(perPeso);
-  const abilitaV = vMatPl.filter((v) => v.blocco === "abilita" && (!nucleo || v.nucleo === nucleo)).sort(perPeso);
-  const competenzeV = vMatPl.filter((v) => v.blocco === "competenza" && (!nucleo || v.nucleo === nucleo)).sort(perPeso);
+  const abilitaV = vMatPl.filter((v) => v.blocco === "abilita").sort(perPeso);
+  const competenzeV = vMatPl.filter((v) => v.blocco === "competenza").sort(perPeso);
 
   const selVoci: Voce[] = arch ? [...selIds].map((id) => voce(arch, id)).filter((v): v is Voce => !!v) : [];
   const toggleIn = (arr: string[], v: string) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -147,8 +144,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
   const resetTutto = () => {
     setSelIds(new Set()); setNucleo(""); setStepIdx(0); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
-    setFasi(""); setMetodologie([]); setStrumenti([]); setEduciv([]); setRaccordi([]); setInclusione(""); setVerificaF("");
-    setCompiti([]); setConsegna(""); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
+    setFasi(""); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
+    setCompiti([]); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
   };
   const cambiaMateria = (m: string) => { setMateria(m); setNucleo(""); setSelIds(new Set()); setStepIdx(0); };
   const cambiaClasse = (c: string) => { setClasse(c); setCiclo(cicloDi(c)); setStepIdx(0); };
@@ -168,6 +165,27 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   };
   const righe = (campo: "con" | "ab" | "com", testo: string): string[] => derivato(campo, testo).split("\n").filter(Boolean).map((s) => s.replace(/^•\s*/, ""));
 
+  // ── Ganci automatizzati (suggerimenti dal contesto) ──────────────────────────
+  const suggPrereq = () => {
+    const ante = new Set<string>();
+    if (arch) for (const v of selVoci) for (const an of antenati(arch, v.id)) if (CONO.has(an.blocco)) ante.add(an.testo);
+    setPrereq(ante.size ? `Conoscere: ${[...ante].slice(0, 6).join("; ")}.` : "Prerequisiti di base della disciplina (lettura, lessico, riferimenti di contesto).");
+  };
+  const suggFasi = () => {
+    const m = metodologie.length ? metodologie.map(cap).join(", ") : "lezione dialogata";
+    setFasi(`Apertura (10'): richiamo dei prerequisiti e degli obiettivi.\nSviluppo (25'): ${m}.\nEsercitazione (15'): applicazione guidata.\nSintesi e verifica (10'): ricapitolazione e domande flash.`);
+  };
+  const suggInclusione = () => {
+    const c = classe ? contiClasse(classe, profile) : { tot: 0, l104: 0, bes: 0, dsa: 0 };
+    const parts: string[] = [];
+    if (c.dsa) parts.push(`${c.dsa} DSA`);
+    if (c.bes) parts.push(`${c.bes} BES`);
+    if (c.l104) parts.push(`${c.l104} con L.104`);
+    setInclusione(parts.length
+      ? `Per ${parts.join(", ")}: misure compensative (mappe, schemi, formulari, dizionario digitale, tempi aggiuntivi) e dispensative (riduzione del carico); per la L.104 secondo PEI.`
+      : "Nessun alunno con BES/DSA/L.104 segnalato in anagrafica: si adottano comunque strategie inclusive di classe.");
+  };
+
   const obiettiviDaVoci = (): string[] => {
     if (!arch) return [];
     const backbone = new Set<string>();
@@ -185,7 +203,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     return ids;
   };
 
-  const addCompito = (t: string) => setCompiti((c) => [...c, { id: newId(), tipo: t, testo: "" }]);
+  const addCompito = (t: string) => setCompiti((c) => [...c, { id: newId(), tipo: t, testo: "", data: "" }]);
   const setCompito = (id: string, patch: Partial<CompitoRow>) => setCompiti((c) => c.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   const removeCompito = (id: string) => setCompiti((c) => c.filter((x) => x.id !== id));
 
@@ -198,18 +216,30 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     setMatSel((s) => [...s, id]);
     setNuovoMat({ titolo: "", tipo: nuovoMat.tipo });
   };
-  const compitiText = () => compiti.filter((c) => c.testo.trim()).map((c) => `• [${c.tipo}] ${c.testo.trim()}`).join("\n");
+  const compitiText = () => compiti.filter((c) => c.testo.trim()).map((c) => `• [${c.tipo}] ${c.testo.trim()}${c.data ? ` (entro ${fmtIt(c.data)})` : ""}`).join("\n");
+  const compitiDaCal = compiti.filter((c) => c.data && c.testo.trim());
 
-  const titoloEff = titolo.trim() || `${materia}${selVoci[0] ? " — " + selVoci[0].testo : ""}`;
-  const tipoLabel = isUda ? "UdA" : tipo === "laboratorio" ? "Laboratorio" : "Lezione";
+  const titoloEff = titolo.trim() || `${tipoLabelDi(tipo)} di ${materia}${selVoci[0] ? " — " + selVoci[0].testo : ""}`;
+  const tipoLabel = tipoLabelDi(tipo);
 
-  // Riepilogo strutturato (usato da panoramica e da export Word).
+  // Titolo proposto dal tagging quando si arriva alla panoramica (modificabile).
+  const cur = stepDefsDi().cur;
+  useEffect(() => {
+    if (cur.key === "dettagli" && !titolo.trim()) {
+      const primo = selVoci.find((v) => v.tipo_contenuto === "autore") || selVoci.find((v) => CONO.has(v.blocco));
+      setTitolo(`${tipoLabel} di ${materia}${primo ? ": " + primo.testo : ""}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cur.key]);
+
+  const educivView = edcivSkip ? ["Nessuna (lezione standard)"] : educiv;
   const riepilogo = () => ({
     titolo: titoloEff, tipoLabel, materia, classe: isUda ? "" : classe, scuola: scuolaNome ?? "",
     quando: isUda ? `${fmtIt(data)} – ${fmtIt(dataFine)}${nLezioni ? ` · ${nLezioni} lezioni` : ""}` : `${fmtIt(data)} · ${durata} ore`,
     conoscenze: righe("con", conoscenze), abilita: righe("ab", abilita), competenze: righe("com", competenzeTxt),
-    metodologie: metodologie.map(cap), strumenti: strumenti.map(cap), educiv, raccordi,
-    compiti: compiti.filter((c) => c.testo.trim()).map((c) => `[${cap(c.tipo)}] ${c.testo.trim()}`),
+    metodologie: metodologie.map(cap), strumenti: strumenti.map(cap), educiv: educivView, raccordi,
+    compiti: compiti.filter((c) => c.testo.trim()).map((c) => `[${cap(c.tipo)}] ${c.testo.trim()}${c.data ? ` (entro ${fmtIt(c.data)})` : ""}`),
+    compitiCal: compitiDaCal.map((c) => `${fmtIt(c.data)} · ${cap(c.tipo)}: ${c.testo.trim()}`),
     prereq, fasi, inclusione, verificaF: verificaF ? cap(verificaF) : "", competenza, prodotto, compitoRealta,
   });
 
@@ -234,6 +264,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
       sec("Educazione civica", r.educiv),
       sec("Raccordi interdisciplinari", r.raccordi),
       sec("Compiti ed esercizi", r.compiti),
+      sec("Compiti da calendarizzare", r.compitiCal),
       par("Inclusione (misure)", r.inclusione),
       r.verificaF ? `<h2>Verifica formativa</h2><p>${escH(r.verificaF)}</p>` : "",
     ].filter(Boolean).join("\n");
@@ -251,6 +282,10 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
       "Educazione civica": educiv, "Raccordi interdisciplinari": raccordi, "Inclusione (misure)": inclusione,
       ...(verificaF ? { "Verifica formativa": verificaF } : {}),
     };
+    // Compiti con data → scadenze calendarizzate.
+    for (const c of compitiDaCal) {
+      upsert("scadenze", { id: newId(), Titolo: `${cap(c.tipo)} ${materia}${classe ? ` · ${classe}` : ""}: ${c.testo.trim().slice(0, 60)}`, Data: c.data, Stato: "da fare", Tipo: "consegna", "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}) } as Rec);
+    }
     if (isUda) {
       const obIds = obiettiviDaVoci();
       const lezIds: string[] = [];
@@ -259,7 +294,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
         const t = nLezioni > 1 ? start + (end - start) * (i / (nLezioni - 1)) : start;
         const d = new Date(t).toISOString().slice(0, 10);
         const lid = newId(); lezIds.push(lid);
-        upsert("lezioni", { id: lid, Titolo: `${tit} — lezione ${i + 1}`, Materia: materia, "Data prevista": d, Stato: "Progettata", Sequenza: i + 1, "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}) } as Rec);
+        upsert("lezioni", { id: lid, Titolo: `${tit} — lezione ${i + 1}`, Materia: materia, "Data prevista": d, Stato: "Calendarizzata", Sequenza: i + 1, "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}) } as Rec);
       }
       upsert("uda", {
         ...didattica, id: newId(), Titolo: tit, "Competenza attesa": competenza, "Prodotto atteso": prodotto, "Compito di realtà": compitoRealta,
@@ -273,35 +308,34 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
         Titolo: tipo === "laboratorio" ? `[Laboratorio] ${tit}` : tit,
         Materia: materia, "Data prevista": data, "Durata (ore)": durata, Stato: "Calendarizzata",
         "Obiettivi della lezione": selVoci.map((v) => `• ${v.testo}`).join("\n"),
-        Fasi: fasi, ...(consegna ? { "Consegna compiti": consegna } : {}),
-        "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}), ...(matSel.length ? { Materiali: matSel } : {}),
+        Fasi: fasi, "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}), ...(matSel.length ? { Materiali: matSel } : {}),
       } as Rec);
-      if (consegna && compiti.some((c) => c.tipo === "compito per casa" && c.testo.trim())) {
-        upsert("scadenze", { id: newId(), Titolo: `Compiti ${materia}${classe ? ` · ${classe}` : ""}`, Data: consegna, Stato: "da fare", Tipo: "consegna", "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}) } as Rec);
-      }
       setMsg(`✓ ${tipoLabel} salvata in archivio e calendarizzata: ${tit}`);
     }
     resetTutto();
   };
 
   // ── Sequenza degli step disponibili ──────────────────────────────────────────
-  const stepDefs: { key: StepKey; titolo: string; hint: string }[] = [
-    { key: "conoscenze", titolo: "Conoscenze e contenuti", hint: "Espandi i rami e flagga: scegliendo una voce si flaggano da sole le categorie superiori." },
-    ...(code && haAbilitaComp ? [{ key: "abilita" as StepKey, titolo: "Abilità e competenze", hint: "Il completamento: ciò che si sa fare e l'agire competente." }] : []),
-    { key: "metodologie", titolo: "Metodologie", hint: "Come si conduce: scegli i metodi didattici." },
-    { key: "strumenti", titolo: "Strumenti e spazi", hint: "Con cosa e dove si svolge l'attività." },
-    { key: "edciv", titolo: "Educazione civica", hint: "Ampliamento facoltativo di cittadinanza: può anche restare vuoto." },
-    ...(raccordiOpts.length ? [{ key: "raccordi" as StepKey, titolo: "Raccordi interdisciplinari", hint: indir ? "Le materie dell'indirizzo con cui dialoga." : "Le altre materie con cui dialoga." }] : []),
-    { key: "compiti", titolo: "Compiti ed esercizi", hint: "Scegli la tipologia: aggiunge una riga da descrivere." },
-    { key: "dettagli", titolo: "Panoramica & salvataggio", hint: "Rivedi tutto, esporta in Word, poi salva in archivio e calendarizza." },
-  ];
-  const idx = Math.min(stepIdx, stepDefs.length - 1);
-  const cur = stepDefs[idx];
+  function stepDefsDi() {
+    const defs: { key: StepKey; titolo: string; hint: string }[] = [
+      { key: "conoscenze", titolo: "Conoscenze e contenuti", hint: "Espandi i rami e flagga: scegliendo una voce si flaggano da sole le categorie superiori." },
+      ...(code && haAbilitaComp ? [{ key: "abilita" as StepKey, titolo: "Abilità e competenze", hint: "Stessa consultazione: ciò che si sa fare e l'agire competente." }] : []),
+      { key: "metodologie", titolo: "Metodologie", hint: "Come si conduce: scegli i metodi didattici." },
+      { key: "strumenti", titolo: "Strumenti e spazi", hint: "Con cosa e dove si svolge l'attività." },
+      { key: "edciv", titolo: "Educazione civica", hint: "Ampliamento facoltativo: usa «Nessun apporto» per una lezione standard." },
+      ...(raccordiOpts.length ? [{ key: "raccordi" as StepKey, titolo: "Raccordi interdisciplinari", hint: indir ? "Le materie dell'indirizzo con cui dialoga." : "Le altre materie con cui dialoga." }] : []),
+      { key: "compiti", titolo: "Compiti ed esercizi", hint: "Scegli il tipo e imposta una data per calendarizzare il compito." },
+      { key: "dettagli", titolo: "Panoramica & salvataggio", hint: "Rivedi tutto, esporta in Word, poi salva in archivio e calendarizza." },
+    ];
+    const idx = Math.min(stepIdx, defs.length - 1);
+    return { defs, idx, cur: defs[idx] };
+  }
+  function tipoLabelDi(t: Tipo) { return t === "uda" ? "UdA" : t === "laboratorio" ? "Laboratorio" : "Lezione"; }
+  const { defs: stepDefs, idx } = stepDefsDi();
 
   const scuolaOk = !multiScuola || !!scuolaId;
   const ctxReady = scuolaOk && !!materia && (isUda || !!classe);
   const classiPerMateria = materia ? classi.filter((c) => materieClasseEffettive(c, profile).includes(materia)) : classi;
-  const sigla = (m: string): string => (arch && materiaCodice(arch, m)) || m.split(/\s+/).filter((w) => w.length > 2).map((w) => w[0]).join("").slice(0, 3).toUpperCase();
   const nConoscenze = selVoci.filter((v) => CONO.has(v.blocco)).length;
   const nAbilitaComp = selVoci.filter((v) => v.blocco === "abilita" || v.blocco === "competenza").length;
   const r = riepilogo();
@@ -333,7 +367,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
             {scuolaOk && (materia
               ? <button className="pl-crumb" onClick={() => cambiaMateria("")}><b>Materia</b> {materia} <span>✕</span></button>
               : <div className="pl-pick"><span className="pl-pick-q">Quale materia?</span>
-                  <div className="pl-dgrid">{materie.map((m) => <DCard key={m} top={<span className="pl-sigla" style={{ background: materiaColor(m) ?? "var(--accent)" }}>{sigla(m)}</span>} title={m} desc={arch && materiaCodice(arch, m) ? "Guidata dall'archivio" : "Compilazione libera"} onClick={() => cambiaMateria(m)} />)}</div>
+                  <div className="pl-dgrid">{materie.map((m) => <DCard key={m} top={<span className="pl-sigla" style={{ background: materiaColor(m) ?? "var(--accent)" }}>{materiaSigla(m)}</span>} title={m} desc={arch && materiaCodice(arch, m) ? "Guidata dall'archivio" : "Compilazione libera"} onClick={() => cambiaMateria(m)} />)}</div>
                 </div>
             )}
 
@@ -341,7 +375,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
               ? <button className="pl-crumb" onClick={() => setClasse("")}><b>Classe</b> {classe} <span>✕</span></button>
               : <div className="pl-pick"><span className="pl-pick-q">Quale classe?</span>
                   {classiPerMateria.length === 0 ? <p className="muted">Nessuna classe associata a {materia} (vedi sinolo nel Profilo).</p>
-                    : <div className="pl-dgrid">{classiPerMateria.map((c) => <DCard key={c} top={<span className="pl-sigla cls" style={{ background: "var(--gold)" }}>{c}</span>} title={`Classe ${c}`} desc={cicloDi(c)} onClick={() => cambiaClasse(c)} />)}</div>}
+                    : <div className="pl-dgrid">{classiPerMateria.map((c) => <DCard key={c} top={<span className="pl-sigla cls" style={{ background: classeColor(c) ?? "var(--gold)" }}>{c}</span>} title={`Classe ${c}`} desc={cicloDi(c)} onClick={() => cambiaClasse(c)} />)}</div>}
                 </div>
             )}
           </div>
@@ -352,13 +386,13 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                 {stepDefs.map((s, i) => <li key={s.key} className={i === idx ? "on" : i < idx ? "done" : ""} onClick={() => setStepIdx(i)} title={s.titolo}>{i + 1}</li>)}
               </ol>
 
-              <Step n={idx + 1} tot={stepDefs.length} titolo={cur.titolo} hint={cur.hint}
-                badge={cur.key === "conoscenze" ? `${nConoscenze} scelte` : cur.key === "abilita" ? `${nAbilitaComp} scelte`
-                  : cur.key === "metodologie" ? (metodologie.length || "") + "" : cur.key === "strumenti" ? (strumenti.length || "") + ""
-                  : cur.key === "edciv" ? (educiv.length || "") + "" : cur.key === "raccordi" ? (raccordi.length || "") + ""
-                  : cur.key === "compiti" ? (compiti.length || "") + "" : undefined}>
+              <Step n={idx + 1} tot={stepDefs.length} titolo={stepDefs[idx].titolo} hint={stepDefs[idx].hint}
+                badge={stepDefs[idx].key === "conoscenze" ? `${nConoscenze} scelte` : stepDefs[idx].key === "abilita" ? `${nAbilitaComp} scelte`
+                  : stepDefs[idx].key === "metodologie" ? (metodologie.length || "") + "" : stepDefs[idx].key === "strumenti" ? (strumenti.length || "") + ""
+                  : stepDefs[idx].key === "edciv" ? (edcivSkip ? "✓" : (educiv.length || "") + "") : stepDefs[idx].key === "raccordi" ? (raccordi.length || "") + ""
+                  : stepDefs[idx].key === "compiti" ? (compiti.length || "") + "" : undefined}>
 
-                {cur.key === "conoscenze" && (code
+                {stepDefs[idx].key === "conoscenze" && (code
                   ? <>
                       {nucleiPl.length > 0 && (
                         <div className="pl-menu">
@@ -371,39 +405,51 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                   : <p className="muted">Per <b>{materia}</b> non c'è ancora un archivio: i contenuti si scrivono nello step finale.</p>
                 )}
 
-                {cur.key === "abilita" && (
-                  <>
-                    {abilitaV.length > 0 && <><div className="pl-sub">Abilità</div><div className="pl-menu">{abilitaV.map((v) => <FlagVoce key={v.id} v={v} on={selIds.has(v.id)} onToggle={toggleVoce} />)}</div></>}
-                    {competenzeV.length > 0 && <><div className="pl-sub">Competenze</div><div className="pl-menu">{competenzeV.map((v) => <FlagVoce key={v.id} v={v} on={selIds.has(v.id)} onToggle={toggleVoce} />)}</div></>}
-                  </>
+                {stepDefs[idx].key === "abilita" && (
+                  <div className="pl-ac">
+                    <div className="pl-ac-col">
+                      <div className="pl-sub">Abilità <small>{abilitaV.length}</small></div>
+                      <AlberoConoscenze a={arch!} radici={abilitaV} selez={selIds} onToggle={toggleVoce} />
+                    </div>
+                    <div className="pl-ac-col">
+                      <div className="pl-sub">Competenze <small>{competenzeV.length}</small></div>
+                      <AlberoConoscenze a={arch!} radici={competenzeV} selez={selIds} onToggle={toggleVoce} />
+                    </div>
+                  </div>
                 )}
 
-                {cur.key === "metodologie" && <DrillCards opts={METODOLOGIE} val={metodologie} onToggle={(m) => setMetodologie(toggleIn(metodologie, m))} desc={(o) => DESCR_METODOLOGIE[o]} />}
-                {cur.key === "strumenti" && <DrillCards opts={STRUMENTI} val={strumenti} onToggle={(m) => setStrumenti(toggleIn(strumenti, m))} desc={(o) => DESCR_STRUMENTI[o]} />}
-                {cur.key === "edciv" && <DrillCards opts={EDCIVICA} val={educiv} onToggle={(m) => setEduciv(toggleIn(educiv, m))} desc={(o) => DESCR_EDCIVICA[o]} />}
-                {cur.key === "raccordi" && <DrillCards opts={raccordiOpts} val={raccordi} onToggle={(m) => setRaccordi(toggleIn(raccordi, m))} desc={(o) => `Aggancio interdisciplinare con ${o}.`} />}
+                {stepDefs[idx].key === "metodologie" && <DrillCards opts={METODOLOGIE} val={metodologie} onToggle={(m) => setMetodologie(toggleIn(metodologie, m))} desc={(o) => DESCR_METODOLOGIE[o]} icon={(o) => ICON_METODOLOGIE[o]} />}
+                {stepDefs[idx].key === "strumenti" && <DrillCards opts={STRUMENTI} val={strumenti} onToggle={(m) => setStrumenti(toggleIn(strumenti, m))} desc={(o) => DESCR_STRUMENTI[o]} icon={(o) => ICON_STRUMENTI[o]} />}
+                {stepDefs[idx].key === "edciv" && (
+                  <div className="pl-dgrid">
+                    <DCard icon="🚫" title="Nessun apporto" desc="Lezione standard: non si considera l'Educazione civica." on={edcivSkip} onClick={() => { setEdcivSkip((s) => !s); setEduciv([]); }} />
+                    {EDCIVICA.map((o) => <DCard key={o} icon={ICON_EDCIVICA[o]} title={cap(o)} desc={DESCR_EDCIVICA[o]} on={educiv.includes(o)} onClick={() => { setEduciv(toggleIn(educiv, o)); setEdcivSkip(false); }} />)}
+                  </div>
+                )}
+                {stepDefs[idx].key === "raccordi" && <DrillCards opts={raccordiOpts} val={raccordi} onToggle={(m) => setRaccordi(toggleIn(raccordi, m))} desc={(o) => `Aggancio interdisciplinare con ${o}.`} icon={(o) => <span className="pl-sigla mini" style={{ background: materiaColor(o) ?? "var(--ink-muted)" }}>{materiaSigla(o)}</span>} />}
 
-                {cur.key === "compiti" && (
+                {stepDefs[idx].key === "compiti" && (
                   <>
-                    <div className="pl-dgrid">{COMPITO_TIPI.map((t) => <DCard key={t} top={<span className="pl-ico">＋</span>} title={cap(t)} desc={DESCR_COMPITI[t]} onClick={() => addCompito(t)} />)}</div>
+                    <div className="pl-dgrid">{COMPITO_TIPI.map((t) => <DCard key={t} icon={ICON_COMPITI[t]} title={cap(t)} desc={DESCR_COMPITI[t]} onClick={() => addCompito(t)} />)}</div>
                     {compiti.length > 0 && (
                       <div className="pl-compiti">
                         {compiti.map((c) => (
                           <div key={c.id} className="pl-compito">
                             <span className="pl-compito-tag">{cap(c.tipo)}</span>
                             <input type="text" value={c.testo} placeholder="Es. tradurre vv. 1-20; esercizi p.45…" onChange={(e) => setCompito(c.id, { testo: e.target.value })} />
+                            <input className="pl-compito-data" type="date" value={c.data} title="Data per calendarizzare il compito" onChange={(e) => setCompito(c.id, { data: e.target.value })} />
                             <button className="danger" onClick={() => removeCompito(c.id)} aria-label="Rimuovi">✕</button>
                           </div>
                         ))}
                       </div>
                     )}
-                    {!isUda && <label className="field sm inline"><span>Consegna (compiti per casa)</span><input type="date" value={consegna} onChange={(e) => setConsegna(e.target.value)} /></label>}
+                    {compitiDaCal.length > 0 && <p className="muted pl-hint">📅 {compitiDaCal.length === 1 ? "1 compito con data: sarà calendarizzato" : `${compitiDaCal.length} compiti con data: saranno calendarizzati`} al salvataggio (conferma nella panoramica).</p>}
                   </>
                 )}
 
-                {cur.key === "dettagli" && (
+                {stepDefs[idx].key === "dettagli" && (
                   <>
-                    <label className="field"><span>Titolo</span>
+                    <label className="field"><span>Titolo <em>· proposto dal tagging, modificabile</em></span>
                       <input type="text" value={titolo} placeholder={`${tipoLabel} di ${materia}`} onChange={(e) => setTitolo(e.target.value)} style={{ borderLeft: `3px solid ${materiaColor(materia) ?? "var(--rule)"}` }} />
                     </label>
                     <div className="pl-when">
@@ -431,8 +477,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       </>
                     )}
 
-                    <label className="field"><span>Prerequisiti</span><textarea rows={2} value={prereq} onChange={(e) => setPrereq(e.target.value)} placeholder="Cosa serve sapere/saper fare prima…" /></label>
-                    {!isUda && <label className="field"><span>Fasi e tempi</span><textarea rows={2} value={fasi} onChange={(e) => setFasi(e.target.value)} placeholder="Apertura · sviluppo · esercitazione · sintesi/verifica…" /></label>}
+                    <label className="field"><span>Prerequisiti <button className="link" onClick={suggPrereq}>💡 dai contenuti</button></span><textarea rows={2} value={prereq} onChange={(e) => setPrereq(e.target.value)} placeholder="Cosa serve sapere/saper fare prima…" /></label>
+                    {!isUda && <label className="field"><span>Fasi e tempi <button className="link" onClick={suggFasi}>💡 struttura</button></span><textarea rows={3} value={fasi} onChange={(e) => setFasi(e.target.value)} placeholder="Apertura · sviluppo · esercitazione · sintesi/verifica…" /></label>}
 
                     <div className="pl-rifinitura">
                       <div className="pl-sub">Rifinitura testuale {selVoci.length > 0 && <button className="link" onClick={componi}>componi dai flag ↓</button>}</div>
@@ -441,7 +487,6 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                         <label className="field"><span>Abilità</span><textarea rows={3} value={abilita} onChange={(e) => setAbilita(e.target.value)} placeholder={derivato("ab", "") || "Saper fare…"} /></label>
                         <label className="field"><span>Competenze</span><textarea rows={3} value={competenzeTxt} onChange={(e) => setCompetenzeTxt(e.target.value)} placeholder={derivato("com", "") || "Agire competente…"} /></label>
                       </div>
-                      <p className="muted pl-hint">Vuoti = compilati in automatico dalle voci flaggate.</p>
                     </div>
 
                     <div className="field"><span>Materiali</span>
@@ -458,7 +503,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                     </div>
 
                     <div className="pl-triade">
-                      <label className="field"><span>Inclusione (misure)</span><textarea rows={2} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (a livello di classe)…" /></label>
+                      <label className="field"><span>Inclusione (misure) <button className="link" onClick={suggInclusione}>💡 dall'anagrafica</button></span><textarea rows={2} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (a livello di classe)…" /></label>
                       <label className="field"><span>Verifica formativa</span>
                         <select value={verificaF} onChange={(e) => setVerificaF(e.target.value)}>
                           <option value="">—</option>
@@ -479,6 +524,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                         <OvTags t="Educazione civica" xs={r.educiv} />
                         <OvTags t="Raccordi" xs={r.raccordi} />
                         <OvList t="Compiti ed esercizi" xs={r.compiti} />
+                        <OvList t="📅 Compiti da calendarizzare" xs={r.compitiCal} />
                       </div>
                     </div>
 
@@ -490,7 +536,6 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                   </>
                 )}
 
-                {/* navigazione fra gli step */}
                 <div className="pl-nav">
                   <button className="ghost" disabled={idx === 0} onClick={() => setStepIdx(idx - 1)}>← Indietro</button>
                   <span className="pl-nav-prog">Passo {idx + 1} di {stepDefs.length}</span>
