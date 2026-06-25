@@ -97,7 +97,7 @@ export function buildRepertori(read) {
     raccordo_valutazione: i.raccordo_valutazione, materie: pipe(i.materie),
   }));
   const agenda = rd("agenda-2030.csv").map((s) => ({
-    id: s.id, numero: num(s.numero), titolo: s.titolo, colore: s.colore, area: s.area, descrizione: s.descrizione, keywords: pipe(s.keywords),
+    id: s.id, numero: num(s.numero), titolo: s.titolo, colore: s.colore, icona: s.icona, area: s.area, descrizione: s.descrizione, keywords: pipe(s.keywords),
   }));
   return { prerequisiti, metodologie, fasi, arrangiamenti, materiali, valutazione, inclusione, agenda };
 }

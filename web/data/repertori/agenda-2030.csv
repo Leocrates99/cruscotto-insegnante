@@ -1,18 +1,18 @@
-id,numero,titolo,colore,area,descrizione,keywords
-SDG-01,1,"Sconfiggere la povertà",#E5243B,Persone,"Porre fine a ogni forma di povertà nel mondo",poverta|diritti|welfare
-SDG-02,2,"Sconfiggere la fame",#DDA63A,Persone,"Fame zero: sicurezza alimentare, nutrizione e agricoltura sostenibile",fame|alimentazione|agricoltura
-SDG-03,3,"Salute e benessere",#4C9F38,Persone,"Salute e benessere per tutti e per tutte le età",salute|benessere
-SDG-04,4,"Istruzione di qualità",#C5192D,Persone,"Istruzione di qualità, equa e inclusiva; apprendimento permanente",istruzione|scuola|cittadinanza
-SDG-05,5,"Parità di genere",#FF3A21,Persone,"Parità di genere ed emancipazione di donne e ragazze",genere|parita|diritti
-SDG-06,6,"Acqua pulita e servizi igienico-sanitari",#26BDE2,Pianeta,"Acqua pulita e servizi igienico-sanitari per tutti",acqua|igiene|ambiente
-SDG-07,7,"Energia pulita e accessibile",#FCC30B,Prosperità,"Energia accessibile, affidabile, sostenibile e moderna",energia|rinnovabili
-SDG-08,8,"Lavoro dignitoso e crescita economica",#A21942,Prosperità,"Lavoro dignitoso e crescita economica inclusiva e sostenibile",lavoro|economia
-SDG-09,9,"Imprese, innovazione e infrastrutture",#FD6925,Prosperità,"Industria, innovazione e infrastrutture resilienti",innovazione|industria
-SDG-10,10,"Ridurre le disuguaglianze",#DD1367,Prosperità,"Ridurre le disuguaglianze fra i Paesi e al loro interno",disuguaglianze|equita|diritti
-SDG-11,11,"Città e comunità sostenibili",#FD9D24,Prosperità,"Città e comunità sostenibili, sicure e inclusive",citta|comunita|territorio
-SDG-12,12,"Consumo e produzione responsabili",#BF8B2E,Pianeta,"Modelli di consumo e produzione responsabili",consumo|produzione|sostenibilita
-SDG-13,13,"Lotta contro il cambiamento climatico",#3F7E44,Pianeta,"Agire per il clima e contrastarne gli impatti",clima|ambiente
-SDG-14,14,"La vita sott'acqua",#0A97D9,Pianeta,"Conservare e usare in modo sostenibile mari e risorse marine",mare|oceani|biodiversita
-SDG-15,15,"La vita sulla terra",#56C02B,Pianeta,"Proteggere e ripristinare gli ecosistemi terrestri",ecosistemi|biodiversita
-SDG-16,16,"Pace, giustizia e istituzioni solide",#00689D,Pace,"Pace, giustizia e istituzioni solide e inclusive",pace|giustizia|legalita|costituzione
-SDG-17,17,"Partnership per gli obiettivi",#19486A,Partnership,"Rafforzare i mezzi di attuazione e il partenariato globale",partnership|cooperazione
+id,numero,titolo,colore,icona,area,descrizione,keywords
+SDG-01,1,"Sconfiggere la povertà",#E5243B,👪,Persone,"Porre fine a ogni forma di povertà nel mondo",poverta|diritti|welfare
+SDG-02,2,"Sconfiggere la fame",#DDA63A,🍲,Persone,"Fame zero: sicurezza alimentare, nutrizione e agricoltura sostenibile",fame|alimentazione|agricoltura
+SDG-03,3,"Salute e benessere",#4C9F38,💓,Persone,"Salute e benessere per tutti e per tutte le età",salute|benessere
+SDG-04,4,"Istruzione di qualità",#C5192D,📖,Persone,"Istruzione di qualità, equa e inclusiva; apprendimento permanente",istruzione|scuola|cittadinanza
+SDG-05,5,"Parità di genere",#FF3A21,⚥,Persone,"Parità di genere ed emancipazione di donne e ragazze",genere|parita|diritti
+SDG-06,6,"Acqua pulita e servizi igienico-sanitari",#26BDE2,💧,Pianeta,"Acqua pulita e servizi igienico-sanitari per tutti",acqua|igiene|ambiente
+SDG-07,7,"Energia pulita e accessibile",#FCC30B,☀️,Prosperità,"Energia accessibile, affidabile, sostenibile e moderna",energia|rinnovabili
+SDG-08,8,"Lavoro dignitoso e crescita economica",#A21942,📈,Prosperità,"Lavoro dignitoso e crescita economica inclusiva e sostenibile",lavoro|economia
+SDG-09,9,"Imprese, innovazione e infrastrutture",#FD6925,🏗️,Prosperità,"Industria, innovazione e infrastrutture resilienti",innovazione|industria
+SDG-10,10,"Ridurre le disuguaglianze",#DD1367,🟰,Prosperità,"Ridurre le disuguaglianze fra i Paesi e al loro interno",disuguaglianze|equita|diritti
+SDG-11,11,"Città e comunità sostenibili",#FD9D24,🏙️,Prosperità,"Città e comunità sostenibili, sicure e inclusive",citta|comunita|territorio
+SDG-12,12,"Consumo e produzione responsabili",#BF8B2E,♻️,Pianeta,"Modelli di consumo e produzione responsabili",consumo|produzione|sostenibilita
+SDG-13,13,"Lotta contro il cambiamento climatico",#3F7E44,🌍,Pianeta,"Agire per il clima e contrastarne gli impatti",clima|ambiente
+SDG-14,14,"La vita sott'acqua",#0A97D9,🐟,Pianeta,"Conservare e usare in modo sostenibile mari e risorse marine",mare|oceani|biodiversita
+SDG-15,15,"La vita sulla terra",#56C02B,🌳,Pianeta,"Proteggere e ripristinare gli ecosistemi terrestri",ecosistemi|biodiversita
+SDG-16,16,"Pace, giustizia e istituzioni solide",#00689D,🕊️,Pace,"Pace, giustizia e istituzioni solide e inclusive",pace|giustizia|legalita|costituzione
+SDG-17,17,"Partnership per gli obiettivi",#19486A,🤝,Partnership,"Rafforzare i mezzi di attuazione e il partenariato globale",partnership|cooperazione

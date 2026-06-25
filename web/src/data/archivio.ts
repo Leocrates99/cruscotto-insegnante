@@ -26,7 +26,7 @@ export interface Arrangiamento { id: string; nome: string; modello: string; sequ
 export interface Materiale { id: string; categoria: string; tipo: string; descrizione: string; supporto: string; funzione: string; accessibilita: string; materie: string[]; note: string }
 export interface Valutazione { id: string; funzione: string; metodo: string; forma: string; descrizione: string; momento: string; oggetto: string[]; bloom_max: string; descrittore_dublino: string; graduata: boolean; materie: string[] }
 export interface MisuraInclusione { id: string; ambito: string; categoria: string; misura: string; descrizione: string; disciplina_o_trasversale: string; riferimento_normativo: string; raccordo_valutazione: string; materie: string[] }
-export interface Sdg { id: string; numero: number | null; titolo: string; colore: string; area: string; descrizione: string; keywords: string[] }
+export interface Sdg { id: string; numero: number | null; titolo: string; colore: string; icona: string; area: string; descrizione: string; keywords: string[] }
 export interface Repertori { prerequisiti: Prerequisito[]; metodologie: Metodologia[]; fasi: Fase[]; arrangiamenti: Arrangiamento[]; materiali: Materiale[]; valutazione: Valutazione[]; inclusione: MisuraInclusione[]; agenda: Sdg[] }
 
 export interface ArchivioIndex {

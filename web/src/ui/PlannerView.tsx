@@ -531,7 +531,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                           {agenda2030(arch).map((s) => { const lab = `SDG ${s.numero} · ${s.titolo}`; const on = educiv.includes(lab); return (
                             <button key={s.id} className={on ? "pl-sdg on" : "pl-sdg"} style={{ background: s.colore }} title={s.descrizione} onClick={() => setEduciv(toggleIn(educiv, lab))}>
                               {on && <span className="pl-sdg-ck">✓</span>}
-                              <span className="pl-sdg-n">{s.numero}</span>
+                              <span className="pl-sdg-top"><span className="pl-sdg-n">{s.numero}</span><span className="pl-sdg-ico" aria-hidden="true">{s.icona}</span></span>
                               <span className="pl-sdg-t">{s.titolo}</span>
                             </button>
                           ); })}
