@@ -950,6 +950,64 @@ button.ap-tw:hover { background: var(--accent-pale); border-radius: 5px; box-sha
 .pl-rifinitura { border: 1px dashed var(--accent-border); border-radius: var(--radius); padding: 0.7rem 0.8rem; background: color-mix(in srgb, var(--accent) 3%, transparent); display: flex; flex-direction: column; gap: 0.6rem; }
 .pl-compito-tag { flex-shrink: 0; font: 700 0.68rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.02em; color: var(--accent); background: var(--accent-pale); padding: 0.25rem 0.5rem; border-radius: 6px; min-width: 9rem; text-align: center; }
 
+/* ── Drill a card (contesto + metodologie/strumenti/edciv/raccordi/compiti) ──── */
+.pl-dgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.8rem; }
+.pl-dcard { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 0.35rem; text-align: left; white-space: normal; padding: 0.9rem 1rem; border: 1px solid var(--rule); border-radius: var(--radius-lg); background: var(--cream); color: var(--ink); cursor: pointer; box-shadow: var(--shadow-sm); transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition); }
+.pl-dcard:hover { border-color: var(--accent); box-shadow: var(--shadow); transform: translateY(-1px); }
+.pl-dcard.on { border-color: var(--accent); background: var(--accent-pale); box-shadow: 0 0 0 1px var(--accent) inset; }
+.pl-dcard-check { position: absolute; top: 0.55rem; right: 0.6rem; width: 1.3rem; height: 1.3rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font: 800 0.8rem var(--font-ui); color: var(--ink-muted); background: var(--parchment-dark); }
+.pl-dcard.on .pl-dcard-check { color: #fff; background: var(--accent); }
+.pl-dcard-top { margin-bottom: 0.1rem; }
+.pl-ico { font-size: 1.7rem; line-height: 1; }
+.pl-sigla { display: inline-flex; align-items: center; justify-content: center; min-width: 2.6rem; height: 2.1rem; padding: 0 0.5rem; border-radius: 8px; color: #fff; font: 800 1rem var(--font-ui); letter-spacing: 0.04em; }
+.pl-sigla.cls { font-size: 0.95rem; }
+.pl-dcard-t { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; line-height: 1.2; padding-right: 1.4rem; }
+.pl-dcard-d { font-size: 0.8rem; color: var(--ink-muted); line-height: 1.35; }
+
+/* ── Stepper: traccia numerata + navigazione ───────────────────────────────── */
+.pl-track { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; margin: 0 0 0.9rem; padding: 0; }
+.pl-track li { width: 1.8rem; height: 1.8rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--rule); background: var(--cream); color: var(--ink-muted); font: 700 0.82rem var(--font-ui); cursor: pointer; transition: all var(--transition); }
+.pl-track li:hover { border-color: var(--accent); color: var(--accent); }
+.pl-track li.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pl-track li.done { background: var(--accent-pale); border-color: var(--accent-border); color: var(--accent); }
+.pl-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.4rem; padding-top: 0.8rem; border-top: 1px solid var(--parchment-dark); }
+.pl-nav-prog { font: 600 0.78rem var(--font-ui); color: var(--ink-muted); }
+.pl-nav-end { width: 1px; }
+button.ghost { background: none; border: 1px solid var(--rule); color: var(--ink-light); }
+button.ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); box-shadow: none; transform: none; }
+button.ghost:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Panoramica (step finale) ──────────────────────────────────────────────── */
+.pl-overview { border: 1px solid var(--accent-border); border-radius: var(--radius-lg); background: color-mix(in srgb, var(--accent) 3%, transparent); padding: 1rem 1.1rem; }
+.pl-ov-head { margin-bottom: 0.7rem; }
+.pl-ov-head h3 { margin: 0; font-size: 1.25rem; }
+.pl-ov-sub { font: 600 0.8rem var(--font-ui); color: var(--ink-muted); }
+.pl-ov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.8rem 1.2rem; }
+.pl-ov-block { min-width: 0; }
+.pl-ov-t { font: 700 0.7rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); margin-bottom: 0.25rem; }
+.pl-ov-t small { color: var(--accent); }
+.pl-ov-ul { margin: 0; padding-left: 1.1rem; font-size: 0.86rem; }
+.pl-ov-ul li { margin: 0.1rem 0; }
+.pl-ov-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+
+/* ── Le mie pianificazioni (Archivio) ──────────────────────────────────────── */
+.arc-cap { margin: -0.3rem 0 0.7rem; }
+.pian-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.pian-card { border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); background: var(--cream); box-shadow: var(--shadow-sm); overflow: hidden; }
+.pian-head { width: 100%; display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 0.9rem; background: none; border: none; cursor: pointer; text-align: left; }
+.pian-head:hover { background: var(--parchment); transform: none; box-shadow: none; }
+.pian-tipo { flex-shrink: 0; font: 700 0.66rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); background: var(--accent-pale); padding: 0.2rem 0.5rem; border-radius: 99px; }
+.pian-titolo { font-family: var(--font-display); font-size: 1.02rem; font-weight: 600; }
+.pian-meta { color: var(--ink-muted); font-size: 0.82rem; }
+.pian-stato { margin-left: auto; flex-shrink: 0; font: 600 0.72rem var(--font-ui); color: var(--ink-light); background: var(--parchment-dark); padding: 0.15rem 0.5rem; border-radius: 99px; }
+.pian-caret { flex-shrink: 0; color: var(--ink-muted); }
+.pian-body { padding: 0.4rem 0.9rem 0.9rem; border-top: 1px solid var(--parchment-dark); display: flex; flex-direction: column; gap: 0.6rem; }
+.pian-tags { display: flex; flex-direction: column; gap: 0.3rem; }
+.pian-tagrow { font-size: 0.84rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
+.pian-tagrow b { font: 700 0.7rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-muted); margin-right: 0.2rem; }
+.pian-blk b { display: block; font: 700 0.7rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-muted); margin-bottom: 0.15rem; }
+.pian-blk pre { margin: 0; font-family: var(--font-body); font-size: 0.86rem; white-space: pre-wrap; line-height: 1.45; color: var(--ink); }
+
 /* ── Tablet ──────────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .nav { width: 208px; }

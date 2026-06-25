@@ -103,6 +103,18 @@ export const figliOrdinati = (a: ArchivioIndex, parentId: string): Voce[] =>
     const ry = y.tipo_contenuto ? ORD_FIGLIO[y.tipo_contenuto] ?? 9 : 9;
     return rx - ry || perPeso(x, y);
   });
+/** Catena di antenati (genitore → … → radice) di una voce, dal più vicino al più lontano. */
+export function antenati(a: ArchivioIndex, id: string): Voce[] {
+  const out: Voce[] = [];
+  let cur = voce(a, id);
+  const visti = new Set<string>([id]);
+  while (cur?.parent && !visti.has(cur.parent)) {
+    const p = voce(a, cur.parent);
+    if (!p) break;
+    out.push(p); visti.add(p.id); cur = p;
+  }
+  return out;
+}
 export const autoriDi = (a: ArchivioIndex, radiceId: string): Voce[] => figli(a, radiceId).filter((v) => v.tipo_contenuto === "autore");
 export const opereDi = (a: ArchivioIndex, autoreId: string): Voce[] => figli(a, autoreId).filter((v) => v.tipo_contenuto === "opera");
 export const schedaAutore = (a: ArchivioIndex, autoreId: string): Voce[] => figli(a, autoreId).filter((v) => v.tipo_contenuto !== null && FACET.has(v.tipo_contenuto));
