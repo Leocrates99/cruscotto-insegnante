@@ -61,6 +61,15 @@ export const ICON_COMPITI: Record<string, string> = {
   "esercizio in classe": "✏️", "esercitazione guidata": "🧑‍🏫", "compito per casa": "🏠", "verifica formativa": "✅",
 };
 
+// Icone per i materiali (per categoria) e per le misure di inclusione (per categoria/ambito).
+export const ICON_MATERIALI: Record<string, string> = {
+  testuali: "📚", iconografici: "🖼️", digitali: "💻", operativi: "🧰", laboratoriali: "🔬", inclusivi: "♿",
+};
+export const ICON_INCLUSIONE: Record<string, string> = {
+  compensativo: "🧰", dispensativo: "⏳", organizzativo: "🗂️", valutativo: "✅", curricolare: "📘",
+};
+export const ICON_INC_AMBITO: Record<string, string> = { DSA: "📖", BES: "🧩", L104: "♿" };
+
 export const DESCR_COMPITI: Record<string, string> = {
   "esercizio in classe": "Applicazione immediata e guidata di quanto appena spiegato.",
   "esercitazione guidata": "Pratica strutturata passo-passo, con il docente che accompagna.",

@@ -7,8 +7,8 @@ import { useStore } from "../store/useStore";
 import { classiAttive, contiClasse, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
 import { annoCorrenteId, classeId } from "../store/links";
 import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia";
-import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, misureInclusione as repInclusione, perPeso, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
-import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI, ICON_COMPITI, ICON_EDCIVICA, ICON_METODOLOGIE, ICON_STRUMENTI } from "../data/glossario";
+import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, faseById, fasi as repFasi, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, metodologieDiFase, misureInclusione as repInclusione, perPeso, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
+import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI, ICON_COMPITI, ICON_EDCIVICA, ICON_INC_AMBITO, ICON_INCLUSIONE, ICON_MATERIALI, ICON_METODOLOGIE, ICON_STRUMENTI } from "../data/glossario";
 import { downloadWord } from "../store/reportFineAnno";
 import { getSessione, upsertSessione } from "../store/valutazione";
 import { AlberoConoscenze } from "./AlberoConoscenze";
@@ -54,6 +54,7 @@ const METODOLOGIE = optsOf("lezioni", "Metodologie");
 const STRUMENTI = optsOf("lezioni", "Strumenti e spazi");
 const VERIFICHE_F = optsOf("lezioni", "Verifica formativa");
 const EDCIVICA = optsOf("lezioni", "Educazione civica");
+const AGENDA = "Agenda 2030 e sviluppo sostenibile";
 
 // Riserva di icone per garantire icone DISTINTE in una stessa finestra di menù.
 const ICON_POOL = ["🗣️", "💬", "👥", "🔄", "⚖️", "🧩", "💡", "🤝", "🔬", "📖", "🎭", "🎯", "🧠", "📚", "✍️", "🔎", "🗂️", "🧪", "🎬", "🗺️", "📐", "🧭", "🎲", "🏛️", "🌐", "🧰", "📊", "🪄", "🧱", "🪞", "🎙️", "📝", "🧮", "🔭", "🧵", "🎨"];
@@ -207,6 +208,12 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const fasiMinTot = fasiRows.reduce((a, b) => a + (Number(b.minuti) || 0), 0);
   const minRim = minPrev - fasiMinTot;
   const addFase = () => setFasiRows((r) => [...r, { id: newId(), nome: FASI_DEFAULT[r.length] ?? `Fase ${r.length + 1}`, minuti: 0, metodi: [] }]);
+  const addFaseCatalogo = (fid: string) => {
+    if (!arch) return;
+    const f = faseById(arch, fid); if (!f) return;
+    const min = f.perc_monte ? Math.round((minPrev || 60) * f.perc_monte / 100) : (f.dur_min_60 ?? 10);
+    setFasiRows((r) => [...r, { id: newId(), nome: f.fase, minuti: min, funzione: f.funzione, centratura: f.centratura, metodi: metodologieDiFase(arch, fid).slice(0, 2).map((m) => m.nome) }]);
+  };
   const setFase = (id: string, patch: Partial<FaseRow>) => setFasiRows((r) => r.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   const removeFase = (id: string) => setFasiRows((r) => r.filter((x) => x.id !== id));
   const spostaFase = (from: number, to: number) => setFasiRows((r) => { if (from === to || from < 0 || to < 0 || from >= r.length || to >= r.length) return r; const a = [...r]; const [m] = a.splice(from, 1); a.splice(to, 0, m); return a; });
@@ -414,7 +421,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
       { key: "conoscenze", titolo: "Conoscenze e contenuti", hint: "Espandi i rami e flagga: scegliendo una voce si flaggano da sole le categorie superiori." },
       ...(code && haAbilitaComp ? [{ key: "abilita" as StepKey, titolo: "Abilità e competenze", hint: "Stessa consultazione: ciò che si sa fare e l'agire competente." }] : []),
       ...(code ? [{ key: "prerequisiti" as StepKey, titolo: "Prerequisiti", hint: "Calcolati per prossimità dai contenuti flaggati; modificabili." }] : []),
-      { key: "metodologie", titolo: "Metodologie", hint: "Come si conduce: scegli i metodi didattici." },
+      { key: "metodologie", titolo: "Metodologie", hint: "La strategia con cui fai apprendere: come organizzi attività, interazione e ruoli per raggiungere gli obiettivi. Scegline una o più, anche combinate." },
       ...(!isUda ? [{ key: "fasi" as StepKey, titolo: "Fasi e tempi", hint: "La timeline della lezione: preset, durate scalate sul monte ore, metodi per fase." }] : []),
       { key: "edciv", titolo: "Educazione civica", hint: "Ampliamento facoltativo: usa «Nessun apporto» per una lezione standard." },
       ...(raccordiOpts.length ? [{ key: "raccordi" as StepKey, titolo: "Raccordi interdisciplinari", hint: indir ? "Le materie dell'indirizzo con cui dialoga." : "Le altre materie con cui dialoga." }] : []),
@@ -526,12 +533,11 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                 {stepDefs[idx].key === "edciv" && (
                   <>
                     <div className="pl-dgrid">
-                      <DCard icon="🚫" title="Nessun apporto" desc="Lezione standard: non si considera l'Educazione civica." on={edcivSkip} onClick={() => { setEdcivSkip((s) => !s); setEduciv([]); }} />
-                      {EDCIVICA.map((o) => <DCard key={o} icon={ICON_EDCIVICA[o]} title={cap(o)} desc={DESCR_EDCIVICA[o]} on={educiv.includes(o)} onClick={() => {
-                        const isAgenda = o === "Agenda 2030 e sviluppo sostenibile";
+                      <DCard icon="❌" title="Nessun apporto" desc="Lezione standard: non si considera l'Educazione civica." on={edcivSkip} onClick={() => { setEdcivSkip((s) => !s); setEduciv([]); }} />
+                      {[AGENDA, ...EDCIVICA.filter((o) => o !== AGENDA)].map((o) => <DCard key={o} icon={ICON_EDCIVICA[o]} title={cap(o)} desc={DESCR_EDCIVICA[o]} on={educiv.includes(o)} onClick={() => {
                         const off = educiv.includes(o);
                         let next = toggleIn(educiv, o);
-                        if (isAgenda && off) next = next.filter((x) => !x.startsWith("SDG "));
+                        if (o === AGENDA && off) next = next.filter((x) => !x.startsWith("SDG "));
                         setEduciv(next); setEdcivSkip(false);
                       }} />)}
                     </div>
@@ -547,7 +553,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                     )}
                   </>
                 )}
-                {stepDefs[idx].key === "raccordi" && <DrillCards opts={raccordiOpts} val={raccordi} onToggle={(m) => setRaccordi(toggleIn(raccordi, m))} desc={(o) => `Aggancio interdisciplinare con ${o}.`} icon={(o) => <span className="pl-sigla mini" style={{ background: materiaColor(o) ?? "var(--ink-muted)" }}>{materiaSigla(o)}</span>} />}
+                {stepDefs[idx].key === "raccordi" && <DrillCards opts={raccordiOpts} val={raccordi} onToggle={(m) => setRaccordi(toggleIn(raccordi, m))} desc={() => undefined} icon={(o) => <span className="pl-sigla mini" style={{ background: materiaColor(o) ?? "var(--ink-muted)" }}>{materiaSigla(o)}</span>} />}
 
                 {stepDefs[idx].key === "prerequisiti" && (
                   <>
@@ -574,7 +580,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       <label className="pl-fasi-ora">inizio <input type="time" value={oraInizio} onChange={(e) => setOraInizio(e.target.value)} /></label>
                       {arrRep.length > 0 && <select className="pl-arr-sel" value="" onChange={(e) => { if (e.target.value) applicaArrangiamento(e.target.value); }}><option value="">↳ preset timeline…</option>{arrRep.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}</select>}
                       <button className="link" onClick={struttFasi}>struttura tipo</button>
-                      <button className="link" onClick={addFase}>+ fase</button>
+                      {arch && repFasi(arch).length > 0
+                        ? <select className="pl-arr-sel" value="" onChange={(e) => { if (e.target.value === "__v") addFase(); else if (e.target.value) addFaseCatalogo(e.target.value); }}><option value="">+ fase…</option>{repFasi(arch).map((f) => <option key={f.id} value={f.id}>{f.fase}</option>)}<option value="__v">— fase vuota</option></select>
+                        : <button className="link" onClick={addFase}>+ fase</button>}
                     </div>
 
                     {fasiRows.length > 0 && (
@@ -612,14 +620,16 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
                 {stepDefs[idx].key === "materiali" && (
                   <div className="pl-mat">
-                    <div className="pl-sub">Strumenti e spazi</div>
+                    <div className="pl-sez">🧰 Strumenti e spazi</div>
                     <DrillCards opts={STRUMENTI} val={strumenti} onToggle={(m) => setStrumenti(toggleIn(strumenti, m))} desc={(o) => DESCR_STRUMENTI[o]} icon={(o) => ICON_STRUMENTI[o]} />
-                    {matRep.length > 0 && <div className="pl-sub">Materiali e supporti</div>}
-                    {matRep.length > 0 && [...new Set(matRep.map((m) => m.categoria))].map((cat) => (
-                      <div key={cat}><div className="pl-sub">{cap(cat)} <small>{matRep.filter((m) => m.categoria === cat).length}</small></div>
-                        <div className="pl-dgrid">{matRep.filter((m) => m.categoria === cat).map((m) => <DCard key={m.id} title={m.tipo} desc={m.descrizione} onClick={() => creaDaCatalogo(m)} />)}</div>
-                      </div>
-                    ))}
+                    {matRep.length > 0 && <>
+                      <div className="pl-sez">📦 Materiali e supporti</div>
+                      {[...new Set(matRep.map((m) => m.categoria))].map((cat) => (
+                        <div key={cat}><div className="pl-sub">{ICON_MATERIALI[cat] ?? "📦"} {cap(cat)} <small>{matRep.filter((m) => m.categoria === cat).length}</small></div>
+                          <div className="pl-dgrid">{matRep.filter((m) => m.categoria === cat).map((m) => <DCard key={m.id} icon={ICON_MATERIALI[m.categoria] ?? "📦"} title={m.tipo} desc={m.descrizione} onClick={() => creaDaCatalogo(m)} />)}</div>
+                        </div>
+                      ))}
+                    </>}
                     {materialiDisp.length > 0 && <><div className="pl-sub">I tuoi materiali collegati</div><div className="pl-menu">{materialiDisp.map((m) => <button key={m.id} className={matSel.includes(m.id) ? "pl-mbtn on" : "pl-mbtn"} onClick={() => setMatSel((a) => toggleIn(a, m.id))}><span className="pl-mb-tick">{matSel.includes(m.id) ? "✓" : "+"}</span>{String(m["Titolo"] ?? "—")}</button>)}</div></>}
                     <div className="pl-mat-add">
                       <input type="text" value={nuovoMat.titolo} placeholder="Nuovo materiale (titolo)…" onChange={(e) => setNuovoMat((s) => ({ ...s, titolo: e.target.value }))} onKeyDown={(e) => { if (e.key === "Enter") creaMateriale(); }} />
@@ -639,8 +649,13 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       return <p className="muted">Modello anonimo: le misure si associano a una situazione (es. «PDP per DSA»), mai a un nominativo.</p>;
                     })()}
                     {inclRep.length > 0 && [...new Set(inclRep.map((m) => m.ambito))].map((amb) => (
-                      <div key={amb}><div className="pl-sub">{amb} <small>{inclRep.filter((m) => m.ambito === amb).length}</small></div>
-                        <div className="pl-dgrid">{inclRep.filter((m) => m.ambito === amb).map((m) => <DCard key={m.id} title={m.misura} desc={m.descrizione} onClick={() => setInclusione((t) => [...new Set([...t.split("\n").filter(Boolean), `• [${m.ambito}/${m.categoria}] ${m.misura}`])].join("\n"))} />)}</div>
+                      <div key={amb}>
+                        <div className="pl-sez">{ICON_INC_AMBITO[amb] ?? "🧩"} {amb} <small>{inclRep.filter((m) => m.ambito === amb).length}</small></div>
+                        {[...new Set(inclRep.filter((m) => m.ambito === amb).map((m) => m.categoria))].map((cat) => (
+                          <div key={cat}><div className="pl-sub">{ICON_INCLUSIONE[cat] ?? "•"} {cap(cat)}</div>
+                            <div className="pl-dgrid">{inclRep.filter((m) => m.ambito === amb && m.categoria === cat).map((m) => <DCard key={m.id} icon={ICON_INCLUSIONE[m.categoria]} title={m.misura} desc={m.descrizione} onClick={() => setInclusione((t) => [...new Set([...t.split("\n").filter(Boolean), `• [${m.ambito}/${m.categoria}] ${m.misura}`])].join("\n"))} />)}</div>
+                          </div>
+                        ))}
                       </div>
                     ))}
                     <label className="field"><span>Misure (testo)</span><textarea rows={3} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (modello anonimo, per situazione)…" /></label>

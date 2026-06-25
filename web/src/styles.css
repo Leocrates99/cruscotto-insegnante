@@ -1008,6 +1008,9 @@ button.ap-tw:hover { background: var(--accent-pale); border-radius: 5px; box-sha
 .pl-step-badge { flex-shrink: 0; align-self: center; font: 700 0.72rem var(--font-ui); padding: 0.15rem 0.55rem; border-radius: 99px; background: var(--accent-pale); color: var(--accent); }
 .pl-step-body { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; }
 .pl-sub { font: 700 0.72rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); display: flex; align-items: center; gap: 0.6rem; }
+.pl-sez { font: 600 1.02rem var(--font-display); color: var(--ink); margin: 1rem 0 0.5rem; padding-bottom: 0.35rem; border-bottom: 1.5px solid var(--accent-border); display: flex; align-items: baseline; gap: 0.5rem; }
+.pl-sez:first-child { margin-top: 0; }
+.pl-sez small { font: 700 0.72rem var(--font-ui); color: var(--accent); }
 .pl-step-body .ap-tree { max-height: 52vh; }
 /* Abilità/competenze: stessa resa ad albero delle conoscenze, su due colonne */
 .pl-ac { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
