@@ -391,11 +391,10 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
       ...(code && haAbilitaComp ? [{ key: "abilita" as StepKey, titolo: "Abilità e competenze", hint: "Stessa consultazione: ciò che si sa fare e l'agire competente." }] : []),
       ...(code ? [{ key: "prerequisiti" as StepKey, titolo: "Prerequisiti", hint: "Calcolati per prossimità dai contenuti flaggati; modificabili." }] : []),
       { key: "metodologie", titolo: "Metodologie", hint: "Come si conduce: scegli i metodi didattici." },
-      { key: "strumenti", titolo: "Strumenti e spazi", hint: "Con cosa e dove si svolge l'attività." },
       ...(!isUda ? [{ key: "fasi" as StepKey, titolo: "Fasi e tempi", hint: "La timeline della lezione: preset, durate scalate sul monte ore, metodi per fase." }] : []),
       { key: "edciv", titolo: "Educazione civica", hint: "Ampliamento facoltativo: usa «Nessun apporto» per una lezione standard." },
       ...(raccordiOpts.length ? [{ key: "raccordi" as StepKey, titolo: "Raccordi interdisciplinari", hint: indir ? "Le materie dell'indirizzo con cui dialoga." : "Le altre materie con cui dialoga." }] : []),
-      { key: "materiali", titolo: "Materiali", hint: "Strumenti e supporti per la lezione, dal catalogo o creati al volo." },
+      { key: "materiali", titolo: "Strumenti e materiali", hint: "Con cosa e dove: strumenti/spazi e i supporti, dal catalogo o creati al volo." },
       { key: "inclusione", titolo: "Inclusione", hint: "Misure per la classe e i suoi componenti (modello anonimo, per situazione)." },
       { key: "compiti", titolo: "Compiti e verifiche", hint: "Compiti (con data) e la verifica; possono restare vuoti e completarsi dopo." },
       { key: "dettagli", titolo: "Panoramica & convalida", hint: "Quadro finale modificabile: rivedi, esporta in Word, poi convalida nel Cruscotto." },
@@ -462,10 +461,10 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
               <Step n={idx + 1} tot={stepDefs.length} titolo={stepDefs[idx].titolo} hint={stepDefs[idx].hint}
                 badge={stepDefs[idx].key === "conoscenze" ? `${nConoscenze} scelte` : stepDefs[idx].key === "abilita" ? `${nAbilitaComp} scelte`
                   : stepDefs[idx].key === "prerequisiti" ? ((prereqAgg.daAccertare.length + prereqAgg.consolidate.length) || "") + ""
-                  : stepDefs[idx].key === "metodologie" ? (metodologie.length || "") + "" : stepDefs[idx].key === "strumenti" ? (strumenti.length || "") + ""
+                  : stepDefs[idx].key === "metodologie" ? (metodologie.length || "") + ""
                   : stepDefs[idx].key === "fasi" ? (fasiRows.length || "") + ""
                   : stepDefs[idx].key === "edciv" ? (edcivSkip ? "✓" : (educiv.length || "") + "") : stepDefs[idx].key === "raccordi" ? (raccordi.length || "") + ""
-                  : stepDefs[idx].key === "materiali" ? (matSel.length || "") + "" : stepDefs[idx].key === "inclusione" ? (inclusione.trim() ? "✓" : "")
+                  : stepDefs[idx].key === "materiali" ? ((strumenti.length + matSel.length) || "") + "" : stepDefs[idx].key === "inclusione" ? (inclusione.trim() ? "✓" : "")
                   : stepDefs[idx].key === "compiti" ? (compiti.length || "") + "" : undefined}>
 
                 {stepDefs[idx].key === "conoscenze" && (code
@@ -500,7 +499,6 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                         <div className="pl-dgrid">{ms.map((m) => <DCard key={m.id} icon={metIcone[m.nome]} title={m.nome} desc={m.aggancio_classico} on={metodologie.includes(m.nome)} onClick={() => setMetodologie(toggleIn(metodologie, m.nome))} />)}</div>
                       </div>))}</div>
                   : <DrillCards opts={METODOLOGIE} val={metodologie} onToggle={(m) => setMetodologie(toggleIn(metodologie, m))} desc={(o) => DESCR_METODOLOGIE[o]} icon={(o) => ICON_METODOLOGIE[o]} />)}
-                {stepDefs[idx].key === "strumenti" && <DrillCards opts={STRUMENTI} val={strumenti} onToggle={(m) => setStrumenti(toggleIn(strumenti, m))} desc={(o) => DESCR_STRUMENTI[o]} icon={(o) => ICON_STRUMENTI[o]} />}
                 {stepDefs[idx].key === "edciv" && (
                   <div className="pl-dgrid">
                     <DCard icon="🚫" title="Nessun apporto" desc="Lezione standard: non si considera l'Educazione civica." on={edcivSkip} onClick={() => { setEdcivSkip((s) => !s); setEduciv([]); }} />
@@ -557,6 +555,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
                 {stepDefs[idx].key === "materiali" && (
                   <div className="pl-mat">
+                    <div className="pl-sub">Strumenti e spazi</div>
+                    <DrillCards opts={STRUMENTI} val={strumenti} onToggle={(m) => setStrumenti(toggleIn(strumenti, m))} desc={(o) => DESCR_STRUMENTI[o]} icon={(o) => ICON_STRUMENTI[o]} />
+                    {matRep.length > 0 && <div className="pl-sub">Materiali e supporti</div>}
                     {matRep.length > 0 && [...new Set(matRep.map((m) => m.categoria))].map((cat) => (
                       <div key={cat}><div className="pl-sub">{cap(cat)} <small>{matRep.filter((m) => m.categoria === cat).length}</small></div>
                         <div className="pl-dgrid">{matRep.filter((m) => m.categoria === cat).map((m) => <DCard key={m.id} title={m.tipo} desc={m.descrizione} onClick={() => creaDaCatalogo(m)} />)}</div>
