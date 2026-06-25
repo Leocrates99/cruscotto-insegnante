@@ -7,7 +7,8 @@ import { useStore } from "../store/useStore";
 import { classiAttive, contiClasse, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
 import { annoCorrenteId, classeId } from "../store/links";
 import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia";
-import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, faseById, fasi as repFasi, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, metodologieDiFase, misureInclusione as repInclusione, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
+import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, faseById, fasi as repFasi, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, metodologieDiFase, misureInclusione as repInclusione, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type ArchivioIndex, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
+import { findNodo, tassonomiaConoscenze, tassonomiaSkill, type TNodo } from "../data/tassonomia-conoscenze";
 import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI, ICON_COMPITI, ICON_EDCIVICA, ICON_INC_AMBITO, ICON_INCLUSIONE, ICON_MATERIALI, ICON_METODOLOGIE, ICON_STRUMENTI } from "../data/glossario";
 import { downloadWord } from "../store/reportFineAnno";
 import { getSessione, upsertSessione } from "../store/valutazione";
@@ -96,6 +97,39 @@ function DCard({ icon, top, title, desc, on, onClick, accent }: { icon?: ReactNo
 function DrillCards({ opts, val, onToggle, desc, icon }: { opts: string[]; val: string[]; onToggle: (v: string) => void; desc: (o: string) => string | undefined; icon?: (o: string) => ReactNode }) {
   return <div className="pl-dgrid">{opts.map((o) => <DCard key={o} icon={icon?.(o)} title={cap(o)} desc={desc(o)} on={val.includes(o)} onClick={() => onToggle(o)} />)}</div>;
 }
+const labelDi = (roots: TNodo[], path: string[]): string => findNodo(roots, path)?.label ?? "";
+/**
+ * Drill di comando per la tassonomia (conoscenze, abilità/competenze): macro → sotto
+ * categorie → foglia. La foglia "ad albero" usa AlberoConoscenze (epoche/correnti →
+ * autori), le altre mostrano le voci come card a testo intero (mai troncate).
+ */
+function DrillTax({ roots, path, setPath, a, selez, onTree, onVoce }: {
+  roots: TNodo[]; path: string[]; setPath: (p: string[]) => void; a: ArchivioIndex; selez: Set<string>;
+  onTree: (v: Voce) => void; onVoce: (v: Voce) => void;
+}) {
+  const nodo = findNodo(roots, path);
+  const figli = path.length === 0 ? roots : (nodo?.figli ?? []);
+  const isLeaf = !!nodo && !nodo.figli;
+  return (
+    <div className="pl-drill">
+      {path.length > 0 && (
+        <nav className="pl-bc">
+          <button className="pl-bc-i" onClick={() => setPath([])}>↩ Tutte le aree</button>
+          {path.map((id, i) => <span key={id} className="pl-bc-seg"><span className="pl-bc-sep">▸</span><button className="pl-bc-i" onClick={() => setPath(path.slice(0, i + 1))}>{labelDi(roots, path.slice(0, i + 1))}</button></span>)}
+        </nav>
+      )}
+      {isLeaf ? (
+        nodo!.voci!.length === 0
+          ? <p className="muted">Nessuna voce a sorgente per «{nodo!.label}»: la categoria è prevista nella struttura e si popolerà arricchendo l'archivio.</p>
+          : nodo!.tree
+            ? <AlberoConoscenze a={a} radici={nodo!.voci!.filter((v) => !v.parent)} selez={selez} onToggle={onTree} />
+            : <div className="pl-dgrid full">{nodo!.voci!.map((v) => <DCard key={v.id} title={v.testo} on={selez.has(v.id)} onClick={() => onVoce(v)} />)}</div>
+      ) : (
+        <div className="pl-dgrid">{figli.map((n) => <DCard key={n.id} icon={n.icona} title={n.label} top={<span className={n.count ? "pl-cnt" : "pl-cnt zero"}>{n.count} voci</span>} onClick={() => setPath([...path, n.id])} />)}</div>
+      )}
+    </div>
+  );
+}
 
 /**
  * Pianifica: wizard a finestre. Drill di contesto a card (Scuola → Materia → Classe,
@@ -118,7 +152,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [scuolaId, setScuolaId] = useState(() => (scuole.length >= 2 ? "" : scuoleCorrenti(profile)[0]?.id ?? ""));
   const [materia, setMateria] = useState("");
   const [classe, setClasse] = useState("");
-  const [nucleo, setNucleo] = useState("");
+  const [catCono, setCatCono] = useState<string[]>([]);
+  const [catAC, setCatAC] = useState<string[]>([]);
   const [ciclo, setCiclo] = useState<"Biennio" | "Triennio">("Triennio");
   const [stepIdx, setStepIdx] = useState(0);
   const [data, setData] = useState(oggi());
@@ -162,20 +197,14 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
   const code = arch ? materiaCodice(arch, materia) : undefined;
   const vMatPl = useMemo(() => (arch && code ? arch.voci.filter((v) => v.materia === code) : []), [arch, code]);
-  const nucleiPl = useMemo(() => [...new Set(vMatPl.map((v) => v.nucleo).filter(Boolean))].sort((a, b) => a.localeCompare(b)), [vMatPl]);
   const haAbilitaComp = vMatPl.some((v) => v.blocco === "abilita" || v.blocco === "competenza");
   // Ordine sorgente = sequenza curricolare/cronologica (le epoche sono in ordine nell'archivio).
-  const radici = vMatPl.filter((v) => CONO.has(v.blocco) && !v.parent && (!nucleo || v.nucleo === nucleo));
-  const abilitaV = vMatPl.filter((v) => v.blocco === "abilita");
-  const competenzeV = vMatPl.filter((v) => v.blocco === "competenza");
-  const LETTERARI = new Set(["epoca", "corrente", "genere"]);
-  const gruppiConoscenze = [
-    { lab: "Epoche", roots: radici.filter((r) => r.tipo_contenuto === "epoca") },
-    { lab: "Correnti", roots: radici.filter((r) => r.tipo_contenuto === "corrente") },
-    { lab: "Generi", roots: radici.filter((r) => r.tipo_contenuto === "genere") },
-  ].filter((g) => g.roots.length);
-  const conoscenzeGramm = radici.filter((r) => !LETTERARI.has(r.tipo_contenuto || ""));
-  const nucleiDi = (vs: Voce[]) => [...new Set(vs.map((v) => v.nucleo).filter(Boolean))];
+  const vCono = useMemo(() => vMatPl.filter((v) => CONO.has(v.blocco)), [vMatPl]);
+  const abilitaV = useMemo(() => vMatPl.filter((v) => v.blocco === "abilita"), [vMatPl]);
+  const competenzeV = useMemo(() => vMatPl.filter((v) => v.blocco === "competenza"), [vMatPl]);
+  // Tassonomia "a drill di comando" (macro → sotto-categorie → foglia).
+  const taxCono = useMemo(() => (arch && code ? tassonomiaConoscenze(code, vCono) : []), [arch, code, vCono]);
+  const taxAC = useMemo(() => tassonomiaSkill(abilitaV, competenzeV), [abilitaV, competenzeV]);
 
   const selVoci: Voce[] = arch ? [...selIds].map((id) => voce(arch, id)).filter((v): v is Voce => !!v) : [];
   const toggleIn = (arr: string[], v: string) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -189,12 +218,12 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   });
 
   const resetTutto = () => {
-    setSelIds(new Set()); setNucleo(""); setStepIdx(0); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
+    setSelIds(new Set()); setCatCono([]); setCatAC([]); setStepIdx(0); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
     setFasiRows([]); setFaseMetodi(null); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
     setCompiti([]); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
     setShowVerifica(false); setVerificaSessId(null);
   };
-  const cambiaMateria = (m: string) => { setMateria(m); setNucleo(""); setSelIds(new Set()); setStepIdx(0); };
+  const cambiaMateria = (m: string) => { setMateria(m); setCatCono([]); setCatAC([]); setSelIds(new Set()); setStepIdx(0); };
   const cambiaClasse = (c: string) => { setClasse(c); setCiclo(cicloDi(c)); setStepIdx(0); };
 
   const componi = () => {
@@ -508,52 +537,11 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                   : stepDefs[idx].key === "compiti" ? (compiti.length || "") + "" : undefined}>
 
                 {stepDefs[idx].key === "conoscenze" && (code
-                  ? <>
-                      {nucleiPl.length > 0 && (
-                        <div className="pl-menu">
-                          <button className={!nucleo ? "pl-mbtn on" : "pl-mbtn"} onClick={() => setNucleo("")}>Tutti i settori</button>
-                          {nucleiPl.map((n) => <button key={n} className={nucleo === n ? "pl-mbtn on" : "pl-mbtn"} onClick={() => setNucleo(n)}>{n}</button>)}
-                        </div>
-                      )}
-                      {gruppiConoscenze.length === 0 && conoscenzeGramm.length === 0 && <p className="muted">Nessun contenuto per questo filtro.</p>}
-                      {gruppiConoscenze.length > 0 && <div className="pl-sez">📜 Letteratura</div>}
-                      {gruppiConoscenze.map((g) => (
-                        <div key={g.lab}><div className="pl-sub">{g.lab} <small>{g.roots.length}</small></div>
-                          <AlberoConoscenze a={arch!} radici={g.roots} selez={selIds} onToggle={toggleAlbero} />
-                        </div>
-                      ))}
-                      {conoscenzeGramm.length > 0 && <>
-                        <div className="pl-sez">📐 Conoscenze e lingua</div>
-                        {nucleiDi(conoscenzeGramm).map((nu) => (
-                          <div key={nu}><div className="pl-sub">{nu} <small>{conoscenzeGramm.filter((r) => r.nucleo === nu).length}</small></div>
-                            <AlberoConoscenze a={arch!} radici={conoscenzeGramm.filter((r) => r.nucleo === nu)} selez={selIds} onToggle={toggleAlbero} />
-                          </div>
-                        ))}
-                      </>}
-                    </>
+                  ? <DrillTax roots={taxCono} path={catCono} setPath={setCatCono} a={arch!} selez={selIds} onTree={toggleAlbero} onVoce={toggleAlbero} />
                   : <p className="muted">Per <b>{materia}</b> non c'è ancora un archivio: i contenuti si scrivono nello step finale.</p>
                 )}
 
-                {stepDefs[idx].key === "abilita" && (
-                  <div className="pl-ac">
-                    <div className="pl-ac-col">
-                      <div className="pl-sez">🛠️ Abilità <small>{abilitaV.length}</small></div>
-                      {nucleiDi(abilitaV).map((nu) => (
-                        <div key={nu}><div className="pl-sub">{nu} <small>{abilitaV.filter((v) => v.nucleo === nu).length}</small></div>
-                          <AlberoConoscenze a={arch!} radici={abilitaV.filter((v) => v.nucleo === nu)} selez={selIds} onToggle={toggleVoce} />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="pl-ac-col">
-                      <div className="pl-sez">🎯 Competenze <small>{competenzeV.length}</small></div>
-                      {nucleiDi(competenzeV).map((nu) => (
-                        <div key={nu}><div className="pl-sub">{nu} <small>{competenzeV.filter((v) => v.nucleo === nu).length}</small></div>
-                          <AlberoConoscenze a={arch!} radici={competenzeV.filter((v) => v.nucleo === nu)} selez={selIds} onToggle={toggleVoce} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {stepDefs[idx].key === "abilita" && <DrillTax roots={taxAC} path={catAC} setPath={setCatAC} a={arch!} selez={selIds} onTree={toggleVoce} onVoce={toggleVoce} />}
 
                 {stepDefs[idx].key === "metodologie" && (metRep.length
                   ? <div className="pl-mgruppi">{Object.entries(metByGruppo).map(([g, ms]) => (
