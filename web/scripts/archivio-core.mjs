@@ -74,7 +74,7 @@ export function buildRepertori(read) {
   }));
   const fasi = rd("fasi-lezione.csv").map((f) => ({
     id: f.id, fase: f.fase, modello: f.modello, ordine: num(f.ordine), funzione: f.funzione, centratura: f.centratura,
-    perc_monte: num(f.perc_monte), dur_min_60: num(f.dur_min_60), dur_max_60: num(f.dur_max_60),
+    momento: f.momento, perc_monte: num(f.perc_monte), dur_min_60: num(f.dur_min_60), dur_max_60: num(f.dur_max_60),
     attivita_docente: f.attivita_docente, attivita_studente: f.attivita_studente,
     metodologie_tipiche: pipeRef(f.metodologie_tipiche), opzionale: yesNo(f.opzionale),
   }));

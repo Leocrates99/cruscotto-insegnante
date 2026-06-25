@@ -7,7 +7,7 @@ import { useStore } from "../store/useStore";
 import { classiAttive, contiClasse, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
 import { annoCorrenteId, classeId } from "../store/links";
 import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia";
-import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, faseById, fasi as repFasi, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, metodologieDiFase, misureInclusione as repInclusione, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type ArchivioIndex, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
+import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, faseById, fasi as repFasi, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, metodologieDiFase, misureInclusione as repInclusione, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type ArchivioIndex, type Fase, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
 import { findNodo, tassonomiaConoscenze, tassonomiaSkill, type TNodo } from "../data/tassonomia-conoscenze";
 import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI, ICON_COMPITI, ICON_EDCIVICA, ICON_INC_AMBITO, ICON_INCLUSIONE, ICON_MATERIALI, ICON_METODOLOGIE, ICON_STRUMENTI } from "../data/glossario";
 import { downloadWord } from "../store/reportFineAnno";
@@ -19,7 +19,7 @@ import { classeColor, materiaColor, materiaSigla } from "./materia";
 const oggi = () => new Date().toISOString().slice(0, 10);
 type Tipo = "lezione" | "laboratorio" | "uda";
 type CompitoRow = { id: string; tipo: string; testo: string; data: string };
-type FaseRow = { id: string; nome: string; minuti: number; metodi: string[]; funzione?: string; centratura?: string; fonte?: string; attDoc?: string; attStu?: string; durMin?: number; durMax?: number };
+type FaseRow = { id: string; nome: string; minuti: number; metodi: string[]; funzione?: string; centratura?: string; momento?: string; fonte?: string; attDoc?: string; attStu?: string; durMin?: number; durMax?: number };
 type StepKey = "conoscenze" | "abilita" | "prerequisiti" | "metodologie" | "strumenti" | "fasi" | "edciv" | "raccordi" | "materiali" | "inclusione" | "compiti" | "dettagli";
 const FASI_DEFAULT = ["Apertura", "Sviluppo", "Esercitazione", "Sintesi e verifica"];
 const FASE_COLORS = ["#1800ac", "#2f7d5a", "#b9791f", "#a22e37", "#7c3aed", "#0891b2", "#be185d", "#4d7c0f"];
@@ -34,6 +34,15 @@ const CENTRATURA: Record<string, { icona: string; col: string; peso: number; lab
   "individuale": { icona: "🧑", col: "#7c3aed", peso: 1, lab: "Individuale" },
 };
 const centr = (c?: string) => (c ? CENTRATURA[c] : undefined);
+// Arco narrativo della lezione: i momenti in cui si distribuiscono le fasi.
+const MOMENTI: { id: string; label: string; icona: string; desc: string }[] = [
+  { id: "inizio", label: "Inizio", icona: "🚀", desc: "Avvio e aggancio: clima, prerequisiti, motivazione, obiettivi." },
+  { id: "sviluppo", label: "Sviluppo", icona: "📖", desc: "Presentazione del nuovo: esposizione, scoperta, modellamento, analisi." },
+  { id: "apprendimento", label: "Apprendimento", icona: "🛠️", desc: "Pratica attiva: esercizio, applicazione, cooperazione, laboratorio." },
+  { id: "fine", label: "Fine", icona: "🏁", desc: "Chiusura: sintesi, verifica formativa, metacognizione, consegna." },
+];
+const MOM_ORDER = MOMENTI.map((m) => m.id);
+const momIdx = (m?: string) => { const i = m ? MOM_ORDER.indexOf(m) : -1; return i < 0 ? MOM_ORDER.length : i; };
 
 const COMPITO_TIPI = ["esercizio in classe", "esercitazione guidata", "compito per casa", "verifica formativa"];
 const MAT_TIPI = ["esercizio", "scheda", "traccia", "versione", "presentazione", "mappa concettuale"];
@@ -183,6 +192,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [faseMetodi, setFaseMetodi] = useState<string | null>(null);
   const [faseDett, setFaseDett] = useState<string | null>(null);
   const [faseEvidenzia, setFaseEvidenzia] = useState<string | null>(null);
+  const [addFaseOpen, setAddFaseOpen] = useState(false);
+  const [faseMomento, setFaseMomento] = useState<string | null>(null);
   const dragFase = useRef<number | null>(null);
   const [metodologie, setMetodologie] = useState<string[]>([]);
   const [strumenti, setStrumenti] = useState<string[]>([]);
@@ -231,7 +242,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
   const resetTutto = () => {
     setSelIds(new Set()); setCatCono([]); setCatAC([]); setStepIdx(0); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
-    setFasiRows([]); setFaseMetodi(null); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
+    setFasiRows([]); setFaseMetodi(null); setFaseDett(null); setAddFaseOpen(false); setFaseMomento(null); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
     setCompiti([]); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
     setShowVerifica(false); setVerificaSessId(null);
   };
@@ -280,7 +291,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     if (!arch) return;
     const f = faseById(arch, fid); if (!f) return;
     const min = f.perc_monte ? Math.round((minPrev || 60) * f.perc_monte / 100) : (f.dur_min_60 ?? 10);
-    setFasiRows((r) => [...r, { id: newId(), nome: f.fase, minuti: min, funzione: f.funzione, centratura: f.centratura, fonte: f.id, attDoc: f.attivita_docente, attStu: f.attivita_studente, durMin: f.dur_min_60 ?? undefined, durMax: f.dur_max_60 ?? undefined, metodi: metodologieDiFase(arch, fid).slice(0, 2).map((m) => m.nome) }]);
+    const riga: FaseRow = { id: newId(), nome: f.fase, minuti: min, funzione: f.funzione, centratura: f.centratura, momento: f.momento, fonte: f.id, attDoc: f.attivita_docente, attStu: f.attivita_studente, durMin: f.dur_min_60 ?? undefined, durMax: f.dur_max_60 ?? undefined, metodi: metodologieDiFase(arch, fid).slice(0, 2).map((m) => m.nome) };
+    // Inserisce mantenendo l'arco narrativo (inizio → sviluppo → apprendimento → fine).
+    setFasiRows((r) => { const ni = momIdx(f.momento); let pos = r.length; for (let k = 0; k < r.length; k++) if (momIdx(r[k].momento) > ni) { pos = k; break; } const a = [...r]; a.splice(pos, 0, riga); return a; });
   };
   const setFase = (id: string, patch: Partial<FaseRow>) => setFasiRows((r) => r.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   const removeFase = (id: string) => setFasiRows((r) => r.filter((x) => x.id !== id));
@@ -308,10 +321,11 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const metByGruppo = useMemo(() => { const g: Record<string, Metodologia[]> = {}; for (const m of metRep) (g[m.gruppo] ??= []).push(m); return g; }, [metRep]);
   const metNomi = metRep.length ? metRep.map((m) => m.nome) : METODOLOGIE;
   const arrRep = arch && code ? repArrangiamenti(arch) : [];
+  const fasiByMomento = useMemo(() => { const g: Record<string, Fase[]> = {}; if (arch) for (const f of repFasi(arch)) (g[f.momento] ??= []).push(f); return g; }, [arch]);
   const applicaArrangiamento = (arrId: string) => {
     if (!arch) return;
     const tl = espandiArrangiamento(arch, arrId, minPrev || 60);
-    setFasiRows(tl.fasi.map((ft) => ({ id: newId(), nome: ft.fase.fase, minuti: ft.minuti, funzione: ft.fase.funzione, centratura: ft.fase.centratura, fonte: ft.fase.id, attDoc: ft.fase.attivita_docente, attStu: ft.fase.attivita_studente, durMin: ft.fase.dur_min_60 ?? undefined, durMax: ft.fase.dur_max_60 ?? undefined, metodi: ft.metodologie.slice(0, 2).map((m) => m.nome) })));
+    setFasiRows(tl.fasi.map((ft) => ({ id: newId(), nome: ft.fase.fase, minuti: ft.minuti, funzione: ft.fase.funzione, centratura: ft.fase.centratura, momento: ft.fase.momento, fonte: ft.fase.id, attDoc: ft.fase.attivita_docente, attStu: ft.fase.attivita_studente, durMin: ft.fase.dur_min_60 ?? undefined, durMax: ft.fase.dur_max_60 ?? undefined, metodi: ft.metodologie.slice(0, 2).map((m) => m.nome) })));
   };
   const metIcone = useMemo(() => iconaUniche(metNomi, ICON_METODOLOGIE), [metNomi]);
   const prereqAgg = useMemo(() => {
@@ -632,9 +646,24 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       {arrRep.length > 0 && <select className="pl-arr-sel" value="" onChange={(e) => { if (e.target.value) applicaArrangiamento(e.target.value); }}><option value="">↳ preset timeline…</option>{arrRep.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}</select>}
                       <button className="link" onClick={struttFasi}>struttura tipo</button>
                       {arch && repFasi(arch).length > 0
-                        ? <select className="pl-arr-sel" value="" onChange={(e) => { if (e.target.value === "__v") addFase(); else if (e.target.value) addFaseCatalogo(e.target.value); }}><option value="">+ fase…</option>{repFasi(arch).map((f) => <option key={f.id} value={f.id}>{f.fase}</option>)}<option value="__v">— fase vuota</option></select>
+                        ? <button className={addFaseOpen ? "pl-fase-addbtn on" : "pl-fase-addbtn"} onClick={() => { setAddFaseOpen((o) => !o); setFaseMomento(null); }}>{addFaseOpen ? "× chiudi" : "＋ aggiungi fase"}</button>
                         : <button className="link" onClick={addFase}>+ fase</button>}
                     </div>
+
+                    {addFaseOpen && arch && (
+                      <div className="pl-fase-add">
+                        <div className="pl-fase-add-hint">Scegli il <b>momento</b> dell'arco della lezione, poi la fase. Le fasi si dispongono da sole in ordine: inizio → sviluppo → apprendimento → fine.</div>
+                        {faseMomento && <nav className="pl-bc"><button className="pl-bc-i" onClick={() => setFaseMomento(null)}>↩ Momenti</button><span className="pl-bc-seg"><span className="pl-bc-sep">▸</span><button className="pl-bc-i">{MOMENTI.find((m) => m.id === faseMomento)?.label}</button></span></nav>}
+                        {!faseMomento
+                          ? <div className="pl-dgrid">
+                              {MOMENTI.map((m) => <DCard key={m.id} icon={m.icona} title={m.label} desc={m.desc} top={<span className="pl-cnt">{(fasiByMomento[m.id]?.length ?? 0)} fasi</span>} onClick={() => setFaseMomento(m.id)} />)}
+                              <DCard icon="➕" title="Fase vuota" desc="Aggiungi una fase senza modello, da compilare a mano." onClick={() => addFase()} />
+                            </div>
+                          : <div className="pl-dgrid">
+                              {(fasiByMomento[faseMomento] ?? []).map((f) => <DCard key={f.id} icon={centr(f.centratura)?.icona} title={f.fase} desc={f.funzione} top={<span className="pl-cnt">{centr(f.centratura)?.lab ?? "—"} · {f.dur_min_60}–{f.dur_max_60}′</span>} onClick={() => addFaseCatalogo(f.id)} />)}
+                            </div>}
+                      </div>
+                    )}
 
                     {fasiRows.length > 0 && (
                       <div className="pl-binario" role="img" aria-label={`Ripartizione del tempo: ${fasiRows.map((f) => `${f.nome} ${f.minuti}′`).join(", ")}`}>
@@ -656,29 +685,31 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       <div className="pl-fasi-list">
                         {fasiRows.map((f, i) => { const s = inizioFase(i); const col = FASE_COLORS[i % FASE_COLORS.length]; const c = centr(f.centratura); const rng = rangeFase(f); const fuori = fuoriRange(f); const hasDett = !!(f.attDoc || f.attStu || rng); return (
                           <div key={f.id} id={`pl-fase-${f.id}`} className={faseEvidenzia === f.id ? "pl-fase evidenzia" : "pl-fase"} style={{ borderLeftColor: col }} onDragOver={(e) => e.preventDefault()} onDrop={() => { const from = dragFase.current; if (from != null) spostaFase(from, i); dragFase.current = null; }}>
-                            <div className="pl-fase-main">
-                              <span className="pl-fase-n" draggable onDragStart={() => { dragFase.current = i; }} onDragEnd={() => { dragFase.current = null; }} title="Trascina per riordinare" style={{ background: col, cursor: "grab" }}>{i + 1}</span>
-                              <span className="pl-fase-rik"><button onClick={() => spostaFase(i, i - 1)} disabled={i === 0} aria-label="Sposta su">▲</button><button onClick={() => spostaFase(i, i + 1)} disabled={i === fasiRows.length - 1} aria-label="Sposta giù">▼</button></span>
-                              <span className="pl-fase-ora">{fmtOra(s)}–{fmtOra(s + (f.minuti || 0))}</span>
-                              <input className="pl-fase-nome" type="text" value={f.nome} placeholder={`Fase ${i + 1}`} onChange={(e) => setFase(f.id, { nome: e.target.value })} />
-                              <span className={fuori ? "pl-fase-step warn" : "pl-fase-step"} title={fuori && rng ? `Durata consigliata ${rng[0]}–${rng[1]}′` : undefined}>
-                                <button onClick={() => setFase(f.id, { minuti: Math.max(0, (f.minuti || 0) - 5) })} aria-label="Meno 5 minuti">−</button>
-                                <input type="number" min={0} step={5} value={f.minuti} onChange={(e) => setFase(f.id, { minuti: Number(e.target.value) })} /><em>′</em>
-                                <button onClick={() => setFase(f.id, { minuti: (f.minuti || 0) + 5 })} aria-label="Più 5 minuti">+</button>
-                              </span>
-                              {c && <span className="pl-fase-cen" style={{ background: c.col }} title={`Centratura: ${c.lab}`}>{c.icona} {c.lab}</span>}
-                              <button className={faseMetodi === f.id ? "pl-fase-met on" : "pl-fase-met"} onClick={() => setFaseMetodi(faseMetodi === f.id ? null : f.id)}>metodi · {f.metodi.length} ▾</button>
-                              {hasDett && <button className={faseDett === f.id ? "pl-fase-met on" : "pl-fase-met"} onClick={() => setFaseDett(faseDett === f.id ? null : f.id)}>dettagli ▾</button>}
-                              <button className="danger" onClick={() => removeFase(f.id)} aria-label="Rimuovi">✕</button>
+                            <span className="pl-fase-n" draggable onDragStart={() => { dragFase.current = i; }} onDragEnd={() => { dragFase.current = null; }} title="Trascina per riordinare" style={{ background: col, cursor: "grab" }}>{i + 1}</span>
+                            <span className={fuori ? "pl-fase-step warn" : "pl-fase-step"} title={fuori && rng ? `Durata consigliata ${rng[0]}–${rng[1]}′` : undefined}>
+                              <button onClick={() => setFase(f.id, { minuti: Math.max(0, (f.minuti || 0) - 5) })} aria-label="Meno 5 minuti">−</button>
+                              <input type="number" min={0} step={5} value={f.minuti} onChange={(e) => setFase(f.id, { minuti: Number(e.target.value) })} /><em>′</em>
+                              <button onClick={() => setFase(f.id, { minuti: (f.minuti || 0) + 5 })} aria-label="Più 5 minuti">+</button>
+                            </span>
+                            <div className="pl-fase-body">
+                              <div className="pl-fase-row1">
+                                <input className="pl-fase-nome" type="text" value={f.nome} placeholder={`Fase ${i + 1}`} onChange={(e) => setFase(f.id, { nome: e.target.value })} />
+                                <span className="pl-fase-ora">{fmtOra(s)}–{fmtOra(s + (f.minuti || 0))}</span>
+                                <span className="spacer" />
+                                <span className="pl-fase-rik"><button onClick={() => spostaFase(i, i - 1)} disabled={i === 0} aria-label="Sposta su">▲</button><button onClick={() => spostaFase(i, i + 1)} disabled={i === fasiRows.length - 1} aria-label="Sposta giù">▼</button></span>
+                                <button className={faseMetodi === f.id ? "pl-fase-met on" : "pl-fase-met"} onClick={() => setFaseMetodi(faseMetodi === f.id ? null : f.id)}>metodi · {f.metodi.length} ▾</button>
+                                {hasDett && <button className={faseDett === f.id ? "pl-fase-met on" : "pl-fase-met"} onClick={() => setFaseDett(faseDett === f.id ? null : f.id)}>dettagli ▾</button>}
+                                <button className="danger" onClick={() => removeFase(f.id)} aria-label="Rimuovi">✕</button>
+                              </div>
+                              {(c || f.funzione) && <div className="pl-fase-fn">{c && <span className="pl-fase-cen" style={{ background: c.col }} title={`Centratura: ${c.lab}`}>{c.icona} {c.lab}</span>}{f.funzione}</div>}
+                              {faseDett === f.id && <div className="pl-fase-dett">
+                                {rng && <div className="pl-fase-dr">⏱ Durata consigliata <b>{rng[0]}–{rng[1]}′</b> <span className="muted">(per {minPrev}′ di lezione)</span>{fuori && <span className="pl-fase-fuori"> · attuale {f.minuti}′ fuori range</span>}</div>}
+                                {f.attDoc && <div className="pl-fase-att"><span className="pl-fase-role doc">🗣️ Docente</span>{f.attDoc}</div>}
+                                {f.attStu && <div className="pl-fase-att"><span className="pl-fase-role stu">🙋 Studenti</span>{f.attStu}</div>}
+                              </div>}
+                              {f.metodi.length > 0 && faseMetodi !== f.id && <div className="pl-fase-sel">{f.metodi.map((m) => cap(m)).join(" · ")}</div>}
+                              {faseMetodi === f.id && <div className="pl-fase-metodi">{metNomi.map((m) => <button key={m} className={f.metodi.includes(m) ? "pl-mbtn xs on" : "pl-mbtn xs"} onClick={() => setFase(f.id, { metodi: toggleIn(f.metodi, m) })}>{cap(m)}</button>)}</div>}
                             </div>
-                            {f.funzione && <div className="pl-fase-fn">{f.funzione}</div>}
-                            {faseDett === f.id && <div className="pl-fase-dett">
-                              {rng && <div className="pl-fase-dr">⏱ Durata consigliata <b>{rng[0]}–{rng[1]}′</b> <span className="muted">(per {minPrev}′ di lezione)</span>{fuori && <span className="pl-fase-fuori"> · attuale {f.minuti}′ fuori range</span>}</div>}
-                              {f.attDoc && <div className="pl-fase-att"><span className="pl-fase-role doc">🗣️ Docente</span>{f.attDoc}</div>}
-                              {f.attStu && <div className="pl-fase-att"><span className="pl-fase-role stu">🙋 Studenti</span>{f.attStu}</div>}
-                            </div>}
-                            {f.metodi.length > 0 && faseMetodi !== f.id && <div className="pl-fase-sel">{f.metodi.map((m) => cap(m)).join(" · ")}</div>}
-                            {faseMetodi === f.id && <div className="pl-fase-metodi">{metNomi.map((m) => <button key={m} className={f.metodi.includes(m) ? "pl-mbtn xs on" : "pl-mbtn xs"} onClick={() => setFase(f.id, { metodi: toggleIn(f.metodi, m) })}>{cap(m)}</button>)}</div>}
                           </div>
                         ); })}
                       </div>
