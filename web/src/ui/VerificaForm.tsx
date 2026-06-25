@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
 import { classeInfo, classiAttive, materieAttive, materieClasseEffettive, useProfile } from "../store/profile";
+import { records } from "../store/store";
+import { useStore } from "../store/useStore";
+import { classeId } from "../store/links";
 import {
   SCALA_DEFAULT,
   annoCorrente,
@@ -19,7 +22,8 @@ const oggi = () => new Date().toISOString().slice(0, 10);
  * aperta = tipologia mista) e crea una Sessione legata alla classe, precompilando le righe dai
  * numeri di registro dell'anagrafica. Si apre poi nel calcolatore.
  */
-export function VerificaForm({ prefill, onClose, onOpen }: { prefill?: { classe?: string; data?: string; materia?: string; titolo?: string }; onClose: () => void; onOpen: (id: string) => void }) {
+export function VerificaForm({ prefill, onClose, onOpen }: { prefill?: { classe?: string; data?: string; materia?: string; titolo?: string; pianoId?: string }; onClose: () => void; onOpen: (id: string) => void }) {
+  useStore();
   const profile = useProfile();
   const { griglie } = useValutazione();
   const classi = classiAttive(profile);
@@ -29,6 +33,15 @@ export function VerificaForm({ prefill, onClose, onOpen }: { prefill?: { classe?
   const [classe, setClasse] = useState(prefill?.classe ?? classi[0] ?? "");
   const [materia, setMateria] = useState(prefill?.materia ?? materie[0] ?? "");
   const [data, setData] = useState(prefill?.data ?? oggi());
+  const [pianoId, setPianoId] = useState(prefill?.pianoId ?? "");
+
+  // Pianificazioni a cui agganciare la verifica (lezioni della classe + UdA), così i dati si completano.
+  const piani = useMemo(() => {
+    const cId = classe ? classeId(classe) : undefined;
+    const lez = records("lezioni").filter((l) => !cId || (Array.isArray(l["Classe"]) && (l["Classe"] as string[]).includes(cId))).map((l) => ({ id: l.id, tipo: "lezione" as const, titolo: String(l["Titolo"] ?? "—") }));
+    const uda = records("uda").map((u) => ({ id: u.id, tipo: "uda" as const, titolo: `[UdA] ${String(u["Titolo"] ?? "—")}` }));
+    return [...lez, ...uda];
+  }, [classe]);
   const [esercizi, setEsercizi] = useState<ExRow[]>([{ nome: "Esercizio 1", max: 5 }, { nome: "Esercizio 2", max: 5 }]);
   const [includiAperti, setIncludiAperti] = useState(false);
   const [modelloApertiId, setModelloApertiId] = useState("");
@@ -55,9 +68,11 @@ export function VerificaForm({ prefill, onClose, onOpen }: { prefill?: { classe?
     if (indicatori.length === 0) { alert("Aggiungi almeno un esercizio o i criteri a risposta aperta."); return; }
     const griglia: Griglia = { id: newId(), nome: titolo.trim() || "Verifica", categoria: "scritto", scala: { ...SCALA_DEFAULT }, indicatori };
     const righe = studenti.map((s) => ({ id: newId(), n: s.n, valori: {} }));
+    const piano = piani.find((p) => p.id === pianoId);
     const sess: Sessione = {
       id: newId(), classe, materia: materia || undefined, titolo: titolo.trim() || "Verifica",
       data, annoScolastico: annoCorrente(), griglia, righe,
+      ...(piano ? { pianoId: piano.id, pianoTipo: piano.tipo } : {}),
     };
     upsertSessione(sess);
     onOpen(sess.id);
@@ -84,6 +99,14 @@ export function VerificaForm({ prefill, onClose, onOpen }: { prefill?: { classe?
             </select>
           </label>
           <label className="field"><span>Data</span><input type="date" value={data} onChange={(e) => setData(e.target.value)} /></label>
+          {piani.length > 0 && (
+            <label className="field"><span>Aggancia a pianificazione <em>· opzionale</em></span>
+              <select value={pianoId} onChange={(e) => setPianoId(e.target.value)}>
+                <option value="">— nessuna</option>
+                {piani.map((p) => <option key={p.id} value={p.id}>{p.titolo}</option>)}
+              </select>
+            </label>
+          )}
         </div>
 
         <h3 className="ge-h">Esercizi (a punti)</h3>

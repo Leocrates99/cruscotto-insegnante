@@ -83,6 +83,12 @@ export interface Sessione {
   righe: RigaCorrezione[];
   archiviata?: boolean;
   conclusa?: boolean; // correzione chiusa (consultabile, riapribile)
+  pianoId?: string; // aggancio alla pianificazione (record lezioni/uda) da cui nasce
+  pianoTipo?: "lezione" | "uda";
+}
+/** Sessioni-verifica agganciate a una pianificazione (lezione/UdA). */
+export function sessioniDiPiano(pianoId: string): Sessione[] {
+  return state.sessioni.filter((s) => s.pianoId === pianoId);
 }
 
 /** Voce d'archivio: SOLO medie di classe (aggregati anonimi). */

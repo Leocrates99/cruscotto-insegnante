@@ -1,14 +1,16 @@
 import { useState } from "react";
+import type { View } from "../App";
 import { copertura, obiettiviDiVoce, opzioni, suggerimenti, useArchivio, type Voce } from "../data/archivio";
 import { records } from "../store/store";
 import { useStore } from "../store/useStore";
+import { sessioniDiPiano } from "../store/valutazione";
 import { ArchivioPicker } from "./ArchivioPicker";
 
 const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const fmtIt = (d: string) => { const [y, m, g] = String(d).split("-"); return g ? `${g}/${m}/${y}` : String(d); };
 
 /** Archivio: il database didattico ad albero + le pianificazioni salvate dal docente. */
-export function ArchivioView() {
+export function ArchivioView({ onView }: { onView: (v: View) => void }) {
   const a = useArchivio();
   useStore();
   const [vista, setVista] = useState<"db" | "piani">("db");
@@ -33,7 +35,7 @@ export function ArchivioView() {
         </div>
       </div>
 
-      {vista === "piani" ? <Pianificazioni /> : (
+      {vista === "piani" ? <Pianificazioni onView={onView} /> : (
         <>
           <p className="muted arc-cap">{a.meta.conteggi.obiettivi} obiettivi · {a.meta.conteggi.voci} voci · {a.meta.conteggi.parallelismi} parallelismi</p>
           <div className="seg arc-materie">
@@ -97,7 +99,7 @@ function classeLabel(id: string): string {
 }
 function asArr(v: unknown): string[] { return Array.isArray(v) ? v.map((x) => String(x)) : v ? [String(v)] : []; }
 
-function Pianificazioni() {
+function Pianificazioni({ onView }: { onView: (v: View) => void }) {
   const [aperto, setAperto] = useState<string | null>(null);
   type P = { id: string; tipo: string; r: Record<string, unknown>; data: string };
   const piani: P[] = [
@@ -135,6 +137,7 @@ function Pianificazioni() {
                 )}
                 {blocchi.map(([k, lab]) => { const t = campoTxt(r, k); return t ? <div key={k} className="pian-blk"><b>{lab}</b><pre>{t}</pre></div> : null; })}
                 {campoTxt(r, "Competenza attesa") && <div className="pian-blk"><b>Competenza attesa</b><pre>{campoTxt(r, "Competenza attesa")}</pre></div>}
+                {(() => { const vs = sessioniDiPiano(p.id); return vs.length > 0 ? <div className="pian-blk"><b>Verifiche agganciate</b><div className="pian-tags">{vs.map((s) => <button key={s.id} className="chip" onClick={() => onView({ kind: "valutazione", sessioneId: s.id })}>📝 {s.titolo}{s.data ? ` · ${fmtIt(s.data)}` : ""} · correzione →</button>)}</div></div> : null; })()}
               </div>
             )}
           </div>

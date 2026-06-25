@@ -130,7 +130,7 @@ export function App() {
           {view.kind === "valutazione" && <ValutazioneView sessioneId={view.sessioneId} onView={setView} />}
           {view.kind === "andamento" && <AndamentoView />}
           {view.kind === "planner" && <PlannerView onView={setView} />}
-          {view.kind === "archivio" && <ArchivioView />}
+          {view.kind === "archivio" && <ArchivioView onView={setView} />}
           {view.kind === "promemoria" && <PromemoriaView onEdit={onEdit} />}
           {view.kind === "home" && (
             <HomeView onSelect={(key) => setView({ kind: "entity", key })} onOpenUda={openUda} />

@@ -787,6 +787,12 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-fase-dur input { width: 4rem; text-align: right; padding: 0.3rem 0.4rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); color: var(--ink); }
 .pl-fase-metodi { display: flex; flex-wrap: wrap; gap: 0.25rem; }
 .pl-mbtn.xs { font-size: 0.68rem; padding: 0.12rem 0.42rem; gap: 0.2rem; }
+.pl-fase-n { flex-shrink: 0; width: 1.5rem; height: 1.5rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: #fff; font: 800 0.78rem var(--font-ui); }
+.pl-fase-bar { height: 6px; border-radius: 99px; background: var(--parchment-dark); overflow: hidden; }
+.pl-fase-bar > div { height: 100%; border-radius: 99px; }
+.pl-fase-fn { font-size: 0.78rem; color: var(--ink-muted); font-style: italic; }
+.pl-verifiche-sec { margin-top: 0.5rem; }
+.pl-convalida { font-size: 0.95rem; }
 
 /* ── Reminder (inclusione / verifica) ──────────────────────────────────────── */
 .pl-remind { font-size: 0.82rem; line-height: 1.4; padding: 0.4rem 0.6rem; border-radius: var(--radius); margin-bottom: 0.4rem; }

@@ -10,6 +10,7 @@ import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia"
 import { antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, misureInclusione as repInclusione, perPeso, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
 import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI, ICON_COMPITI, ICON_EDCIVICA, ICON_METODOLOGIE, ICON_STRUMENTI } from "../data/glossario";
 import { downloadWord } from "../store/reportFineAnno";
+import { getSessione, upsertSessione } from "../store/valutazione";
 import { AlberoConoscenze } from "./AlberoConoscenze";
 import { VerificaForm } from "./VerificaForm";
 import { classeColor, materiaColor, materiaSigla } from "./materia";
@@ -17,8 +18,8 @@ import { classeColor, materiaColor, materiaSigla } from "./materia";
 const oggi = () => new Date().toISOString().slice(0, 10);
 type Tipo = "lezione" | "laboratorio" | "uda";
 type CompitoRow = { id: string; tipo: string; testo: string; data: string };
-type FaseRow = { id: string; nome: string; minuti: number; metodi: string[] };
-type StepKey = "conoscenze" | "abilita" | "metodologie" | "strumenti" | "edciv" | "raccordi" | "compiti" | "dettagli";
+type FaseRow = { id: string; nome: string; minuti: number; metodi: string[]; funzione?: string };
+type StepKey = "conoscenze" | "abilita" | "prerequisiti" | "metodologie" | "strumenti" | "fasi" | "edciv" | "raccordi" | "materiali" | "inclusione" | "compiti" | "dettagli";
 const FASI_DEFAULT = ["Apertura", "Sviluppo", "Esercitazione", "Sintesi e verifica"];
 const FASE_COLORS = ["#1800ac", "#2f7d5a", "#b9791f", "#a22e37", "#7c3aed", "#0891b2", "#be185d", "#4d7c0f"];
 
@@ -42,6 +43,20 @@ const METODOLOGIE = optsOf("lezioni", "Metodologie");
 const STRUMENTI = optsOf("lezioni", "Strumenti e spazi");
 const VERIFICHE_F = optsOf("lezioni", "Verifica formativa");
 const EDCIVICA = optsOf("lezioni", "Educazione civica");
+
+// Riserva di icone per garantire icone DISTINTE in una stessa finestra di menù.
+const ICON_POOL = ["🗣️", "💬", "👥", "🔄", "⚖️", "🧩", "💡", "🤝", "🔬", "📖", "🎭", "🎯", "🧠", "📚", "✍️", "🔎", "🗂️", "🧪", "🎬", "🗺️", "📐", "🧭", "🎲", "🏛️", "🌐", "🧰", "📊", "🪄", "🧱", "🪞", "🎙️", "📝", "🧮", "🔭", "🧵", "🎨"];
+/** Assegna a ogni chiave un'icona unica: la mappata se libera, altrimenti la prima del pool non ancora usata. */
+function iconaUniche(keys: string[], map: Record<string, string>): Record<string, string> {
+  const used = new Set<string>(), out: Record<string, string> = {};
+  let p = 0;
+  for (const k of keys) {
+    let ic = map[k] ?? map[k.toLowerCase()] ?? "";
+    if (!ic || used.has(ic)) { while (p < ICON_POOL.length && used.has(ICON_POOL[p])) p++; ic = ICON_POOL[p] ?? "•"; }
+    used.add(ic); out[k] = ic;
+  }
+  return out;
+}
 
 // ── Mattoni UI a livello di modulo (stabili fra i render) ─────────────────────
 function Step({ n, tot, titolo, hint, badge, children }: { n: number; tot: number; titolo: string; hint?: string; badge?: string; children: ReactNode }) {
@@ -196,8 +211,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const applicaArrangiamento = (arrId: string) => {
     if (!arch) return;
     const tl = espandiArrangiamento(arch, arrId, minPrev || 60);
-    setFasiRows(tl.fasi.map((ft) => ({ id: newId(), nome: ft.fase.fase, minuti: ft.minuti, metodi: ft.metodologie.slice(0, 2).map((m) => m.nome) })));
+    setFasiRows(tl.fasi.map((ft) => ({ id: newId(), nome: ft.fase.fase, minuti: ft.minuti, funzione: ft.fase.funzione, metodi: ft.metodologie.slice(0, 2).map((m) => m.nome) })));
   };
+  const metIcone = useMemo(() => iconaUniche(metNomi, ICON_METODOLOGIE), [metNomi]);
   const prereqAgg = useMemo(() => {
     const da = new Map<string, PrereqRisolto>(), co = new Map<string, PrereqRisolto>(), ctx = new Map<string, Voce>();
     if (arch) for (const v of selVoci.filter((x) => CONO.has(x.blocco))) {
@@ -333,6 +349,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     for (const c of compitiDaCal) {
       upsert("scadenze", { id: newId(), Titolo: `${cap(c.tipo)} ${materia}${classe ? ` · ${classe}` : ""}: ${c.testo.trim().slice(0, 60)}`, Data: c.data, Stato: "da fare", Tipo: "consegna", "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}) } as Rec);
     }
+    // Aggancia la verifica pianificata in itinere alla pianificazione appena creata.
+    const linkVerifica = (pid: string, ptipo: "lezione" | "uda") => { if (verificaSessId) { const s = getSessione(verificaSessId); if (s && !s.pianoId) upsertSessione({ ...s, pianoId: pid, pianoTipo: ptipo }); } };
     if (isUda) {
       const obIds = obiettiviDaVoci();
       const lezIds: string[] = [];
@@ -343,20 +361,24 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
         const lid = newId(); lezIds.push(lid);
         upsert("lezioni", { id: lid, Titolo: `${tit} — lezione ${i + 1}`, Materia: materia, "Data prevista": d, Stato: "Calendarizzata", Sequenza: i + 1, "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}) } as Rec);
       }
+      const udaId = newId();
       upsert("uda", {
-        ...didattica, id: newId(), Titolo: tit, "Competenza attesa": competenza, "Prodotto atteso": prodotto, "Compito di realtà": compitoRealta,
+        ...didattica, id: udaId, Titolo: tit, "Competenza attesa": competenza, "Prodotto atteso": prodotto, "Compito di realtà": compitoRealta,
         Ciclo: ciclo, Stato: "Calendarizzata", "Data inizio": data, "Data fine": dataFine, Obiettivi: obIds,
         ...(lezIds.length ? { Lezioni: lezIds } : {}), ...(matSel.length ? { Materiali: matSel } : {}),
       } as Rec);
+      linkVerifica(udaId, "uda");
       setMsg(`✓ UdA salvata in archivio${lezIds.length ? ` e ${lezIds.length} lezioni calendarizzate` : ""}: ${tit}`);
     } else {
+      const lezId = newId();
       upsert("lezioni", {
-        ...didattica, id: newId(),
+        ...didattica, id: lezId,
         Titolo: tipo === "laboratorio" ? `[Laboratorio] ${tit}` : tit,
         Materia: materia, "Data prevista": data, "Durata (ore)": durata, Stato: "Calendarizzata",
         "Obiettivi della lezione": selVoci.map((v) => `• ${v.testo}`).join("\n"),
         Fasi: fasiText(), "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}), ...(matSel.length ? { Materiali: matSel } : {}),
       } as Rec);
+      linkVerifica(lezId, "lezione");
       setMsg(`✓ ${tipoLabel} salvata in archivio e calendarizzata: ${tit}`);
     }
     resetTutto();
@@ -367,12 +389,16 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     const defs: { key: StepKey; titolo: string; hint: string }[] = [
       { key: "conoscenze", titolo: "Conoscenze e contenuti", hint: "Espandi i rami e flagga: scegliendo una voce si flaggano da sole le categorie superiori." },
       ...(code && haAbilitaComp ? [{ key: "abilita" as StepKey, titolo: "Abilità e competenze", hint: "Stessa consultazione: ciò che si sa fare e l'agire competente." }] : []),
+      ...(code ? [{ key: "prerequisiti" as StepKey, titolo: "Prerequisiti", hint: "Calcolati per prossimità dai contenuti flaggati; modificabili." }] : []),
       { key: "metodologie", titolo: "Metodologie", hint: "Come si conduce: scegli i metodi didattici." },
       { key: "strumenti", titolo: "Strumenti e spazi", hint: "Con cosa e dove si svolge l'attività." },
+      ...(!isUda ? [{ key: "fasi" as StepKey, titolo: "Fasi e tempi", hint: "La timeline della lezione: preset, durate scalate sul monte ore, metodi per fase." }] : []),
       { key: "edciv", titolo: "Educazione civica", hint: "Ampliamento facoltativo: usa «Nessun apporto» per una lezione standard." },
       ...(raccordiOpts.length ? [{ key: "raccordi" as StepKey, titolo: "Raccordi interdisciplinari", hint: indir ? "Le materie dell'indirizzo con cui dialoga." : "Le altre materie con cui dialoga." }] : []),
-      { key: "compiti", titolo: "Compiti ed esercizi", hint: "Scegli il tipo e imposta una data per calendarizzare il compito." },
-      { key: "dettagli", titolo: "Panoramica & salvataggio", hint: "Rivedi tutto, esporta in Word, poi salva in archivio e calendarizza." },
+      { key: "materiali", titolo: "Materiali", hint: "Strumenti e supporti per la lezione, dal catalogo o creati al volo." },
+      { key: "inclusione", titolo: "Inclusione", hint: "Misure per la classe e i suoi componenti (modello anonimo, per situazione)." },
+      { key: "compiti", titolo: "Compiti e verifiche", hint: "Compiti (con data) e la verifica; possono restare vuoti e completarsi dopo." },
+      { key: "dettagli", titolo: "Panoramica & convalida", hint: "Quadro finale modificabile: rivedi, esporta in Word, poi convalida nel Cruscotto." },
     ];
     const idx = Math.min(stepIdx, defs.length - 1);
     return { defs, idx, cur: defs[idx] };
@@ -435,8 +461,11 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
               <Step n={idx + 1} tot={stepDefs.length} titolo={stepDefs[idx].titolo} hint={stepDefs[idx].hint}
                 badge={stepDefs[idx].key === "conoscenze" ? `${nConoscenze} scelte` : stepDefs[idx].key === "abilita" ? `${nAbilitaComp} scelte`
+                  : stepDefs[idx].key === "prerequisiti" ? ((prereqAgg.daAccertare.length + prereqAgg.consolidate.length) || "") + ""
                   : stepDefs[idx].key === "metodologie" ? (metodologie.length || "") + "" : stepDefs[idx].key === "strumenti" ? (strumenti.length || "") + ""
+                  : stepDefs[idx].key === "fasi" ? (fasiRows.length || "") + ""
                   : stepDefs[idx].key === "edciv" ? (edcivSkip ? "✓" : (educiv.length || "") + "") : stepDefs[idx].key === "raccordi" ? (raccordi.length || "") + ""
+                  : stepDefs[idx].key === "materiali" ? (matSel.length || "") + "" : stepDefs[idx].key === "inclusione" ? (inclusione.trim() ? "✓" : "")
                   : stepDefs[idx].key === "compiti" ? (compiti.length || "") + "" : undefined}>
 
                 {stepDefs[idx].key === "conoscenze" && (code
@@ -468,7 +497,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                 {stepDefs[idx].key === "metodologie" && (metRep.length
                   ? <div className="pl-mgruppi">{Object.entries(metByGruppo).map(([g, ms]) => (
                       <div key={g}><div className="pl-sub">{cap(g)} <small>{ms.length}</small></div>
-                        <div className="pl-dgrid">{ms.map((m) => <DCard key={m.id} icon={ICON_METODOLOGIE[m.nome.toLowerCase()] ?? "🎓"} title={m.nome} desc={m.aggancio_classico} on={metodologie.includes(m.nome)} onClick={() => setMetodologie(toggleIn(metodologie, m.nome))} />)}</div>
+                        <div className="pl-dgrid">{ms.map((m) => <DCard key={m.id} icon={metIcone[m.nome]} title={m.nome} desc={m.aggancio_classico} on={metodologie.includes(m.nome)} onClick={() => setMetodologie(toggleIn(metodologie, m.nome))} />)}</div>
                       </div>))}</div>
                   : <DrillCards opts={METODOLOGIE} val={metodologie} onToggle={(m) => setMetodologie(toggleIn(metodologie, m))} desc={(o) => DESCR_METODOLOGIE[o]} icon={(o) => ICON_METODOLOGIE[o]} />)}
                 {stepDefs[idx].key === "strumenti" && <DrillCards opts={STRUMENTI} val={strumenti} onToggle={(m) => setStrumenti(toggleIn(strumenti, m))} desc={(o) => DESCR_STRUMENTI[o]} icon={(o) => ICON_STRUMENTI[o]} />}
@@ -480,8 +509,89 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                 )}
                 {stepDefs[idx].key === "raccordi" && <DrillCards opts={raccordiOpts} val={raccordi} onToggle={(m) => setRaccordi(toggleIn(raccordi, m))} desc={(o) => `Aggancio interdisciplinare con ${o}.`} icon={(o) => <span className="pl-sigla mini" style={{ background: materiaColor(o) ?? "var(--ink-muted)" }}>{materiaSigla(o)}</span>} />}
 
+                {stepDefs[idx].key === "prerequisiti" && (
+                  <>
+                    {(prereqAgg.daAccertare.length + prereqAgg.consolidate.length + prereqAgg.contesto.length > 0)
+                      ? <div className="pl-prereq">
+                          {prereqAgg.daAccertare.length > 0 && <div className="pl-prereq-grp"><b>Da accertare</b>{prereqAgg.daAccertare.map((r) => <span key={r.regola.id} className={r.regola.obbligatorio ? "chip oblig" : "chip"} title={r.regola.nota || r.regola.tipo}>{r.etichetta}{r.regola.obbligatorio ? " · micro-verifica" : ""}</span>)}</div>}
+                          {prereqAgg.consolidate.length > 0 && <div className="pl-prereq-grp"><b>Consolidate</b>{prereqAgg.consolidate.map((r) => <span key={r.regola.id} className="chip ok" title={`orizzonte: ${r.regola.orizzonte}`}>{r.etichetta}</span>)}</div>}
+                          {prereqAgg.contesto.length > 0 && <div className="pl-prereq-grp"><b>Contesto</b>{prereqAgg.contesto.map((v) => <span key={v.id} className="chip ctx">{v.testo}</span>)}</div>}
+                        </div>
+                      : <p className="muted">Flagga prima dei contenuti: qui compaiono i prerequisiti calcolati per prossimità (orizzonte circoscritto).</p>}
+                    <label className="field"><span>Prerequisiti da accertare {(prereqAgg.daAccertare.length + prereqAgg.consolidate.length > 0) && <button className="link" onClick={inserisciPrereq}>inserisci i calcolati ↓</button>}</span>
+                      <textarea rows={3} value={prereq} onChange={(e) => setPrereq(e.target.value)} placeholder="Cosa serve sapere/saper fare prima…" />
+                    </label>
+                  </>
+                )}
+
+                {stepDefs[idx].key === "fasi" && (
+                  <div className="pl-fasi">
+                    <div className="pl-fasi-head">
+                      <span>Tempo lezione <b>{minPrev}′</b></span>
+                      <span>· assegnato <b>{fasiMinTot}′</b></span>
+                      <span className={minRim < 0 ? "pl-fasi-over" : "pl-fasi-ok"}>{minRim >= 0 ? `${minRim}′ ancora liberi` : `${-minRim}′ in eccesso`}</span>
+                      <span className="spacer" />
+                      {arrRep.length > 0 && <select className="pl-arr-sel" value="" onChange={(e) => { if (e.target.value) applicaArrangiamento(e.target.value); }}><option value="">↳ preset timeline…</option>{arrRep.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}</select>}
+                      <button className="link" onClick={struttFasi}>struttura tipo</button>
+                      <button className="link" onClick={addFase}>+ fase</button>
+                    </div>
+                    {fasiRows.length === 0 ? <p className="muted">Scegli un preset «timeline» dall'archivio o aggiungi le fasi a mano: per ciascuna durata e metodi.</p> : (
+                      <div className="pl-fasi-list">
+                        {fasiRows.map((f, i) => (
+                          <div key={f.id} className="pl-fase" style={{ borderLeftColor: FASE_COLORS[i % FASE_COLORS.length] }}>
+                            <div className="pl-fase-main">
+                              <span className="pl-fase-n" style={{ background: FASE_COLORS[i % FASE_COLORS.length] }}>{i + 1}</span>
+                              <input className="pl-fase-nome" type="text" value={f.nome} placeholder={`Fase ${i + 1}`} onChange={(e) => setFase(f.id, { nome: e.target.value })} />
+                              <span className="pl-fase-dur"><input type="number" min={0} step={5} value={f.minuti} onChange={(e) => setFase(f.id, { minuti: Number(e.target.value) })} />′</span>
+                              <button className="danger" onClick={() => removeFase(f.id)} aria-label="Rimuovi">✕</button>
+                            </div>
+                            <div className="pl-fase-bar"><div style={{ width: `${minPrev ? Math.min(100, Math.round((f.minuti / minPrev) * 100)) : 0}%`, background: FASE_COLORS[i % FASE_COLORS.length] }} /></div>
+                            {f.funzione && <div className="pl-fase-fn">{f.funzione}</div>}
+                            <div className="pl-fase-metodi">{metNomi.map((m) => <button key={m} className={f.metodi.includes(m) ? "pl-mbtn xs on" : "pl-mbtn xs"} onClick={() => setFase(f.id, { metodi: toggleIn(f.metodi, m) })}>{cap(m)}</button>)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {stepDefs[idx].key === "materiali" && (
+                  <div className="pl-mat">
+                    {matRep.length > 0 && [...new Set(matRep.map((m) => m.categoria))].map((cat) => (
+                      <div key={cat}><div className="pl-sub">{cap(cat)} <small>{matRep.filter((m) => m.categoria === cat).length}</small></div>
+                        <div className="pl-dgrid">{matRep.filter((m) => m.categoria === cat).map((m) => <DCard key={m.id} title={m.tipo} desc={m.descrizione} onClick={() => creaDaCatalogo(m)} />)}</div>
+                      </div>
+                    ))}
+                    {materialiDisp.length > 0 && <><div className="pl-sub">I tuoi materiali collegati</div><div className="pl-menu">{materialiDisp.map((m) => <button key={m.id} className={matSel.includes(m.id) ? "pl-mbtn on" : "pl-mbtn"} onClick={() => setMatSel((a) => toggleIn(a, m.id))}><span className="pl-mb-tick">{matSel.includes(m.id) ? "✓" : "+"}</span>{String(m["Titolo"] ?? "—")}</button>)}</div></>}
+                    <div className="pl-mat-add">
+                      <input type="text" value={nuovoMat.titolo} placeholder="Nuovo materiale (titolo)…" onChange={(e) => setNuovoMat((s) => ({ ...s, titolo: e.target.value }))} onKeyDown={(e) => { if (e.key === "Enter") creaMateriale(); }} />
+                      <select value={nuovoMat.tipo} onChange={(e) => setNuovoMat((s) => ({ ...s, tipo: e.target.value }))}>{MAT_TIPI.map((t) => <option key={t} value={t}>{cap(t)}</option>)}</select>
+                      <button onClick={creaMateriale}>+ Crea e collega</button>
+                    </div>
+                  </div>
+                )}
+
+                {stepDefs[idx].key === "inclusione" && (
+                  <>
+                    {(() => {
+                      const c = classe ? contiClasse(classe, profile) : { tot: 0, l104: 0, bes: 0, dsa: 0 };
+                      const need = c.l104 + c.bes + c.dsa;
+                      if (need > 0) return <div className="pl-remind warn">⚠️ <b>{classe}</b> ({c.tot} alunni): {[c.dsa ? `${c.dsa} DSA` : "", c.bes ? `${c.bes} BES` : "", c.l104 ? `${c.l104} con L.104` : ""].filter(Boolean).join(", ")}. Prevedi le misure per situazione (anagrafica nel <b>Profilo</b>). <button className="link" onClick={suggInclusione}>compila in automatico ↓</button></div>;
+                      if (classe) return <div className="pl-remind ok">✓ {classe}: nessun alunno con BES/DSA/L.104 in anagrafica. <button className="link" onClick={suggInclusione}>nota inclusiva ↓</button></div>;
+                      return <p className="muted">Modello anonimo: le misure si associano a una situazione (es. «PDP per DSA»), mai a un nominativo.</p>;
+                    })()}
+                    {inclRep.length > 0 && [...new Set(inclRep.map((m) => m.ambito))].map((amb) => (
+                      <div key={amb}><div className="pl-sub">{amb} <small>{inclRep.filter((m) => m.ambito === amb).length}</small></div>
+                        <div className="pl-dgrid">{inclRep.filter((m) => m.ambito === amb).map((m) => <DCard key={m.id} title={m.misura} desc={m.descrizione} onClick={() => setInclusione((t) => [...new Set([...t.split("\n").filter(Boolean), `• [${m.ambito}/${m.categoria}] ${m.misura}`])].join("\n"))} />)}</div>
+                      </div>
+                    ))}
+                    <label className="field"><span>Misure (testo)</span><textarea rows={3} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (modello anonimo, per situazione)…" /></label>
+                  </>
+                )}
+
                 {stepDefs[idx].key === "compiti" && (
                   <>
+                    <div className="pl-sub">Compiti ed esercizi</div>
                     <div className="pl-dgrid">{COMPITO_TIPI.map((t) => <DCard key={t} icon={ICON_COMPITI[t]} title={cap(t)} desc={DESCR_COMPITI[t]} onClick={() => addCompito(t)} />)}</div>
                     {compiti.length > 0 && (
                       <div className="pl-compiti">
@@ -495,7 +605,22 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                         ))}
                       </div>
                     )}
-                    {compitiDaCal.length > 0 && <p className="muted pl-hint">📅 {compitiDaCal.length === 1 ? "1 compito con data: sarà calendarizzato" : `${compitiDaCal.length} compiti con data: saranno calendarizzati`} al salvataggio (conferma nella panoramica).</p>}
+                    {compitiDaCal.length > 0 && <p className="muted pl-hint">📅 {compitiDaCal.length === 1 ? "1 compito con data: sarà calendarizzato" : `${compitiDaCal.length} compiti con data: saranno calendarizzati`} alla convalida.</p>}
+
+                    <div className="pl-triade pl-verifiche-sec">
+                      <label className="field"><span>Verifica formativa <em>· in itinere{verRep.length ? ", dall'archivio" : ""}</em></span>
+                        <select value={verificaF} onChange={(e) => setVerificaF(e.target.value)}>
+                          <option value="">— (puoi lasciarla vuota)</option>
+                          {verOptions.map((v) => <option key={v} value={v}>{cap(v)}</option>)}
+                        </select>
+                      </label>
+                      <div className="field"><span>Verifica sommativa <em>· dialoga col calcolatore</em></span>
+                        {verificaSessId
+                          ? <div className="pl-remind ok">✓ Verifica pianificata e in calendario. <button className="link" onClick={() => onView({ kind: "valutazione", sessioneId: verificaSessId })}>apri la correzione →</button></div>
+                          : <div className="pl-verifica"><button onClick={() => setShowVerifica(true)}>📝 Pianifica verifica da zero…</button><p className="muted pl-hint">Oppure lasciala vuota: componendola dopo (dal calcolatore) potrai agganciarla a questa lezione/UdA in archivio.</p></div>}
+                      </div>
+                    </div>
+                    {showVerifica && <VerificaForm prefill={{ classe, data, materia, titolo: titoloEff }} onClose={() => setShowVerifica(false)} onOpen={(id) => { setVerificaSessId(id); setShowVerifica(false); }} />}
                   </>
                 )}
 
@@ -529,46 +654,6 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       </>
                     )}
 
-                    <div className="field"><span>Prerequisiti <em>· regola di prossimità (orizzonte circoscritto)</em> {(prereqAgg.daAccertare.length + prereqAgg.consolidate.length > 0) && <button className="link" onClick={inserisciPrereq}>inserisci nel testo ↓</button>}</span>
-                      {(prereqAgg.daAccertare.length + prereqAgg.consolidate.length + prereqAgg.contesto.length > 0) && (
-                        <div className="pl-prereq">
-                          {prereqAgg.daAccertare.length > 0 && <div className="pl-prereq-grp"><b>Da accertare</b>{prereqAgg.daAccertare.map((r) => <span key={r.regola.id} className={r.regola.obbligatorio ? "chip oblig" : "chip"} title={r.regola.nota || r.regola.tipo}>{r.etichetta}{r.regola.obbligatorio ? " · micro-verifica" : ""}</span>)}</div>}
-                          {prereqAgg.consolidate.length > 0 && <div className="pl-prereq-grp"><b>Consolidate</b>{prereqAgg.consolidate.map((r) => <span key={r.regola.id} className="chip ok" title={`orizzonte: ${r.regola.orizzonte}`}>{r.etichetta}</span>)}</div>}
-                          {prereqAgg.contesto.length > 0 && <div className="pl-prereq-grp"><b>Contesto</b>{prereqAgg.contesto.map((v) => <span key={v.id} className="chip ctx">{v.testo}</span>)}</div>}
-                        </div>
-                      )}
-                      <textarea rows={2} value={prereq} onChange={(e) => setPrereq(e.target.value)} placeholder="Cosa serve sapere/saper fare prima…" />
-                    </div>
-                    {!isUda && (
-                      <div className="field"><span>Fasi e tempi della lezione</span>
-                        <div className="pl-fasi">
-                          <div className="pl-fasi-head">
-                            <span>Tempo lezione <b>{minPrev}′</b></span>
-                            <span>· assegnato <b>{fasiMinTot}′</b></span>
-                            <span className={minRim < 0 ? "pl-fasi-over" : "pl-fasi-ok"}>{minRim >= 0 ? `${minRim}′ ancora liberi` : `${-minRim}′ in eccesso`}</span>
-                            <span className="spacer" />
-                            {arrRep.length > 0 && <select className="pl-arr-sel" value="" onChange={(e) => { if (e.target.value) applicaArrangiamento(e.target.value); }}><option value="">↳ preset timeline…</option>{arrRep.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}</select>}
-                            <button className="link" onClick={struttFasi}>struttura tipo</button>
-                            <button className="link" onClick={addFase}>+ fase</button>
-                          </div>
-                          {fasiRows.length === 0 ? <p className="muted">Aggiungi le fasi: per ciascuna durata e metodi; la barra colorata a sinistra la identifica.</p> : (
-                            <div className="pl-fasi-list">
-                              {fasiRows.map((f, i) => (
-                                <div key={f.id} className="pl-fase" style={{ borderLeftColor: FASE_COLORS[i % FASE_COLORS.length] }}>
-                                  <div className="pl-fase-main">
-                                    <input className="pl-fase-nome" type="text" value={f.nome} placeholder={`Fase ${i + 1}`} onChange={(e) => setFase(f.id, { nome: e.target.value })} />
-                                    <span className="pl-fase-dur"><input type="number" min={0} step={5} value={f.minuti} onChange={(e) => setFase(f.id, { minuti: Number(e.target.value) })} />′</span>
-                                    <button className="danger" onClick={() => removeFase(f.id)} aria-label="Rimuovi">✕</button>
-                                  </div>
-                                  <div className="pl-fase-metodi">{metNomi.map((m) => <button key={m} className={f.metodi.includes(m) ? "pl-mbtn xs on" : "pl-mbtn xs"} onClick={() => setFase(f.id, { metodi: toggleIn(f.metodi, m) })}>{cap(m)}</button>)}</div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
                     <div className="pl-rifinitura">
                       <div className="pl-sub">Rifinitura testuale {selVoci.length > 0 && <button className="link" onClick={componi}>componi dai flag ↓</button>}</div>
                       <div className="pl-triade">
@@ -578,69 +663,31 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       </div>
                     </div>
 
-                    <div className="field"><span>Materiali{matRep.length ? <em> · dall'archivio</em> : null}</span>
-                      <div className="pl-mat">
-                        {matRep.length > 0 && <div className="pl-menu pl-incl-menu">{matRep.slice(0, 16).map((m) => <button key={m.id} className="pl-mbtn xs" title={`${m.categoria} · ${m.supporto} — ${m.descrizione}`} onClick={() => creaDaCatalogo(m)}>+ {m.tipo}</button>)}</div>}
-                        {materialiDisp.length > 0 && (
-                          <div className="pl-menu">{materialiDisp.map((m) => <button key={m.id} className={matSel.includes(m.id) ? "pl-mbtn on" : "pl-mbtn"} onClick={() => setMatSel((a) => toggleIn(a, m.id))}><span className="pl-mb-tick">{matSel.includes(m.id) ? "✓" : "+"}</span>{String(m["Titolo"] ?? "—")}</button>)}</div>
-                        )}
-                        <div className="pl-mat-add">
-                          <input type="text" value={nuovoMat.titolo} placeholder="Nuovo materiale (titolo)…" onChange={(e) => setNuovoMat((s) => ({ ...s, titolo: e.target.value }))} onKeyDown={(e) => { if (e.key === "Enter") creaMateriale(); }} />
-                          <select value={nuovoMat.tipo} onChange={(e) => setNuovoMat((s) => ({ ...s, tipo: e.target.value }))}>{MAT_TIPI.map((t) => <option key={t} value={t}>{cap(t)}</option>)}</select>
-                          <button onClick={creaMateriale}>+ Crea e collega</button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="field"><span>Inclusione (misure) <button className="link" onClick={suggInclusione}>💡 dall'anagrafica</button></span>
-                      {(() => {
-                        const c = classe ? contiClasse(classe, profile) : { tot: 0, l104: 0, bes: 0, dsa: 0 };
-                        const need = c.l104 + c.bes + c.dsa;
-                        if (need > 0) return <div className="pl-remind warn">⚠️ In <b>{classe}</b> ci sono alunni con differenziazioni: {[c.dsa ? `${c.dsa} DSA` : "", c.bes ? `${c.bes} BES` : "", c.l104 ? `${c.l104} con L.104` : ""].filter(Boolean).join(", ")}. Prevedi le misure (anagrafica nel <b>Profilo</b>).</div>;
-                        if (classe) return <div className="pl-remind ok">✓ {classe}: nessun alunno con BES/DSA/L.104 in anagrafica.</div>;
-                        return null;
-                      })()}
-                      {inclRep.length > 0 && <div className="pl-menu pl-incl-menu">{inclRep.slice(0, 14).map((m) => <button key={m.id} className="pl-mbtn xs" title={`${m.ambito} · ${m.categoria} — ${m.descrizione}`} onClick={() => setInclusione((t) => [...new Set([...t.split("\n").filter(Boolean), `• [${m.ambito}/${m.categoria}] ${m.misura}`])].join("\n"))}>+ {m.misura}</button>)}</div>}
-                      <textarea rows={2} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (modello anonimo, per situazione)…" />
-                    </div>
-
-                    <div className="pl-triade">
-                      <label className="field"><span>Verifica formativa <em>· in itinere{verRep.length ? ", dall'archivio" : ""}</em></span>
-                        <select value={verificaF} onChange={(e) => setVerificaF(e.target.value)}>
-                          <option value="">—</option>
-                          {verOptions.map((v) => <option key={v} value={v}>{cap(v)}</option>)}
-                        </select>
-                      </label>
-                      <div className="field"><span>Verifica sommativa <em>· dialoga col calcolatore</em></span>
-                        {verificaSessId
-                          ? <div className="pl-remind ok">✓ Verifica pianificata e messa in calendario. <button className="link" onClick={() => onView({ kind: "valutazione", sessioneId: verificaSessId })}>apri la correzione →</button></div>
-                          : <div className="pl-verifica"><button onClick={() => setShowVerifica(true)}>📝 Pianifica verifica da zero…</button><p className="muted pl-hint">Definisci la prova (struttura mista), va in calendario e si apre poi per la correzione.</p></div>}
-                      </div>
-                    </div>
-
-                    {/* Panoramica */}
+                    {/* Panoramica visiva finale */}
                     <div className="pl-overview">
                       <div className="pl-ov-head"><h3>{r.titolo}</h3><span className="pl-ov-sub">{[r.tipoLabel, r.materia, r.classe, r.scuola].filter(Boolean).join(" · ")} · {r.quando}</span></div>
                       <div className="pl-ov-grid">
                         <OvList t="Conoscenze e contenuti" xs={r.conoscenze} />
                         <OvList t="Abilità" xs={r.abilita} />
                         <OvList t="Competenze" xs={r.competenze} />
+                        <OvList t="Prerequisiti" xs={r.prereq.split("\n").filter(Boolean).map((s) => s.replace(/^•\s*/, ""))} />
+                        {!isUda && <OvList t="Fasi e tempi" xs={r.fasi.split("\n").filter(Boolean)} />}
                         <OvTags t="Metodologie" xs={r.metodologie} />
                         <OvTags t="Strumenti e spazi" xs={r.strumenti} />
                         <OvTags t="Educazione civica" xs={r.educiv} />
                         <OvTags t="Raccordi" xs={r.raccordi} />
                         <OvList t="Compiti ed esercizi" xs={r.compiti} />
                         <OvList t="📅 Compiti da calendarizzare" xs={r.compitiCal} />
+                        <OvList t="Inclusione (misure)" xs={r.inclusione.split("\n").filter(Boolean).map((s) => s.replace(/^•\s*/, ""))} />
+                        <OvTags t="Verifica" xs={[r.verificaF, verificaSessId ? "Sommativa pianificata" : ""].filter(Boolean)} />
                       </div>
                     </div>
 
                     <div className="pl-actions">
                       <button onClick={esportaWord}>📄 Esporta Word</button>
-                      <button className="primary" onClick={salva}>💾 Salva &amp; calendarizza</button>
+                      <button className="primary pl-convalida" onClick={salva}>✓ Convalida e inserisci nel Cruscotto</button>
                       {msg && <span className="pl-msg">{msg} <button className="link" onClick={() => onView({ kind: "calendar" })}>calendario →</button> <button className="link" onClick={() => onView({ kind: "archivio" })}>archivio →</button></span>}
                     </div>
-
-                    {showVerifica && <VerificaForm prefill={{ classe, data, materia, titolo: titoloEff }} onClose={() => setShowVerifica(false)} onOpen={(id) => { setVerificaSessId(id); setShowVerifica(false); }} />}
                   </>
                 )}
 
