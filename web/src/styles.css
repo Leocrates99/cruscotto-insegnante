@@ -781,7 +781,7 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-fasi-over { color: var(--danger); font-weight: 700; }
 .pl-fasi-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .pl-fase { border: 1px solid var(--parchment-dark); border-left: 5px solid var(--accent); border-radius: var(--radius); background: var(--parchment); padding: 0.5rem 0.6rem; display: flex; flex-direction: column; gap: 0.4rem; }
-.pl-fase-main { display: flex; align-items: center; gap: 0.5rem; }
+.pl-fase-main { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .pl-fase-nome { flex: 1; min-width: 0; font: 600 0.9rem var(--font-ui); padding: 0.3rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); color: var(--ink); }
 .pl-fase-dur { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.82rem; color: var(--ink-muted); flex-shrink: 0; }
 .pl-fase-dur input { width: 4rem; text-align: right; padding: 0.3rem 0.4rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); color: var(--ink); }
@@ -810,9 +810,27 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-fase-met { flex-shrink: 0; font: 600 0.74rem var(--font-ui); padding: 0.28rem 0.6rem; border: 1px solid var(--parchment-dark); border-radius: 99px; background: var(--parchment); color: var(--ink-light); cursor: pointer; }
 .pl-fase-met:hover, .pl-fase-met.on { border-color: var(--accent); color: var(--accent); background: var(--accent-pale); box-shadow: none; transform: none; }
 .pl-fase-sel { font-size: 0.78rem; color: var(--ink-muted); padding-left: 0.2rem; }
-.pl-fase-cen { display: inline-block; font: 700 0.62rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.03em; color: var(--accent); background: var(--accent-pale); padding: 0.05rem 0.45rem; border-radius: 99px; margin-right: 0.45rem; vertical-align: 1px; }
+.pl-fase-cen { display: inline-flex; align-items: center; gap: 0.25rem; font: 700 0.66rem var(--font-ui); color: #fff; padding: 0.18rem 0.5rem; border-radius: 99px; flex-shrink: 0; white-space: nowrap; }
 .pl-fase { transition: box-shadow var(--transition); }
 .pl-fase.evidenzia { box-shadow: 0 0 0 2px var(--accent); }
+/* Riordino su/giù + range durata + dettagli fase + barra centratura */
+.pl-fase-rik { display: inline-flex; flex-direction: column; flex-shrink: 0; border: 1px solid var(--parchment-dark); border-radius: var(--radius); overflow: hidden; }
+.pl-fase-rik button { padding: 0 0.35rem; line-height: 1.05; font-size: 0.62rem; background: var(--parchment); border: none; color: var(--ink-light); cursor: pointer; box-shadow: none; }
+.pl-fase-rik button:hover:not(:disabled) { background: var(--accent-pale); color: var(--accent); transform: none; box-shadow: none; }
+.pl-fase-rik button:disabled { opacity: 0.3; cursor: default; }
+.pl-fase-step.warn { border-color: var(--danger); box-shadow: 0 0 0 1px var(--danger) inset; }
+.pl-fase-dett { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.8rem; color: var(--ink); background: var(--cream); border: 1px dashed var(--parchment-dark); border-radius: var(--radius); padding: 0.5rem 0.6rem; }
+.pl-fase-dr { font-size: 0.78rem; color: var(--ink-muted); }
+.pl-fase-fuori { color: var(--danger); font-weight: 700; }
+.pl-fase-att { line-height: 1.4; }
+.pl-fase-role { display: inline-block; font: 700 0.66rem var(--font-ui); padding: 0.05rem 0.4rem; border-radius: 6px; margin-right: 0.4rem; color: #fff; }
+.pl-fase-role.doc { background: #1800ac; }
+.pl-fase-role.stu { background: #2f7d5a; }
+.pl-centmix { display: flex; flex-direction: column; gap: 0.25rem; margin: -0.2rem 0 0.5rem; }
+.pl-centmix-bar { display: flex; height: 10px; border-radius: 99px; overflow: hidden; gap: 1px; }
+.pl-centmix-bar > div { min-width: 0; }
+.pl-centmix-lab { font: 600 0.76rem var(--font-ui); color: var(--ink-light); }
+.pl-centmix-lab b { color: var(--ink); }
 
 /* ── Reminder (inclusione / verifica) ──────────────────────────────────────── */
 .pl-remind { font-size: 0.82rem; line-height: 1.4; padding: 0.4rem 0.6rem; border-radius: var(--radius); margin-bottom: 0.4rem; }
