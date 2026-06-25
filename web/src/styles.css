@@ -794,6 +794,22 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-verifiche-sec { margin-top: 0.5rem; }
 .pl-convalida { font-size: 0.95rem; }
 
+/* Fasi · binario proporzionale + orari reali + stepper + popover metodi */
+.pl-fasi-ora { display: inline-flex; align-items: center; gap: 0.3rem; font: 600 0.78rem var(--font-ui); color: var(--ink-muted); }
+.pl-fasi-ora input { width: 5.5rem; padding: 0.2rem 0.4rem; border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); color: var(--ink); }
+.pl-binario { display: flex; height: 30px; border-radius: var(--radius); overflow: hidden; gap: 2px; margin: 0.2rem 0 0.6rem; }
+.pl-bin-seg { min-width: 0; display: flex; align-items: center; justify-content: center; font: 700 0.7rem var(--font-ui); color: #fff; overflow: hidden; }
+.pl-bin-over { min-width: 6px; background: var(--danger); opacity: 0.85; }
+.pl-fase-ora { flex-shrink: 0; min-width: 6.2rem; font: 600 0.74rem var(--font-ui); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.pl-fase-step { display: inline-flex; align-items: center; border: 1px solid var(--parchment-dark); border-radius: var(--radius); overflow: hidden; flex-shrink: 0; }
+.pl-fase-step button { padding: 0.25rem 0.55rem; background: var(--parchment); border: none; color: var(--ink-light); font-weight: 800; cursor: pointer; line-height: 1; }
+.pl-fase-step button:hover { background: var(--accent-pale); color: var(--accent); box-shadow: none; transform: none; }
+.pl-fase-step input { width: 3rem; text-align: center; border: none; border-left: 1px solid var(--parchment-dark); background: var(--cream); color: var(--ink); padding: 0.25rem 0.2rem; -moz-appearance: textfield; }
+.pl-fase-step em { padding: 0 0.35rem 0 0.1rem; font-style: normal; color: var(--ink-muted); font-size: 0.78rem; border-right: 1px solid var(--parchment-dark); }
+.pl-fase-met { flex-shrink: 0; font: 600 0.74rem var(--font-ui); padding: 0.28rem 0.6rem; border: 1px solid var(--parchment-dark); border-radius: 99px; background: var(--parchment); color: var(--ink-light); cursor: pointer; }
+.pl-fase-met:hover, .pl-fase-met.on { border-color: var(--accent); color: var(--accent); background: var(--accent-pale); box-shadow: none; transform: none; }
+.pl-fase-sel { font-size: 0.78rem; color: var(--ink-muted); padding-left: 0.2rem; }
+
 /* ── Reminder (inclusione / verifica) ──────────────────────────────────────── */
 .pl-remind { font-size: 0.82rem; line-height: 1.4; padding: 0.4rem 0.6rem; border-radius: var(--radius); margin-bottom: 0.4rem; }
 .pl-remind.warn { background: var(--warning-light); color: var(--warning); border: 1px solid color-mix(in srgb, var(--warning) 38%, transparent); }
