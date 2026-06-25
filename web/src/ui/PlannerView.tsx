@@ -7,7 +7,7 @@ import { useStore } from "../store/useStore";
 import { classiAttive, contiClasse, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
 import { annoCorrenteId, classeId } from "../store/links";
 import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia";
-import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, faseById, fasi as repFasi, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, metodologieDiFase, misureInclusione as repInclusione, perPeso, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
+import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, faseById, fasi as repFasi, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, metodologieDiFase, misureInclusione as repInclusione, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
 import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI, ICON_COMPITI, ICON_EDCIVICA, ICON_INC_AMBITO, ICON_INCLUSIONE, ICON_MATERIALI, ICON_METODOLOGIE, ICON_STRUMENTI } from "../data/glossario";
 import { downloadWord } from "../store/reportFineAnno";
 import { getSessione, upsertSessione } from "../store/valutazione";
@@ -164,9 +164,18 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const vMatPl = useMemo(() => (arch && code ? arch.voci.filter((v) => v.materia === code) : []), [arch, code]);
   const nucleiPl = useMemo(() => [...new Set(vMatPl.map((v) => v.nucleo).filter(Boolean))].sort((a, b) => a.localeCompare(b)), [vMatPl]);
   const haAbilitaComp = vMatPl.some((v) => v.blocco === "abilita" || v.blocco === "competenza");
-  const radici = vMatPl.filter((v) => CONO.has(v.blocco) && !v.parent && (!nucleo || v.nucleo === nucleo)).sort(perPeso);
-  const abilitaV = vMatPl.filter((v) => v.blocco === "abilita").sort(perPeso);
-  const competenzeV = vMatPl.filter((v) => v.blocco === "competenza").sort(perPeso);
+  // Ordine sorgente = sequenza curricolare/cronologica (le epoche sono in ordine nell'archivio).
+  const radici = vMatPl.filter((v) => CONO.has(v.blocco) && !v.parent && (!nucleo || v.nucleo === nucleo));
+  const abilitaV = vMatPl.filter((v) => v.blocco === "abilita");
+  const competenzeV = vMatPl.filter((v) => v.blocco === "competenza");
+  const LETTERARI = new Set(["epoca", "corrente", "genere"]);
+  const gruppiConoscenze = [
+    { lab: "Epoche", roots: radici.filter((r) => r.tipo_contenuto === "epoca") },
+    { lab: "Correnti", roots: radici.filter((r) => r.tipo_contenuto === "corrente") },
+    { lab: "Generi", roots: radici.filter((r) => r.tipo_contenuto === "genere") },
+  ].filter((g) => g.roots.length);
+  const conoscenzeGramm = radici.filter((r) => !LETTERARI.has(r.tipo_contenuto || ""));
+  const nucleiDi = (vs: Voce[]) => [...new Set(vs.map((v) => v.nucleo).filter(Boolean))];
 
   const selVoci: Voce[] = arch ? [...selIds].map((id) => voce(arch, id)).filter((v): v is Voce => !!v) : [];
   const toggleIn = (arr: string[], v: string) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -506,7 +515,21 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                           {nucleiPl.map((n) => <button key={n} className={nucleo === n ? "pl-mbtn on" : "pl-mbtn"} onClick={() => setNucleo(n)}>{n}</button>)}
                         </div>
                       )}
-                      <AlberoConoscenze a={arch!} radici={radici} selez={selIds} onToggle={toggleAlbero} />
+                      {gruppiConoscenze.length === 0 && conoscenzeGramm.length === 0 && <p className="muted">Nessun contenuto per questo filtro.</p>}
+                      {gruppiConoscenze.length > 0 && <div className="pl-sez">📜 Letteratura</div>}
+                      {gruppiConoscenze.map((g) => (
+                        <div key={g.lab}><div className="pl-sub">{g.lab} <small>{g.roots.length}</small></div>
+                          <AlberoConoscenze a={arch!} radici={g.roots} selez={selIds} onToggle={toggleAlbero} />
+                        </div>
+                      ))}
+                      {conoscenzeGramm.length > 0 && <>
+                        <div className="pl-sez">📐 Conoscenze e lingua</div>
+                        {nucleiDi(conoscenzeGramm).map((nu) => (
+                          <div key={nu}><div className="pl-sub">{nu} <small>{conoscenzeGramm.filter((r) => r.nucleo === nu).length}</small></div>
+                            <AlberoConoscenze a={arch!} radici={conoscenzeGramm.filter((r) => r.nucleo === nu)} selez={selIds} onToggle={toggleAlbero} />
+                          </div>
+                        ))}
+                      </>}
                     </>
                   : <p className="muted">Per <b>{materia}</b> non c'è ancora un archivio: i contenuti si scrivono nello step finale.</p>
                 )}
@@ -514,12 +537,20 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                 {stepDefs[idx].key === "abilita" && (
                   <div className="pl-ac">
                     <div className="pl-ac-col">
-                      <div className="pl-sub">Abilità <small>{abilitaV.length}</small></div>
-                      <AlberoConoscenze a={arch!} radici={abilitaV} selez={selIds} onToggle={toggleVoce} />
+                      <div className="pl-sez">🛠️ Abilità <small>{abilitaV.length}</small></div>
+                      {nucleiDi(abilitaV).map((nu) => (
+                        <div key={nu}><div className="pl-sub">{nu} <small>{abilitaV.filter((v) => v.nucleo === nu).length}</small></div>
+                          <AlberoConoscenze a={arch!} radici={abilitaV.filter((v) => v.nucleo === nu)} selez={selIds} onToggle={toggleVoce} />
+                        </div>
+                      ))}
                     </div>
                     <div className="pl-ac-col">
-                      <div className="pl-sub">Competenze <small>{competenzeV.length}</small></div>
-                      <AlberoConoscenze a={arch!} radici={competenzeV} selez={selIds} onToggle={toggleVoce} />
+                      <div className="pl-sez">🎯 Competenze <small>{competenzeV.length}</small></div>
+                      {nucleiDi(competenzeV).map((nu) => (
+                        <div key={nu}><div className="pl-sub">{nu} <small>{competenzeV.filter((v) => v.nucleo === nu).length}</small></div>
+                          <AlberoConoscenze a={arch!} radici={competenzeV.filter((v) => v.nucleo === nu)} selez={selIds} onToggle={toggleVoce} />
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
