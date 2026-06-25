@@ -20,7 +20,7 @@ import { classeColor, materiaColor, materiaSigla } from "./materia";
 const oggi = () => new Date().toISOString().slice(0, 10);
 type Tipo = "lezione" | "laboratorio" | "uda";
 type CompitoRow = { id: string; tipo: string; testo: string; data: string };
-type FaseRow = { id: string; nome: string; minuti: number; metodi: string[]; funzione?: string; centratura?: string; momento?: string; fonte?: string; attDoc?: string; attStu?: string; durMin?: number; durMax?: number };
+type FaseRow = { id: string; nome: string; minuti: number; metodi: string[]; funzione?: string; centratura?: string; momento?: string; fonte?: string; attDoc?: string; attStu?: string; durMin?: number; durMax?: number; nota?: string };
 type StepKey = "conoscenze" | "abilita" | "prerequisiti" | "metodologie" | "strumenti" | "fasi" | "edciv" | "raccordi" | "materiali" | "inclusione" | "compiti" | "dettagli";
 const FASI_DEFAULT = ["Apertura", "Sviluppo", "Esercitazione", "Sintesi e verifica"];
 const FASE_COLORS = ["#1800ac", "#2f7d5a", "#b9791f", "#a22e37", "#7c3aed", "#0891b2", "#be185d", "#4d7c0f"];
@@ -37,18 +37,18 @@ const CENTRATURA: Record<string, { icona: string; col: string; peso: number; lab
 const centr = (c?: string) => (c ? CENTRATURA[c] : undefined);
 // Arco narrativo della lezione: i momenti in cui si distribuiscono le fasi.
 const MOMENTI: { id: string; label: string; icona: string; desc: string }[] = [
-  { id: "inizio", label: "Inizio", icona: "🚀", desc: "Avvio e aggancio: clima, prerequisiti, motivazione, obiettivi." },
-  { id: "sviluppo", label: "Sviluppo", icona: "📖", desc: "Presentazione del nuovo: esposizione, scoperta, modellamento, analisi." },
-  { id: "apprendimento", label: "Apprendimento", icona: "🛠️", desc: "Pratica attiva: esercizio, applicazione, cooperazione, laboratorio." },
-  { id: "fine", label: "Fine", icona: "🏁", desc: "Chiusura: sintesi, verifica formativa, metacognizione, consegna." },
+  { id: "inizio", label: "Inizio", icona: "🚀", desc: "Come apri: crei il clima, richiami i prerequisiti e dici dove si va." },
+  { id: "sviluppo", label: "Sviluppo", icona: "📖", desc: "Il sapere nuovo: spieghi, fai scoprire, mostri come si ragiona." },
+  { id: "apprendimento", label: "Apprendimento", icona: "🛠️", desc: "Si mette in pratica: esercizio, applicazione, gruppi, laboratorio." },
+  { id: "fine", label: "Fine", icona: "🏁", desc: "Come chiudi: si tirano le fila, si verifica e si assegna." },
 ];
 const MOM_ORDER = MOMENTI.map((m) => m.id);
 const momIdx = (m?: string) => { const i = m ? MOM_ORDER.indexOf(m) : -1; return i < 0 ? MOM_ORDER.length : i; };
 // Durate-tipo della lezione (drill in cima allo step). `h` = ore → monte = h*60′.
-const DURATE: { h: number; lab: string; icona: string }[] = [
-  { h: 1, lab: "1 ora", icona: "🟩" },
-  { h: 2, lab: "2 ore", icona: "🟦" },
-  { h: 3, lab: "3 ore", icona: "🟪" },
+const DURATE: { h: number; lab: string; icona: string; desc: string }[] = [
+  { h: 1, lab: "1 ora", icona: "🟩", desc: "Lezione singola: una spiegazione e un po' di pratica." },
+  { h: 2, lab: "2 ore", icona: "🟦", desc: "Blocco da due ore: c'è spazio per laboratorio e confronto." },
+  { h: 3, lab: "3 ore", icona: "🟪", desc: "Blocco lungo: progetti, UdA o attività estese." },
 ];
 // Icone dei preset-timeline (per modello di arrangiamento).
 const ICON_ARRANGIAMENTO: Record<string, string> = {
@@ -325,7 +325,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const fasiText = (): string => fasiRows.filter((f) => f.nome.trim() || f.minuti).map((f) => {
     const i = fasiRows.indexOf(f); const s = inizioFase(i);
     const c = centr(f.centratura);
-    return `${f.nome.trim() || "Fase"} (${f.minuti || 0}', min ${s}–${s + (f.minuti || 0)})${c ? ` · ${c.lab.toLowerCase()}` : ""}${f.metodi.length ? ` · ${f.metodi.map(cap).join(", ")}` : ""}`;
+    return `${f.nome.trim() || "Fase"} (${f.minuti || 0}', min ${s}–${s + (f.minuti || 0)})${c ? ` · ${c.lab.toLowerCase()}` : ""}${f.metodi.length ? ` · ${f.metodi.map(cap).join(", ")}` : ""}${f.nota?.trim() ? ` — ${f.nota.trim()}` : ""}`;
   }).join("\n");
 
   // ── Repertori del lesson-builder (data-driven dall'archivio) ───────────────
@@ -649,18 +649,18 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                 {stepDefs[idx].key === "fasi" && (
                   <div className="pl-fasi">
                     <div className="pl-fase-blocco">
-                      <div className="pl-sub">⏳ Durata della lezione <small>ora di lezione = {unitaOra}′ (da orario)</small></div>
-                      <div className="pl-dgrid mini">{DURATE.map((d) => <DCard key={d.h} icon={d.icona} title={d.lab} desc={`${Math.round(d.h * unitaOra)}′ di monte ore`} on={durata === d.h} onClick={() => setDurata(d.h)} />)}</div>
+                      <div className="pl-sub">⏳ Quanto dura la lezione? <small>un'ora qui vale {unitaOra}′ (dal tuo orario)</small></div>
+                      <div className="pl-dgrid mini">{DURATE.map((d) => <DCard key={d.h} icon={d.icona} title={d.lab} top={<span className="pl-cnt">{Math.round(d.h * unitaOra)}′</span>} desc={d.desc} on={durata === d.h} onClick={() => setDurata(d.h)} />)}</div>
                     </div>
 
                     <div className="pl-fase-blocco">
-                      <div className="pl-sub">🧭 Costruisci la scansione</div>
+                      <div className="pl-sub">🧭 Come vuoi costruirla?</div>
                       <div className="pl-dgrid mini">
-                        {arrRep.length > 0 && <DCard icon="🗂️" title="Preset timeline" desc="Applica una sequenza pronta, per modello didattico." on={presetOpen} onClick={() => { setPresetOpen((o) => !o); setAddFaseOpen(false); }} />}
-                        <DCard icon="🧩" title="Struttura tipo" desc="Quattro fasi standard, bilanciate sul monte ore." onClick={() => struttFasi()} />
+                        {arrRep.length > 0 && <DCard icon="🗂️" title="Parti da un modello" desc="Scegli un impianto già pronto (classica, flipped, debate…) e adattalo." on={presetOpen} onClick={() => { setPresetOpen((o) => !o); setAddFaseOpen(false); }} />}
+                        <DCard icon="🧩" title="Struttura tipo" desc="Hai fretta? Quattro fasi equilibrate, già pronte da ritoccare." onClick={() => struttFasi()} />
                         {arch && repFasi(arch).length > 0
-                          ? <DCard icon="➕" title="Aggiungi fase" desc="Scegli per momento dell'arco: inizio → sviluppo → apprendimento → fine." on={addFaseOpen} onClick={() => { setAddFaseOpen((o) => !o); setFaseMomento(null); setPresetOpen(false); }} />
-                          : <DCard icon="➕" title="Aggiungi fase" desc="Aggiungi una fase vuota da compilare a mano." onClick={() => addFase()} />}
+                          ? <DCard icon="➕" title="Aggiungi una fase" desc="Costruisci tu, un passo per volta, seguendo l'arco della lezione." on={addFaseOpen} onClick={() => { setAddFaseOpen((o) => !o); setFaseMomento(null); setPresetOpen(false); }} />
+                          : <DCard icon="➕" title="Aggiungi una fase" desc="Inserisci una fase vuota da compilare a mano." onClick={() => addFase()} />}
                       </div>
                     </div>
 
@@ -715,14 +715,20 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                         {fasiRows.map((f, i) => { const s = inizioFase(i); const col = FASE_COLORS[i % FASE_COLORS.length]; const c = centr(f.centratura); const rng = rangeFase(f); const fuori = fuoriRange(f); const hasDett = !!(f.attDoc || f.attStu || rng); return (
                           <div key={f.id} id={`pl-fase-${f.id}`} className={faseEvidenzia === f.id ? "pl-fase evidenzia" : "pl-fase"} style={{ borderLeftColor: col }} onDragOver={(e) => e.preventDefault()} onDrop={() => { const from = dragFase.current; if (from != null) spostaFase(from, i); dragFase.current = null; }}>
                             <span className="pl-fase-n" draggable onDragStart={() => { dragFase.current = i; }} onDragEnd={() => { dragFase.current = null; }} title="Trascina per riordinare" style={{ background: col, cursor: "grab" }}>{i + 1}</span>
-                            <span className={fuori ? "pl-fase-step warn" : "pl-fase-step"} title={fuori && rng ? `Durata consigliata ${rng[0]}–${rng[1]}′` : undefined}>
-                              <button onClick={() => setFase(f.id, { minuti: Math.max(0, (f.minuti || 0) - 5) })} aria-label="Meno 5 minuti">−</button>
-                              <input type="number" min={0} step={5} value={f.minuti} onChange={(e) => setFase(f.id, { minuti: Number(e.target.value) })} /><em>′</em>
-                              <button onClick={() => setFase(f.id, { minuti: (f.minuti || 0) + 5 })} aria-label="Più 5 minuti">+</button>
+                            <span className={fuori ? "pl-fase-step warn" : "pl-fase-step"} title={fuori && rng ? `Durata consigliata ${rng[0]}–${rng[1]}′` : "Aggiusta i minuti: ± 1 al centro, ± 2 e ± 5 ai lati"}>
+                              <button className="st-l" onClick={() => setFase(f.id, { minuti: Math.max(0, (f.minuti || 0) - 5) })} aria-label="Meno 5 minuti">−5</button>
+                              <button className="st-l" onClick={() => setFase(f.id, { minuti: Math.max(0, (f.minuti || 0) - 2) })} aria-label="Meno 2 minuti">−2</button>
+                              <button className="st-1" onClick={() => setFase(f.id, { minuti: Math.max(0, (f.minuti || 0) - 1) })} aria-label="Meno 1 minuto">−</button>
+                              <input type="number" min={0} step={1} value={f.minuti} onChange={(e) => setFase(f.id, { minuti: Math.max(0, Number(e.target.value)) })} /><em>′</em>
+                              <button className="st-1" onClick={() => setFase(f.id, { minuti: (f.minuti || 0) + 1 })} aria-label="Più 1 minuto">+</button>
+                              <button className="st-l" onClick={() => setFase(f.id, { minuti: (f.minuti || 0) + 2 })} aria-label="Più 2 minuti">+2</button>
+                              <button className="st-l" onClick={() => setFase(f.id, { minuti: (f.minuti || 0) + 5 })} aria-label="Più 5 minuti">+5</button>
                             </span>
                             <div className="pl-fase-body">
                               <div className="pl-fase-row1">
-                                <input className="pl-fase-nome" type="text" value={f.nome} placeholder={`Fase ${i + 1}`} onChange={(e) => setFase(f.id, { nome: e.target.value })} />
+                                {f.fonte
+                                  ? <span className="pl-fase-titolo" title="Fase dal catalogo: il titolo è fisso">{f.nome}</span>
+                                  : <input className="pl-fase-nome" type="text" value={f.nome} placeholder={`Fase ${i + 1}`} onChange={(e) => setFase(f.id, { nome: e.target.value })} />}
                                 <span className="pl-fase-ora" title="Posizione nell'arco della lezione (minuti dall'inizio)">min {s}–{s + (f.minuti || 0)}</span>
                                 <span className="spacer" />
                                 <span className="pl-fase-rik"><button onClick={() => spostaFase(i, i - 1)} disabled={i === 0} aria-label="Sposta su">▲</button><button onClick={() => spostaFase(i, i + 1)} disabled={i === fasiRows.length - 1} aria-label="Sposta giù">▼</button></span>
@@ -731,6 +737,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                                 <button className="danger" onClick={() => removeFase(f.id)} aria-label="Rimuovi">✕</button>
                               </div>
                               {(c || f.funzione) && <div className="pl-fase-fn">{c && <span className="pl-fase-cen" style={{ background: c.col }} title={`Centratura: ${c.lab}`}>{c.icona} {c.lab}</span>}{f.funzione}</div>}
+                              <textarea className="pl-fase-nota" rows={2} value={f.nota ?? ""} placeholder="Cosa farai, in concreto, in questa fase… (es. testo, esercizio, consegna)" onChange={(e) => setFase(f.id, { nota: e.target.value })} />
                               {faseDett === f.id && <div className="pl-fase-dett">
                                 {rng && <div className="pl-fase-dr">⏱ Durata consigliata <b>{rng[0]}–{rng[1]}′</b> <span className="muted">(per {minPrev}′ di lezione)</span>{fuori && <span className="pl-fase-fuori"> · attuale {f.minuti}′ fuori range</span>}</div>}
                                 {f.attDoc && <div className="pl-fase-att"><span className="pl-fase-role doc">🗣️ Docente</span>{f.attDoc}</div>}

@@ -805,14 +805,21 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-bin-seg:hover { filter: brightness(1.08); }
 .pl-bin-over { min-width: 6px; background: var(--danger); opacity: 0.85; }
 .pl-fase-ora { flex-shrink: 0; min-width: 6.2rem; font: 600 0.74rem var(--font-ui); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
-.pl-fase-step { display: inline-flex; align-items: center; border: 1px solid var(--parchment-dark); border-radius: var(--radius); overflow: hidden; flex-shrink: 0; }
-.pl-fase-step button { padding: 0.25rem 0.55rem; background: var(--parchment); border: none; color: var(--ink-light); font-weight: 800; cursor: pointer; line-height: 1; }
+.pl-fase-step { display: inline-flex; align-items: stretch; align-self: center; border: 1px solid var(--parchment-dark); border-radius: var(--radius); overflow: hidden; flex-shrink: 0; background: var(--cream); }
+.pl-fase-step button { padding: 0.3rem 0.5rem; background: var(--parchment); border: none; border-right: 1px solid var(--parchment-dark); color: var(--ink-light); font-weight: 800; cursor: pointer; line-height: 1; }
 .pl-fase-step button:hover { background: var(--accent-pale); color: var(--accent); box-shadow: none; transform: none; }
-.pl-fase-step input { width: 3rem; text-align: center; border: none; border-left: 1px solid var(--parchment-dark); background: var(--cream); color: var(--ink); padding: 0.25rem 0.2rem; -moz-appearance: textfield; }
-.pl-fase-step em { padding: 0 0.35rem 0 0.1rem; font-style: normal; color: var(--ink-muted); font-size: 0.78rem; border-right: 1px solid var(--parchment-dark); }
+.pl-fase-step .st-l { font: 700 0.66rem var(--font-ui); color: var(--ink-muted); padding: 0.3rem 0.4rem; }
+.pl-fase-step .st-1 { font-size: 1rem; }
+.pl-fase-step input { width: 2.6rem; text-align: center; border: none; background: var(--cream); color: var(--ink); font-weight: 700; padding: 0.25rem 0.2rem; -moz-appearance: textfield; }
+.pl-fase-step input::-webkit-outer-spin-button, .pl-fase-step input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pl-fase-step em { padding: 0 0.4rem 0 0.05rem; font-style: normal; color: var(--ink-muted); font-size: 0.78rem; border-right: 1px solid var(--parchment-dark); display: inline-flex; align-items: center; }
 .pl-fase-met { flex-shrink: 0; font: 600 0.74rem var(--font-ui); padding: 0.28rem 0.6rem; border: 1px solid var(--parchment-dark); border-radius: 99px; background: var(--parchment); color: var(--ink-light); cursor: pointer; }
 .pl-fase-met:hover, .pl-fase-met.on { border-color: var(--accent); color: var(--accent); background: var(--accent-pale); box-shadow: none; transform: none; }
 .pl-fase-sel { font-size: 0.78rem; color: var(--ink-muted); padding-left: 0.2rem; }
+.pl-fase-titolo { flex: 1; min-width: 0; font: 700 0.95rem var(--font-display); color: var(--ink); padding: 0.25rem 0; }
+.pl-fase-nota { width: 100%; resize: vertical; min-height: 2.3rem; font: 0.84rem var(--font-ui); line-height: 1.4; padding: 0.4rem 0.55rem; border: 1px dashed var(--parchment-dark); border-radius: var(--radius); background: var(--cream); color: var(--ink); }
+.pl-fase-nota:focus { border-style: solid; border-color: var(--accent); outline: none; }
+.pl-fase-nota::placeholder { color: var(--ink-muted); font-style: italic; }
 .pl-fase-cen { display: inline-flex; align-items: center; gap: 0.25rem; font: 700 0.66rem var(--font-ui); color: #fff; padding: 0.18rem 0.5rem; border-radius: 99px; flex-shrink: 0; white-space: nowrap; }
 .pl-fase { transition: box-shadow var(--transition); }
 .pl-fase.evidenzia { box-shadow: 0 0 0 2px var(--accent); }
