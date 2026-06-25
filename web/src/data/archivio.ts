@@ -45,6 +45,19 @@ let _p: Map<string, Parallelismo> | null = null;
 const vMap = (a: ArchivioIndex) => (_v ??= new Map(a.voci.map((v) => [v.id, v])));
 const pMap = (a: ArchivioIndex) => (_p ??= new Map(a.parallelismi.map((p) => [p.id, p])));
 export const voce = (a: ArchivioIndex, id: string): Voce | undefined => vMap(a).get(id);
+
+// Ponte nome-materia del Cruscotto → codice d'archivio (GRC/LAT/ITA).
+const MAT_BRIDGE: Record<string, string> = {
+  "Lingua e letteratura italiana": "ITA",
+  "Lingua e cultura latina": "LAT",
+  "Lingua e cultura greca": "GRC",
+};
+export function materiaCodice(a: ArchivioIndex, nome: string): string | undefined {
+  if (MAT_BRIDGE[nome]) return MAT_BRIDGE[nome];
+  return a.indici.vociByMateria[nome] ? nome : undefined;
+}
+/** Ordinamento per centralità (core prima) poi alfabetico. */
+export const perPeso = (x: Voce, y: Voce): number => (x.peso === "core" ? 0 : 1) - (y.peso === "core" ? 0 : 1) || x.testo.localeCompare(y.testo);
 const resolveVoci = (a: ArchivioIndex, ids: string[]): Voce[] => ids.map((id) => vMap(a).get(id)).filter((v): v is Voce => !!v);
 
 // ── Gate di pubblicazione (stato) ────────────────────────────────────────────

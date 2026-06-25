@@ -870,6 +870,42 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .arc-cop-pct { text-align: right; font: 700 0.9rem var(--font-display); color: var(--accent); }
 .arc-gap { list-style: none; margin: 0.2rem 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.8rem; }
 .arc-gap li { color: var(--ink-light); }
+.arc-materie { margin-bottom: 0.7rem; }
+.arc-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+@media (max-width: 1000px) { .arc-grid { grid-template-columns: minmax(0, 1fr); } }
+.arc-side { display: flex; flex-direction: column; gap: 0.8rem; }
+
+/* ── ArchivioPicker: menù a pulsanti + albero + abilità/competenze ──────────── */
+.ap { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
+.ap-bar { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid var(--parchment-dark); }
+.ap-grp { display: flex; align-items: center; gap: 0.4rem; }
+.ap-lab { font: 700 0.64rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); }
+.ap-settori { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.ap-set { font: 600 0.74rem var(--font-ui); padding: 0.2rem 0.55rem; border: 1px solid var(--parchment-dark); border-radius: 99px; background: var(--parchment); color: var(--ink-muted); cursor: pointer; }
+.ap-set:hover { border-color: var(--accent); color: var(--accent); transform: none; box-shadow: none; }
+.ap-set.on { background: var(--accent-pale); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.ap-sec-h { font: 700 0.74rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-muted); margin-bottom: 0.3rem; }
+.ap-sec-h small { color: var(--accent); }
+.ap-sec-h em { text-transform: none; letter-spacing: 0; font-weight: 500; font-style: italic; }
+.ap-tree { border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); padding: 0.4rem; max-height: 46vh; overflow-y: auto; overflow-x: hidden; }
+.ap-row { display: flex; align-items: center; gap: 0.2rem; }
+.ap-tw { width: 1.2rem; flex-shrink: 0; background: none; border: none; color: var(--ink-muted); cursor: pointer; padding: 0; font-size: 0.7rem; }
+.ap-tw:hover { background: none; box-shadow: none; transform: none; color: var(--accent); }
+.ap-leaf { flex: 1; min-width: 0; display: flex; align-items: center; gap: 0.4rem; text-align: left; padding: 0.25rem 0.4rem; border: 1px solid transparent; border-radius: var(--radius); background: none; color: var(--ink); cursor: pointer; }
+.ap-leaf:hover { background: var(--parchment); transform: none; box-shadow: none; }
+.ap-leaf.on { background: var(--accent-glow); border-color: var(--accent); }
+.ap-leaf-t { flex: 1; min-width: 0; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ap-flag { width: 0.9rem; flex-shrink: 0; font-weight: 800; color: var(--accent); text-align: center; }
+.ap-tc { font: 700 0.56rem var(--font-ui); text-transform: uppercase; color: var(--ink-muted); background: var(--parchment-dark); padding: 0.05rem 0.3rem; border-radius: 4px; flex-shrink: 0; }
+.ap-ac { background: color-mix(in srgb, var(--accent) 4%, transparent); border: 1px dashed var(--accent-border); border-radius: var(--radius); padding: 0.5rem 0.6rem; }
+.ap-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.ap-chip { display: inline-flex; align-items: center; gap: 0.25rem; font: 600 0.76rem var(--font-ui); padding: 0.2rem 0.5rem; border: 1px solid var(--parchment-dark); border-radius: 99px; background: var(--parchment); color: var(--ink); cursor: pointer; max-width: 100%; }
+.ap-chip:hover { border-color: var(--accent); color: var(--accent); transform: none; box-shadow: none; }
+.ap-chip.on { background: var(--accent-pale); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+
+/* Planner: colonna archivio + indicatore copertura */
+.pl-archivio { min-width: 0; border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); background: var(--cream); padding: 0.6rem; max-height: 64vh; overflow-y: auto; }
+.pl-cop { margin-left: 0.5rem; font: 700 0.74rem var(--font-ui); color: var(--accent); }
 
 /* ── Tablet ──────────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {

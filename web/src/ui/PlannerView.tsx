@@ -6,18 +6,19 @@ import { newId, records, upsert, type Rec } from "../store/store";
 import { useStore } from "../store/useStore";
 import { classiAttive, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
 import { annoCorrenteId, classeId } from "../store/links";
-import { bloomLabel, cicloDaFase, materieIndirizzo, nucleiConObiettivi, useTassonomia, type TaxObiettivo } from "../data/tassonomia";
+import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia";
+import { copertura, materiaCodice, useArchivio, voce, type Voce } from "../data/archivio";
+import { ArchivioPicker } from "./ArchivioPicker";
 import { materiaColor } from "./materia";
 
 const oggi = () => new Date().toISOString().slice(0, 10);
-const norm = (s: string) => s.toLowerCase();
 type Tipo = "lezione" | "laboratorio" | "uda";
 type CompitoRow = { id: string; tipo: string; testo: string };
 
 const COMPITO_TIPI = ["esercizio in classe", "esercitazione guidata", "compito per casa", "verifica formativa"];
 const MAT_TIPI = ["esercizio", "scheda", "traccia", "versione", "presentazione", "mappa concettuale"];
+const CONO = new Set(["conoscenza", "contenuto"]);
 
-// Etichette con la maiuscola a inizio parola (minuscole le particelle), solo per la resa.
 const MINOR = new Set(["di", "e", "a", "da", "in", "con", "su", "per", "tra", "fra", "la", "il", "lo", "le", "i", "gli", "un", "una", "del", "della", "dei", "delle", "al", "alla", "allo", "dello", "ed", "o"]);
 const cap = (s: string): string => s.split(" ").map((w, i) => (!w ? w : i > 0 && MINOR.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1))).join(" ");
 
@@ -31,14 +32,15 @@ const VERIFICHE_F = optsOf("lezioni", "Verifica formativa");
 const EDCIVICA = optsOf("lezioni", "Educazione civica");
 
 /**
- * Pianifica: composer completo di lezione / laboratorio / UdA, con lo stesso livello di
- * arricchimento didattico (conoscenze/abilità/competenze, metodologie, strumenti, compiti,
- * educazione civica, raccordi interdisciplinari, inclusione, verifica) e calendarizzazione.
+ * Pianifica: composer di lezione / laboratorio / UdA guidato dall'ARCHIVIO (ArchivioPicker:
+ * albero ramificato di conoscenze/contenuti + abilità/competenze flaggabili). Le voci flaggate
+ * compongono conoscenze/abilità/competenze e, salvando, creano gli obiettivi del backbone.
  */
 export function PlannerView({ onView }: { onView: (v: View) => void }) {
   useStore();
   const profile = useProfile();
   const tax = useTassonomia();
+  const arch = useArchivio();
   const materie = materieAttive(profile);
   const classi = classiAttive(profile);
   const indir = scuoleCorrenti(profile)[0]?.indirizzo;
@@ -51,12 +53,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [dataFine, setDataFine] = useState(oggi());
   const [durata, setDurata] = useState(2);
   const [titolo, setTitolo] = useState("");
-  const [sel, setSel] = useState<TaxObiettivo[]>([]);
-  const [q, setQ] = useState("");
-  const [area, setArea] = useState("");
+  const [selIds, setSelIds] = useState<Set<string>>(new Set());
   const [msg, setMsg] = useState<string | null>(null);
 
-  // Composizione didattica (condivisa fra lezione/laboratorio/UdA)
   const [prereq, setPrereq] = useState("");
   const [conoscenze, setConoscenze] = useState("");
   const [abilita, setAbilita] = useState("");
@@ -72,7 +71,6 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [consegna, setConsegna] = useState("");
   const [matSel, setMatSel] = useState<string[]>([]);
   const [nuovoMat, setNuovoMat] = useState<{ titolo: string; tipo: string }>({ titolo: "", tipo: "esercizio" });
-  // UdA
   const [competenza, setCompetenza] = useState("");
   const [prodotto, setProdotto] = useState("");
   const [compitoRealta, setCompitoRealta] = useState("");
@@ -82,45 +80,38 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const materieDisp = !isUda && classe ? materieClasseEffettive(classe, profile) : materie;
   const raccordiOpts = useMemo(() => (tax ? materieIndirizzo(tax, indir).filter((m) => m !== materia) : []), [tax, indir, materia]);
 
-  const aree = useMemo(() => {
-    if (!tax || !materia) return [];
-    const base = nucleiConObiettivi(tax, materia, { indirizzoId: indir, ciclo });
-    return [...new Set(base.flatMap((g) => g.obiettivi.map((o) => o.area)).filter(Boolean))].sort();
-  }, [tax, materia, indir, ciclo]);
-
-  const gruppi = useMemo(() => {
-    if (!tax || !materia) return [];
-    let base = nucleiConObiettivi(tax, materia, { indirizzoId: indir, ciclo });
-    if (area) base = base.map((g) => ({ nucleo: g.nucleo, obiettivi: g.obiettivi.filter((o) => o.area === area) })).filter((g) => g.obiettivi.length > 0);
-    if (q.trim()) {
-      const nq = norm(q);
-      base = base.map((g) => ({ nucleo: g.nucleo, obiettivi: g.obiettivi.filter((o) => norm(`${o.argomento} ${o.descrizione} ${o.nucleo} ${(o.keywords ?? []).join(" ")}`).includes(nq)) })).filter((g) => g.obiettivi.length > 0);
-    }
-    return base;
-  }, [tax, materia, indir, ciclo, q, area]);
-
-  const selIds = new Set(sel.map((o) => o.id));
-  const toggle = (o: TaxObiettivo) => setSel((s) => (selIds.has(o.id) ? s.filter((x) => x.id !== o.id) : [...s, o]));
+  const code = arch ? materiaCodice(arch, materia) : undefined;
+  const selVoci: Voce[] = arch ? [...selIds].map((id) => voce(arch, id)).filter((v): v is Voce => !!v) : [];
+  const cop = arch && code ? copertura(arch, code, undefined, [...selIds]) : null;
+  const toggleVoce = (v: Voce) => setSelIds((s) => { const n = new Set(s); n.has(v.id) ? n.delete(v.id) : n.add(v.id); return n; });
   const toggleIn = (arr: string[], v: string) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
-  const componiDaObiettivi = () => {
-    const con = sel.filter((o) => o.tipo === "conoscenza").map((o) => `• ${o.argomento}`);
-    const com = sel.filter((o) => o.tipo === "competenza").map((o) => `• ${o.argomento}`);
+  // Le voci flaggate compongono i tre campi (per blocco): si possono poi rifinire a mano.
+  const componi = () => {
+    const con = selVoci.filter((v) => CONO.has(v.blocco)).map((v) => `• ${v.testo}`);
+    const ab = selVoci.filter((v) => v.blocco === "abilita").map((v) => `• ${v.testo}`);
+    const com = selVoci.filter((v) => v.blocco === "competenza").map((v) => `• ${v.testo}`);
     if (con.length) setConoscenze((c) => [c.trim(), ...con].filter(Boolean).join("\n"));
+    if (ab.length) setAbilita((c) => [c.trim(), ...ab].filter(Boolean).join("\n"));
     if (com.length) setCompetenzeTxt((c) => [c.trim(), ...com].filter(Boolean).join("\n"));
   };
 
-  const obiettivoRecId = (o: TaxObiettivo): string => {
-    const exist = records("obiettivi").find((r) => r["Enunciato"] === o.argomento && r["Materia"] === materia);
-    if (exist) return exist.id;
-    const id = newId();
-    upsert("obiettivi", {
-      id, Enunciato: o.argomento, Tipo: o.tipo, Materia: materia,
-      Nucleo: o.nucleo, Area: o.area, "Competenza europea": o.competenza_europea,
-      ...(bloomLabel(o.bloom) ? { "Livello cognitivo": bloomLabel(o.bloom) } : {}),
-      Ciclo: cicloDaFase(o.fase) ?? ciclo,
-    } as Rec);
-    return id;
+  // Crea (o riusa) i record-obiettivo dal backbone agganciato alle voci flaggate.
+  const obiettiviDaVoci = (): string[] => {
+    if (!arch) return [];
+    const backbone = new Set<string>();
+    for (const v of selVoci) for (const ob of v.obiettivi_backbone) backbone.add(ob);
+    const ids: string[] = [];
+    for (const obId of backbone) {
+      const ob = arch.obiettivi.find((o) => o.id === obId);
+      if (!ob) continue;
+      const exist = records("obiettivi").find((r) => r["Enunciato"] === ob.argomento && r["Materia"] === materia);
+      if (exist) { ids.push(exist.id); continue; }
+      const id = newId();
+      upsert("obiettivi", { id, Enunciato: ob.argomento, Tipo: ob.tipo, Materia: materia, Nucleo: ob.nucleo, "Competenza europea": ob.competenza_europea, ...(bloomLabel(ob.bloom) ? { "Livello cognitivo": bloomLabel(ob.bloom) } : {}), Ciclo: ob.fase === "biennio" ? "Biennio" : ob.fase === "triennio" ? "Triennio" : ciclo } as Rec);
+      ids.push(id);
+    }
+    return ids;
   };
 
   const addCompito = () => setCompiti((c) => [...c, { id: newId(), tipo: COMPITO_TIPI[0], testo: "" }]);
@@ -138,16 +129,15 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   };
 
   const reset = () => {
-    setSel([]); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
+    setSelIds(new Set()); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
     setFasi(""); setMetodologie([]); setStrumenti([]); setEduciv([]); setRaccordi([]); setInclusione(""); setVerificaF("");
     setCompiti([]); setConsegna(""); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
   };
-
   const compitiText = () => compiti.filter((c) => c.testo.trim()).map((c) => `• [${c.tipo}] ${c.testo.trim()}`).join("\n");
 
   const salva = () => {
-    if (sel.length === 0 && !titolo.trim()) { setMsg("Aggiungi un titolo o qualche obiettivo dalla palette."); return; }
-    const tit = titolo.trim() || `${materia}${sel[0] ? " — " + sel[0].argomento : ""}`;
+    if (selVoci.length === 0 && !titolo.trim()) { setMsg("Aggiungi un titolo o flagga qualche voce dall'archivio."); return; }
+    const tit = titolo.trim() || `${materia}${selVoci[0] ? " — " + selVoci[0].testo : ""}`;
     const cId = classe ? classeId(classe) : undefined;
     const didattica: Rec = {
       id: "", Prerequisiti: prereq, Conoscenze: conoscenze, "Abilità": abilita, Competenze: competenzeTxt,
@@ -155,9 +145,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
       "Educazione civica": educiv, "Raccordi interdisciplinari": raccordi, "Inclusione (misure)": inclusione,
       ...(verificaF ? { "Verifica formativa": verificaF } : {}),
     };
-
     if (isUda) {
-      const obIds = sel.map(obiettivoRecId);
+      const obIds = obiettiviDaVoci();
       const lezIds: string[] = [];
       const start = Date.parse(`${data}T00:00:00`), end = Date.parse(`${dataFine || data}T00:00:00`);
       for (let i = 0; i < Math.max(0, nLezioni); i++) {
@@ -177,7 +166,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
         ...didattica, id: newId(),
         Titolo: tipo === "laboratorio" ? `[Laboratorio] ${tit}` : tit,
         Materia: materia, "Data prevista": data, "Durata (ore)": durata, Stato: "Progettata",
-        "Obiettivi della lezione": sel.map((o) => `• ${o.argomento}`).join("\n"),
+        "Obiettivi della lezione": selVoci.map((v) => `• ${v.testo}`).join("\n"),
         Fasi: fasi, ...(consegna ? { "Consegna compiti": consegna } : {}),
         "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}), ...(matSel.length ? { Materiali: matSel } : {}),
       } as Rec);
@@ -210,14 +199,14 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
         <>
           <div className="pl-ctx">
             <label className="field sm"><span>Materia</span>
-              <select value={materieDisp.includes(materia) ? materia : ""} onChange={(e) => { setMateria(e.target.value); setSel([]); setArea(""); }}>
+              <select value={materieDisp.includes(materia) ? materia : ""} onChange={(e) => { setMateria(e.target.value); setSelIds(new Set()); }}>
                 {!materieDisp.includes(materia) && <option value="">—</option>}
                 {materieDisp.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </label>
             {!isUda && (
               <label className="field sm"><span>Classe</span>
-                <select value={classe} onChange={(e) => { const c = e.target.value; setClasse(c); const ms = materieClasseEffettive(c, profile); if (!ms.includes(materia)) { setMateria(ms[0] ?? ""); setSel([]); } }}>
+                <select value={classe} onChange={(e) => { const c = e.target.value; setClasse(c); const ms = materieClasseEffettive(c, profile); if (!ms.includes(materia)) { setMateria(ms[0] ?? ""); setSelIds(new Set()); } }}>
                   {classi.length === 0 && <option value="">—</option>}
                   {classi.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -242,32 +231,10 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
           </div>
 
           <div className="pl-body">
-            <div className="pl-palette">
-              <input className="pl-search" type="text" placeholder="Cerca nucleo, argomento, parola chiave…" value={q} onChange={(e) => setQ(e.target.value)} />
-              {aree.length > 0 && (
-                <select className="pl-area" value={area} onChange={(e) => setArea(e.target.value)}>
-                  <option value="">Tutte le aree</option>
-                  {aree.map((a) => <option key={a} value={a}>{a}</option>)}
-                </select>
-              )}
-              {!tax ? (
-                <p className="muted">Carico il backbone…</p>
-              ) : gruppi.length === 0 ? (
-                <p className="muted">Nessun obiettivo per {materia} ({ciclo}). Prova l'altro ciclo o un'altra area.</p>
-              ) : (
-                gruppi.map((g) => (
-                  <div key={g.nucleo} className="pl-nucleo">
-                    <div className="pl-nucleo-h">{g.nucleo} <small>{g.obiettivi.length}</small></div>
-                    {g.obiettivi.map((o) => (
-                      <button key={o.id} className={selIds.has(o.id) ? "pl-ob sel" : "pl-ob"} onClick={() => toggle(o)} title={o.descrizione}>
-                        <span className="pl-ob-add">{selIds.has(o.id) ? "✓" : "+"}</span>
-                        <span className="pl-ob-txt"><b>{o.argomento}</b>{o.descrizione ? <em> — {o.descrizione}</em> : null}</span>
-                        <span className={`pl-ob-tipo ${o.tipo === "competenza" ? "com" : "con"}`}>{o.tipo === "competenza" ? (bloomLabel(o.bloom) ?? "COM") : "CON"}</span>
-                      </button>
-                    ))}
-                  </div>
-                ))
-              )}
+            <div className="pl-archivio">
+              {!arch ? <p className="muted">Carico l'archivio…</p>
+                : !code ? <p className="muted">Nessun dato d'archivio per <b>{materia}</b>: compila i campi a destra a mano.</p>
+                : <ArchivioPicker a={arch} materia={code} selez={selIds} onToggle={toggleVoce} />}
             </div>
 
             <div className="pl-compose">
@@ -276,9 +243,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
               </label>
 
               <div className="pl-sel">
-                <div className="pl-sel-h">Obiettivi scelti <b>{sel.length}</b>{sel.length > 0 && <button className="link" onClick={componiDaObiettivi}>componi conoscenze/competenze ↓</button>}</div>
-                {sel.length === 0 ? <p className="muted">Pesca gli obiettivi dalla palette a sinistra.</p> : (
-                  <ul>{sel.map((o) => <li key={o.id}><span>{o.argomento}</span><button onClick={() => toggle(o)} aria-label="Togli">✕</button></li>)}</ul>
+                <div className="pl-sel-h">Voci flaggate <b>{selVoci.length}</b>{cop && cop.totali > 0 && <span className="pl-cop">copertura {cop.pct}%</span>}{selVoci.length > 0 && <button className="link" onClick={componi}>componi C/A/C ↓</button>}</div>
+                {selVoci.length === 0 ? <p className="muted">Flagga voci dall'archivio a sinistra (conoscenze, abilità, competenze).</p> : (
+                  <ul>{selVoci.map((v) => <li key={v.id}><span>{v.testo}</span><button onClick={() => toggleVoce(v)} aria-label="Togli">✕</button></li>)}</ul>
                 )}
               </div>
 
