@@ -5,6 +5,7 @@ import { schemaByKey } from "@model";
 import { newId, records, upsert, type Rec } from "../store/store";
 import { useStore } from "../store/useStore";
 import { classiAttive, contiClasse, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
+import { unitaOraria, useSettings } from "../store/settings";
 import { annoCorrenteId, classeId } from "../store/links";
 import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia";
 import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, faseById, fasi as repFasi, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, metodologieDiFase, misureInclusione as repInclusione, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type ArchivioIndex, type Fase, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
@@ -172,6 +173,8 @@ function DrillTax({ roots, path, setPath, a, selez, onTree, onVoce }: {
 export function PlannerView({ onView }: { onView: (v: View) => void }) {
   useStore();
   const profile = useProfile();
+  const settings = useSettings();
+  const unitaOra = unitaOraria(settings);
   const tax = useTassonomia();
   const arch = useArchivio();
   const materie = materieAttive(profile);
@@ -276,7 +279,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const righe = (campo: "con" | "ab" | "com", testo: string): string[] => derivato(campo, testo).split("\n").filter(Boolean).map((s) => s.replace(/^•\s*/, ""));
 
   // Fasi della lezione (widget): durata per fase + metodi per fase + barra colorata.
-  const minPrev = Math.round((durata || 0) * 60);
+  const minPrev = Math.round((durata || 0) * unitaOra);
   const fasiMinTot = fasiRows.reduce((a, b) => a + (Number(b.minuti) || 0), 0);
   const minRim = minPrev - fasiMinTot;
   // Centratura-mix: quota di tempo a protagonismo studente (per la barra pedagogica).
@@ -646,21 +649,19 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                 {stepDefs[idx].key === "fasi" && (
                   <div className="pl-fasi">
                     <div className="pl-fase-blocco">
-                      <div className="pl-sub">⏳ Durata della lezione</div>
-                      <div className="pl-dgrid mini">{DURATE.map((d) => <DCard key={d.h} icon={d.icona} title={d.lab} desc={`${d.h * 60}′ di monte ore`} on={durata === d.h} onClick={() => setDurata(d.h)} />)}</div>
+                      <div className="pl-sub">⏳ Durata della lezione <small>ora di lezione = {unitaOra}′ (da orario)</small></div>
+                      <div className="pl-dgrid mini">{DURATE.map((d) => <DCard key={d.h} icon={d.icona} title={d.lab} desc={`${Math.round(d.h * unitaOra)}′ di monte ore`} on={durata === d.h} onClick={() => setDurata(d.h)} />)}</div>
                     </div>
 
-                    <div className="pl-fasi-head">
-                      <span>Monte ora <b>{minPrev}′</b></span>
-                      <span>· assegnati <b>{fasiMinTot}′</b></span>
-                      <span className={minRim < 0 ? "pl-fasi-over" : "pl-fasi-ok"}>{minRim >= 0 ? `${minRim}′ liberi` : `${-minRim}′ in eccesso`}</span>
-                      <span className="spacer" />
-                      {fasiRows.length > 0 && minPrev > 0 && minRim !== 0 && <button className="link" onClick={bilanciaFasi} title="Riscala le durate proporzionalmente fino a coprire il monte ore">⚖ bilancia</button>}
-                      <button className="link" onClick={struttFasi}>struttura tipo</button>
-                      {arrRep.length > 0 && <button className={presetOpen ? "pl-fase-addbtn on" : "pl-fase-addbtn"} onClick={() => { setPresetOpen((o) => !o); setAddFaseOpen(false); }}>{presetOpen ? "× chiudi" : "↳ preset timeline"}</button>}
-                      {arch && repFasi(arch).length > 0
-                        ? <button className={addFaseOpen ? "pl-fase-addbtn on" : "pl-fase-addbtn"} onClick={() => { setAddFaseOpen((o) => !o); setFaseMomento(null); setPresetOpen(false); }}>{addFaseOpen ? "× chiudi" : "＋ aggiungi fase"}</button>
-                        : <button className="link" onClick={addFase}>+ fase</button>}
+                    <div className="pl-fase-blocco">
+                      <div className="pl-sub">🧭 Costruisci la scansione</div>
+                      <div className="pl-dgrid mini">
+                        {arrRep.length > 0 && <DCard icon="🗂️" title="Preset timeline" desc="Applica una sequenza pronta, per modello didattico." on={presetOpen} onClick={() => { setPresetOpen((o) => !o); setAddFaseOpen(false); }} />}
+                        <DCard icon="🧩" title="Struttura tipo" desc="Quattro fasi standard, bilanciate sul monte ore." onClick={() => struttFasi()} />
+                        {arch && repFasi(arch).length > 0
+                          ? <DCard icon="➕" title="Aggiungi fase" desc="Scegli per momento dell'arco: inizio → sviluppo → apprendimento → fine." on={addFaseOpen} onClick={() => { setAddFaseOpen((o) => !o); setFaseMomento(null); setPresetOpen(false); }} />
+                          : <DCard icon="➕" title="Aggiungi fase" desc="Aggiungi una fase vuota da compilare a mano." onClick={() => addFase()} />}
+                      </div>
                     </div>
 
                     {presetOpen && arrRep.length > 0 && (
@@ -684,6 +685,14 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                             </div>}
                       </div>
                     )}
+
+                    <div className="pl-fasi-head">
+                      <span>Monte ore <b>{minPrev}′</b></span>
+                      <span>· assegnati <b>{fasiMinTot}′</b></span>
+                      <span className={minRim < 0 ? "pl-fasi-over" : "pl-fasi-ok"}>{minRim >= 0 ? `${minRim}′ liberi` : `${-minRim}′ in eccesso`}</span>
+                      <span className="spacer" />
+                      {fasiRows.length > 0 && minPrev > 0 && minRim !== 0 && <button className="link" onClick={bilanciaFasi} title="Riscala le durate proporzionalmente fino a coprire il monte ore">⚖ bilancia</button>}
+                    </div>
 
                     {fasiRows.length > 0 && (
                       <div className="pl-binario" role="img" aria-label={`Ripartizione del tempo: ${fasiRows.map((f) => `${f.nome} ${f.minuti}′`).join(", ")}`}>

@@ -96,3 +96,15 @@ export function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
   return (h || 0) * 60 + (m || 0);
 }
+
+/**
+ * Durata (in minuti) di un'ora di lezione, dedotta dalle fasce dell'orario
+ * (raramente 60′ piena). Usa la durata più frequente fra le fasce; default 60.
+ */
+export function unitaOraria(s: Settings = settings): number {
+  const durate = s.timeBands.map((b) => toMinutes(b.end) - toMinutes(b.start)).filter((d) => d > 0);
+  if (!durate.length) return 60;
+  const freq = new Map<number, number>();
+  for (const d of durate) freq.set(d, (freq.get(d) ?? 0) + 1);
+  return [...freq.entries()].sort((a, b) => b[1] - a[1])[0][0];
+}
