@@ -1,0 +1,219 @@
+id,materia,anno,fase,indirizzi,classi,blocco,nucleo,testo,obiettivi_backbone,tipo_contenuto,parent,peso,tag,bloom,competenza_europea,fonte,stato
+LAT-0001,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Alfabeto, pronuncia, quantita' vocalica e sillabica",LAT.CON.MORF.01,,,core,fonetica|alfabeto,,,LAT cl.1 gramm,revisione
+LAT-0002,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Le regole dell'accento latino",LAT.CON.MORF.01,,,core,accento,,,LAT cl.1 gramm,revisione
+LAT-0003,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Prima declinazione",LAT.CON.MORF.02,,,core,declinazioni,,,LAT cl.1 gramm,revisione
+LAT-0004,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Seconda declinazione",LAT.CON.MORF.02,,,core,declinazioni,,,LAT cl.1 gramm,revisione
+LAT-0005,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Terza declinazione e particolarita'",LAT.CON.MORF.02,,,core,declinazioni,,,LAT cl.1 gramm,revisione
+LAT-0006,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Quarta e quinta declinazione",LAT.CON.MORF.02,,,core,declinazioni,,,LAT cl.1 gramm,revisione
+LAT-0007,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Aggettivi della prima classe (I e II declinazione)",LAT.CON.MORF.03,,,core,aggettivi,,,LAT cl.1 gramm,revisione
+LAT-0008,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Aggettivi della seconda classe (III declinazione); aggettivi pronominali",LAT.CON.MORF.03,,,core,aggettivi,,,LAT cl.1 gramm,revisione
+LAT-0009,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Pronomi personali, riflessivi e possessivi",LAT.CON.MORF.04,,,core,pronomi,,,LAT cl.1 gramm,revisione
+LAT-0010,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Pronomi e aggettivi dimostrativi e determinativi",LAT.CON.MORF.04,,,core,pronomi,,,LAT cl.1 gramm,revisione
+LAT-0011,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Il pronome relativo",LAT.CON.MORF.04,,,core,pronomi|relativo,,,LAT cl.1 gramm,revisione
+LAT-0012,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Il verbo: caratteri generali; le quattro coniugazioni e la coniugazione mista",LAT.CON.MORF.05,,,core,verbo,,,LAT cl.1 gramm,revisione
+LAT-0013,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Il paradigma e i temi verbali; il verbo sum e i composti",LAT.CON.MORF.05,,,core,verbo,,,LAT cl.1 gramm,revisione
+LAT-0014,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Indicativo: tutti i tempi, attivo e passivo",LAT.CON.MORF.05,,,core,verbo|indicativo,,,LAT cl.1 gramm,revisione
+LAT-0015,LAT,1,biennio,LC,A-13,conoscenza,Morfologia,"Infinito presente e imperativo",LAT.CON.MORF.05,,,core,verbo,,,LAT cl.1 gramm,revisione
+LAT-0016,LAT,1,biennio,LC,A-13,conoscenza,Sintassi,"La frase: soggetto, predicato verbale e nominale, copula",LAT.CON.SINT.01,,,core,analisi-logica,,,LAT cl.1 gramm,revisione
+LAT-0017,LAT,1,biennio,LC,A-13,conoscenza,Sintassi,"I principali complementi (luogo, tempo, mezzo, modo, causa, fine, compagnia, agente, dativo di possesso, doppio dativo)",LAT.CON.SINT.01,,,core,complementi,,,LAT cl.1 gramm,revisione
+LAT-0018,LAT,1,biennio,LC,A-13,conoscenza,Sintassi,"Proposizioni causali e temporali con l'indicativo",LAT.CON.SINT.02,,,core,subordinate,,,LAT cl.1 gramm,revisione
+LAT-0019,LAT,1,biennio,LC,A-13,conoscenza,Lessico,"Lessico di base per famiglie semantiche; formazione delle parole dalla radice",LAT.CON.LESS.01,,,core,lessico,,,LAT cl.1 gramm,revisione
+LAT-0020,LAT,1,biennio,LC,A-13,conoscenza,Civilta' e ricezione,"Aspetti e parole-chiave della civilta' romana (scuola, famiglia, esercito, politica)",LAT.CON.CULT.01,,,core,civilta,,,LAT cl.1 gramm,revisione
+LAT-0021,LAT,2,biennio,LC,A-13,conoscenza,Morfologia,"Gradi dell'aggettivo: comparativi e superlativi (regolari e irregolari); gradi dell'avverbio",LAT.CON.MORF.03,,,core,comparativi,,,LAT cl.2 gramm,revisione
+LAT-0022,LAT,2,biennio,LC,A-13,conoscenza,Morfologia,"Pronomi e aggettivi interrogativi e indefiniti",LAT.CON.MORF.04,,,core,pronomi,,,LAT cl.2 gramm,revisione
+LAT-0023,LAT,2,biennio,LC,A-13,conoscenza,Morfologia,"I numerali",LAT.CON.MORF.03,,,core,numerali,,,LAT cl.2 gramm,revisione
+LAT-0024,LAT,2,biennio,LC,A-13,conoscenza,Morfologia,"Congiuntivo: tutti i tempi, attivo e passivo",LAT.CON.MORF.05,,,core,verbo|congiuntivo,,,LAT cl.2 gramm,revisione
+LAT-0025,LAT,2,biennio,LC,A-13,conoscenza,Morfologia,"Participio (presente, perfetto, futuro)",LAT.CON.MORF.05,,,core,verbo|participio,,,LAT cl.2 gramm,revisione
+LAT-0026,LAT,2,biennio,LC,A-13,conoscenza,Morfologia,"Infiniti (presente, perfetto, futuro)",LAT.CON.MORF.05,,,core,verbo|infinito,,,LAT cl.2 gramm,revisione
+LAT-0027,LAT,2,biennio,LC,A-13,conoscenza,Morfologia,"Gerundio, gerundivo e supino",LAT.CON.MORF.05,,,core,verbo,,,LAT cl.2 gramm,revisione
+LAT-0028,LAT,2,biennio,LC,A-13,conoscenza,Morfologia,"Verbi deponenti e semideponenti",LAT.CON.MORF.06,,,core,verbo|deponenti,,,LAT cl.2 gramm,revisione
+LAT-0029,LAT,2,biennio,LC,A-13,conoscenza,Morfologia,"Verbi anomali (fero, eo, volo, fio), difettivi e impersonali",LAT.CON.MORF.06,,,core,verbo|anomali,,,LAT cl.2 gramm,revisione
+LAT-0030,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Participio congiunto e ablativo assoluto",LAT.CON.SINT.03,,,core,participio|ablativo-assoluto,,,LAT cl.2 gramm,revisione
+LAT-0031,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Perifrastica attiva e passiva",LAT.CON.SINT.04,,,core,perifrastica,,,LAT cl.2 gramm,revisione
+LAT-0032,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Le proposizioni infinitive",LAT.CON.SINT.02,,,core,subordinate|infinitive,,,LAT cl.2 gramm,revisione
+LAT-0033,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Finali e completive volitive",LAT.CON.SINT.02,,,core,subordinate,,,LAT cl.2 gramm,revisione
+LAT-0034,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Consecutive e completive di fatto (ut/ut non)",LAT.CON.SINT.02,,,core,subordinate,,,LAT cl.2 gramm,revisione
+LAT-0035,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Cum e congiuntivo; il cum narrativo",LAT.CON.SINT.02,,,core,subordinate,,,LAT cl.2 gramm,revisione
+LAT-0036,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Concessive; relative proprie e improprie",LAT.CON.SINT.02,,,core,subordinate,,,LAT cl.2 gramm,revisione
+LAT-0037,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Interrogative dirette e indirette",LAT.CON.SINT.02,,,core,subordinate,,,LAT cl.2 gramm,revisione
+LAT-0038,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"La consecutio temporum",LAT.CON.SINT.02,,,core,consecutio,,,LAT cl.2 gramm,revisione
+LAT-0039,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Il periodo ipotetico (indipendente)",LAT.CON.SINT.06,,,core,periodo-ipotetico|delta-fase,,,LAT cl.2 gramm,revisione
+LAT-0040,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Sintassi del nominativo e dell'accusativo (doppio nominativo e accusativo)",LAT.CON.SINT.01,,,core,sintassi-casi,,,LAT cl.2 gramm,revisione
+LAT-0041,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Sintassi del genitivo",LAT.CON.SINT.01,,,core,sintassi-casi,,,LAT cl.2 gramm,revisione
+LAT-0042,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Sintassi del dativo",LAT.CON.SINT.01,,,core,sintassi-casi,,,LAT cl.2 gramm,revisione
+LAT-0043,LAT,2,biennio,LC,A-13,conoscenza,Sintassi,"Sintassi dell'ablativo",LAT.CON.SINT.01,,,core,sintassi-casi,,,LAT cl.2 gramm,revisione
+LAT-0044,LAT,1,biennio,LC,A-13,competenza,Traduzione e analisi del testo,"Leggere correttamente rispettando quantita' e accento",LAT.COM.TRAD.01,,,,lettura,applicare,multilinguistica,LAT biennio trad,revisione
+LAT-0045,LAT,1,biennio,LC,A-13,competenza,Traduzione e analisi del testo,"Analisi morfosintattica pre-traduttiva del testo",LAT.COM.TRAD.01,,,,analisi,analizzare,multilinguistica,LAT biennio trad,revisione
+LAT-0046,LAT,2,biennio,LC,A-13,competenza,Traduzione e analisi del testo,"Riconoscere la struttura della frase latina (verbo-dipendenza)",LAT.COM.SINT.01,,,,struttura,analizzare,multilinguistica,LAT biennio trad,revisione
+LAT-0047,LAT,2,biennio,LC,A-13,competenza,Traduzione e analisi del testo,"Uso ragionato del dizionario: scelta dei significati per contesto",LAT.COM.TRAD.02,,,,dizionario,applicare,multilinguistica,LAT biennio trad,revisione
+LAT-0048,LAT,2,biennio,LC,A-13,competenza,Traduzione e analisi del testo,"Formulare e verificare ipotesi di traduzione; motivare le scelte",LAT.COM.TRAD.02,,,,ipotesi,valutare,multilinguistica,LAT biennio trad,revisione
+LAT-0049,LAT,2,biennio,LC,A-13,competenza,Traduzione e analisi del testo,"Comprensione globale di un testo semplice",LAT.COM.TRAD.02,,,,comprensione,comprendere,multilinguistica,LAT biennio trad,revisione
+LAT-0050,LAT,2,biennio,LC,A-13,competenza,Traduzione e analisi del testo,"Tradurre testi semplici (narrativo, mitologico, storico)",LAT.COM.TRAD.02,,,,traduzione,applicare,multilinguistica,LAT biennio trad,revisione
+LAT-0051,LAT,2,biennio,LC,A-13,competenza,Traduzione e analisi del testo,"Decodifica e ricodifica rispettando le norme dell'italiano",LAT.COM.TRAD.02,,,,ricodifica,applicare,multilinguistica,LAT biennio trad,revisione
+LAT-0052,LAT,1,biennio,LC,A-13,competenza,Civilta' e ricezione,"Riflettere sul rapporto latino-italiano (continuita' linguistica, etimologie)",LAT.COM.CULT.01,,,,confronto|etimologia,comprendere,multilinguistica,LAT biennio,revisione
+LAT-0053,LAT,2,biennio,LC,A-13,competenza,Civilta' e ricezione,"Cogliere dai testi gli elementi di civilta' romana (familia, gens, mos maiorum)",LAT.COM.CULT.02,,,,civilta,comprendere,consapevolezza_espressione_culturali,LAT biennio,revisione
+LAT-0054,LAT,1,biennio,LC,A-13,abilita,Morfologia,"Declinare nomi e aggettivi; coniugare forme attive e passive",LAT.COM.TRAD.01,,,,morfologia,,,LAT biennio,revisione
+LAT-0055,LAT,1,biennio,LC,A-13,abilita,Lessico,"Rintracciare etimologie e famiglie di parole (latino, italiano, lingue europee)",LAT.COM.CULT.01,,,,etimologia,,,LAT biennio,revisione
+LAT-0056,LAT,1,biennio,LC,A-13,lep,,"Obiettivi minimi cl.1: declinazioni, pronomi, indicativo e infinito delle quattro coniugazioni e di sum; principali complementi; tradurre e analizzare un semplice testo",LAT.COM.TRAD.02,,,core,obiettivi-minimi,,,LAT cl.1 LEP,revisione
+LAT-0057,LAT,2,biennio,LC,A-13,lep,,"Obiettivi minimi cl.2: morfologia del nome e del verbo; sintassi dei casi; costrutti (finale, consecutiva, infinitiva, cum e congiuntivo, ablativo assoluto, participio congiunto, relativa, interrogativa); tradurre testi d'autore",LAT.COM.TRAD.02,,,core,obiettivi-minimi,,,LAT cl.2 LEP,revisione
+LAT-0058,LAT,1,biennio,LC,A-13,orientamento,,"Macrotema cl.1 'La conoscenza di se''",,,,,orientamento,,personale_sociale_imparare,LAT cl.1 orient,revisione
+LAT-0059,LAT,2,biennio,LC,A-13,orientamento,,"Macrotema cl.2 'Il rapporto con l'altro'",,,,,orientamento,,personale_sociale_imparare,LAT cl.2 orient,revisione
+LAT-0060,LAT,1,biennio,LC,A-13,metodologia,,"Metodi attivi: lezione partecipata e multimediale, cooperative learning, flipped classroom, didattica breve, debate",,,,,metodologie,,,LAT metodi,revisione
+LAT-0061,LAT,2,biennio,LC,A-13,metodologia,,"Libro di testo e supporti multimediali del Dipartimento di Lettere",,,,,libro-di-testo,,,LAT sussidi,revisione
+LAT-0062,LAT,3,triennio,LC,A-13,conoscenza,Sintassi,"Ripasso e recupero della grammatica del biennio; consolidamento della sintassi dei casi, del verbo e del periodo",LAT.CON.SINT.05|LAT.CON.SINT.06,,,core,ripasso|recupero,,,LAT triennio,revisione
+LAT-0063,LAT,3,triennio,LC,A-13,conoscenza,Metrica,"Nozioni di metrica: l'esametro e il distico elegiaco",LAT.CON.METR.01,,,core,metrica|esametro,,,LAT cl.3 lett,revisione
+LAT-0064,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"L'eta' arcaica e le origini: i primi documenti, il teatro e la satira delle origini",LAT.CON.LETT.01,epoca,,core,origini|eta-arcaica,,,LAT cl.3 lett,revisione
+LAT-0065,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"L'eta' di Cesare",LAT.CON.LETT.02,epoca,,core,eta-di-cesare,,,LAT cl.3 lett,revisione
+LAT-0066,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"L'eta' di Augusto",LAT.CON.LETT.03,epoca,,core,eta-augustea,,,LAT cl.4 lett,revisione
+LAT-0067,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"L'eta' giulio-claudia",LAT.CON.LETT.04,epoca,,core,eta-giulio-claudia,,,LAT cl.5 lett,revisione
+LAT-0068,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"L'eta' dei Flavi e di Traiano",LAT.CON.LETT.05,epoca,,core,eta-flavia,,,LAT cl.5 lett,revisione
+LAT-0069,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"L'eta' imperiale tarda e cristiana",LAT.CON.LETT.06,epoca,,core,tarda-antichita|cristianesimo,,,LAT cl.5 lett,revisione
+LAT-0070,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Livio Andronico",LAT.CON.LETT.01,autore,LAT-0064,core,Livio-Andronico|origini,,,LAT cl.3 lett,revisione
+LAT-0071,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Nevio",LAT.CON.LETT.01,autore,LAT-0064,core,Nevio,,,LAT cl.3 lett,revisione
+LAT-0072,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Ennio",LAT.CON.LETT.01,autore,LAT-0064,core,Ennio|epica,,,LAT cl.3 lett,revisione
+LAT-0073,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Plauto",LAT.CON.LETT.01,autore,LAT-0064,core,Plauto|commedia,,,LAT cl.3 lett,revisione
+LAT-0074,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Terenzio",LAT.CON.LETT.01,autore,LAT-0064,core,Terenzio|commedia,,,LAT cl.3 lett,revisione
+LAT-0075,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Catone",LAT.CON.LETT.01,autore,LAT-0064,core,Catone,,,LAT cl.3 lett,revisione
+LAT-0076,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Lucilio",LAT.CON.LETT.01,autore,LAT-0064,rappresentativo,Lucilio|satira,,,LAT cl.3 lett,revisione
+LAT-0077,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Catullo",LAT.CON.LETT.02,autore,LAT-0065,core,Catullo|neoteroi,,,LAT cl.3 lett,revisione
+LAT-0078,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Lucrezio",LAT.CON.LETT.02,autore,LAT-0065,core,Lucrezio,,,LAT cl.4 lett,revisione
+LAT-0079,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Cesare",LAT.CON.LETT.02,autore,LAT-0065,core,Cesare|storiografia,,,LAT cl.3 lett,revisione
+LAT-0080,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Sallustio",LAT.CON.LETT.02,autore,LAT-0065,core,Sallustio,,,LAT cl.3 lett,revisione
+LAT-0081,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Cicerone",LAT.CON.LETT.02,autore,LAT-0065,core,Cicerone|oratoria,,,LAT cl.4 lett,revisione
+LAT-0082,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Varrone",LAT.CON.LETT.02,autore,LAT-0065,rappresentativo,Varrone,,,LAT cl.4 lett,revisione
+LAT-0083,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Virgilio",LAT.CON.LETT.03,autore,LAT-0066,core,Virgilio|epica,,,LAT cl.4 lett,revisione
+LAT-0084,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Orazio",LAT.CON.LETT.03,autore,LAT-0066,core,Orazio,,,LAT cl.4 lett,revisione
+LAT-0085,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Tibullo",LAT.CON.LETT.03,autore,LAT-0066,core,Tibullo|elegia,,,LAT cl.4 lett,revisione
+LAT-0086,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Properzio",LAT.CON.LETT.03,autore,LAT-0066,core,Properzio|elegia,,,LAT cl.4 lett,revisione
+LAT-0087,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Ovidio",LAT.CON.LETT.03,autore,LAT-0066,core,Ovidio,,,LAT cl.4 lett,revisione
+LAT-0088,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Livio",LAT.CON.LETT.03,autore,LAT-0066,core,Livio|storiografia,,,LAT cl.4 lett,revisione
+LAT-0089,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Seneca",LAT.CON.LETT.04,autore,LAT-0067,core,Seneca|filosofia,,,LAT cl.5 lett,revisione
+LAT-0090,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Lucano",LAT.CON.LETT.04,autore,LAT-0067,core,Lucano|epica,,,LAT cl.5 lett,revisione
+LAT-0091,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Petronio",LAT.CON.LETT.04,autore,LAT-0067,core,Petronio|romanzo,,,LAT cl.5 lett,revisione
+LAT-0092,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Fedro",LAT.CON.LETT.04,autore,LAT-0067,rappresentativo,Fedro|favola,,,LAT cl.5 lett,revisione
+LAT-0093,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Persio",LAT.CON.LETT.04,autore,LAT-0067,rappresentativo,Persio|satira,,,LAT cl.5 lett,revisione
+LAT-0094,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Quintiliano",LAT.CON.LETT.05,autore,LAT-0068,core,Quintiliano|oratoria,,,LAT cl.5 lett,revisione
+LAT-0095,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Marziale",LAT.CON.LETT.05,autore,LAT-0068,core,Marziale|epigramma,,,LAT cl.5 lett,revisione
+LAT-0096,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Giovenale",LAT.CON.LETT.05,autore,LAT-0068,core,Giovenale|satira,,,LAT cl.5 lett,revisione
+LAT-0097,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Tacito",LAT.CON.LETT.05,autore,LAT-0068,core,Tacito|storiografia,,,LAT cl.5 lett,revisione
+LAT-0098,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Plinio il Vecchio",LAT.CON.LETT.05,autore,LAT-0068,rappresentativo,Plinio-Vecchio|erudizione,,,LAT cl.5 lett,revisione
+LAT-0099,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Plinio il Giovane",LAT.CON.LETT.05,autore,LAT-0068,rappresentativo,Plinio-Giovane|epistolografia,,,LAT cl.5 lett,revisione
+LAT-0100,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Apuleio",LAT.CON.LETT.06,autore,LAT-0069,core,Apuleio|romanzo,,,LAT cl.5 lett,revisione
+LAT-0101,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Tertulliano",LAT.CON.LETT.06,autore,LAT-0069,rappresentativo,Tertulliano|apologetica,,,LAT cl.5 lett,revisione
+LAT-0102,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Svetonio",LAT.CON.LETT.06,autore,LAT-0069,rappresentativo,Svetonio|biografia,,,LAT cl.5 lett,revisione
+LAT-0103,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Agostino",LAT.CON.LETT.06,autore,LAT-0069,core,Agostino|cristianesimo,,,LAT cl.5 lett,revisione
+LAT-0104,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Aulularia; Miles gloriosus",LAT.CON.LETT.01,opera,LAT-0073,core,Plauto|commedie,,,LAT cl.3 lett,revisione
+LAT-0105,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"De bello Gallico; De bello civili",LAT.CON.LETT.02,opera,LAT-0079,core,Cesare|commentarii,,,LAT cl.3 lett,revisione
+LAT-0106,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"De Catilinae coniuratione",LAT.CON.LETT.02,opera,LAT-0080,core,Sallustio|monografia,,,LAT cl.3 lett,revisione
+LAT-0107,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Catilinarie; De officiis",LAT.CON.LETT.02,opera,LAT-0081,core,Cicerone|orazioni,,,LAT cl.4 lett,revisione
+LAT-0108,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Liber (carmina)",LAT.CON.LETT.02,opera,LAT-0077,core,Catullo|Liber,,,LAT cl.3 lett,revisione
+LAT-0109,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"De rerum natura",LAT.CON.LETT.02,opera,LAT-0078,core,Lucrezio|poema,,,LAT cl.4 lett,revisione
+LAT-0110,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Bucoliche; Georgiche; Eneide",LAT.CON.LETT.03,opera,LAT-0083,core,Virgilio|Eneide,,,LAT cl.4 lett,revisione
+LAT-0111,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Odi; Satire; Epistole",LAT.CON.LETT.03,opera,LAT-0084,core,Orazio|Odi,,,LAT cl.4 lett,revisione
+LAT-0112,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Metamorfosi; Heroides",LAT.CON.LETT.03,opera,LAT-0087,core,Ovidio|Metamorfosi,,,LAT cl.4 lett,revisione
+LAT-0113,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Ab urbe condita",LAT.CON.LETT.03,opera,LAT-0088,core,Livio|storia,,,LAT cl.4 lett,revisione
+LAT-0114,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Epistulae morales ad Lucilium; tragedie",LAT.CON.LETT.04,opera,LAT-0089,core,Seneca|epistole,,,LAT cl.5 lett,revisione
+LAT-0115,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Bellum civile (Pharsalia)",LAT.CON.LETT.04,opera,LAT-0090,core,Lucano|Pharsalia,,,LAT cl.5 lett,revisione
+LAT-0116,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Satyricon",LAT.CON.LETT.04,opera,LAT-0091,core,Petronio|Satyricon,,,LAT cl.5 lett,revisione
+LAT-0117,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Institutio oratoria",LAT.CON.LETT.05,opera,LAT-0094,core,Quintiliano|Institutio,,,LAT cl.5 lett,revisione
+LAT-0118,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Annales; Historiae; Germania; Agricola",LAT.CON.LETT.05,opera,LAT-0097,core,Tacito|Annales,,,LAT cl.5 lett,revisione
+LAT-0119,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Metamorfosi (L'asino d'oro)",LAT.CON.LETT.06,opera,LAT-0100,core,Apuleio|Metamorfosi,,,LAT cl.5 lett,revisione
+LAT-0120,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Confessiones; De civitate Dei",LAT.CON.LETT.06,opera,LAT-0103,core,Agostino|Confessiones,,,LAT cl.5 lett,revisione
+LAT-0121,LAT,3,triennio,LC,A-13,competenza,Traduzione e analisi del testo,"Tradurre e interpretare testi d'autore in prosa e versi",LAT.COM.TRAD.03,,,,traduzione|interpretazione,valutare,multilinguistica,LAT cl.3 lett,revisione
+LAT-0122,LAT,3,triennio,LC,A-13,competenza,Storia letteraria,"Contestualizzare opere e autori nel quadro storico-culturale",LAT.COM.LETT.01,,,,contestualizzazione,analizzare,consapevolezza_espressione_culturali,LAT cl.3 lett,revisione
+LAT-0123,LAT,4,triennio,LC,A-13,competenza,Traduzione e analisi del testo,"Confrontare istituti linguistici (latino, italiano, lingue moderne)",LAT.COM.TRAD.04,,,,confronto-linguistico,analizzare,multilinguistica,LAT cl.4 lett,revisione
+LAT-0124,LAT,4,triennio,LC,A-13,competenza,Traduzione e analisi del testo,"Analizzare integrando lingua e letteratura",LAT.COM.TRAD.05,,,,integrazione,analizzare,consapevolezza_espressione_culturali,LAT cl.4 lett,revisione
+LAT-0125,LAT,5,triennio,LC,A-13,competenza,Traduzione e analisi del testo,"Praticare la traduzione contrastiva con versioni accreditate",LAT.COM.TRAD.06,,,,contrastiva,valutare,multilinguistica,LAT cl.5 lett,revisione
+LAT-0126,LAT,5,triennio,LC,A-13,competenza,Civilta' e ricezione,"Riconoscere continuita' e alterita' tra cultura latina ed europea",LAT.COM.CULT.03,,,,ricezione|continuita,valutare,consapevolezza_espressione_culturali,LAT cl.5 lett,revisione
+LAT-0127,LAT,3,triennio,LC,A-13,abilita,Storia letteraria,"Contestualizzare autore e opera; individuare tratti tematici e stilistici",LAT.COM.LETT.01,,,,analisi-testuale,,,LAT cl.3 lett,revisione
+LAT-0128,LAT,3,triennio,LC,A-13,lep,,"Obiettivi minimi cl.3: strutture morfosintattiche per comprensione globale; collocare opera e autore (origini -> eta' di Cesare: Plauto, Terenzio, Catullo, Cesare, Sallustio, Cicerone)",,,,core,obiettivi-minimi,,,LAT cl.3 LEP,revisione
+LAT-0129,LAT,4,triennio,LC,A-13,lep,,"Obiettivi minimi cl.4: linee dell'eta' augustea e profilo di Lucrezio, Cicerone, Virgilio, Orazio, Ovidio, Livio; interpretare testi; contestualizzare",,,,core,obiettivi-minimi,,,LAT cl.4 LEP,revisione
+LAT-0130,LAT,5,triennio,LC,A-13,lep,,"Obiettivi minimi cl.5: linee dell'eta' imperiale e profilo di Seneca, Petronio, Quintiliano, Marziale, Giovenale, Tacito, Apuleio; contestualizzare; cogliere il valore fondante",,,,core,obiettivi-minimi,,,LAT cl.5 LEP,revisione
+LAT-0131,LAT,3,triennio,LC,A-13,orientamento,,"Macrotema cl.3 'Sviluppare il pensiero critico'",,,,,orientamento|pensiero-critico,,personale_sociale_imparare,LAT cl.3 orient,revisione
+LAT-0132,LAT,4,triennio,LC,A-13,orientamento,,"Macrotema cl.4 'Progettare il proprio futuro'",,,,,orientamento|futuro,,personale_sociale_imparare,LAT cl.4 orient,revisione
+LAT-0133,LAT,5,triennio,LC,A-13,orientamento,,"Macrotema cl.5 'Confrontarsi con la complessita' e diventare cittadini attivi'",,,,,orientamento|cittadinanza-attiva,,personale_sociale_imparare,LAT cl.5 orient,revisione
+LAT-0134,LAT,,quinquennio,LC,A-13,competenza,Strumenti dell'analisi letteraria,"Riconoscere il genere letterario e le sue convenzioni",LAT.COM.ANAL.01,,,,condivisa|generi,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0135,LAT,,quinquennio,LC,A-13,competenza,Strumenti dell'analisi letteraria,"Analizzare la struttura e gli aspetti formali del testo (stile, figure retoriche)",LAT.COM.ANAL.01,,,,condivisa|analisi-testo,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0136,LAT,,quinquennio,LC,A-13,competenza,Metrica,"Analizzare la metrica e il ritmo del testo poetico",LAT.CON.METR.01,,,,condivisa|metrica,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0137,LAT,,quinquennio,LC,A-13,competenza,Strumenti dell'analisi letteraria,"Cogliere il rapporto tra forma e contenuto",LAT.COM.ANAL.01,,,,condivisa,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0138,LAT,,quinquennio,LC,A-13,competenza,Storia letteraria,"Riconoscere temi, motivi, topoi e archetipi",LAT.COM.LETT.02,,,,condivisa|temi,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0139,LAT,,quinquennio,LC,A-13,competenza,Storia letteraria,"Cogliere l'intertestualita' e i rapporti tra testi e tradizioni",LAT.COM.LETT.02,,,,condivisa|intertestualita,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0140,LAT,,quinquennio,LC,A-13,competenza,Teoria e critica letteraria,"Padroneggiare le metodologie della critica letteraria",LAT.COM.CRIT.01,,,,condivisa|critica,valutare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0141,LAT,,quinquennio,LC,A-13,competenza,Teoria e critica letteraria,"Formulare interpretazioni autonome e argomentate del testo",LAT.COM.CRIT.01,,,,condivisa|interpretazione,valutare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0142,LAT,,quinquennio,LC,A-13,competenza,Civilta' e ricezione,"Usare la letteratura per comprendere il presente (attualizzazione)",LAT.COM.CULT.03,,,,condivisa|attualizzazione,valutare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0143,LAT,,quinquennio,LC,A-13,competenza,Strumenti dell'analisi letteraria,"Condurre la lettura diretta del testo come prima forma di interpretazione",LAT.COM.ANAL.02,,,,condivisa|lettura-diretta,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0144,LAT,,quinquennio,LC,A-13,competenza,Storia letteraria,"Confrontare autori, generi ed epoche diverse",LAT.COM.LETT.02,,,,condivisa|comparazione,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0145,LAT,,quinquennio,LC,A-13,competenza,Storia letteraria,"Dimensione autoriale: ricostruire e contestualizzare la biografia e il profilo dell'autore",LAT.COM.LETT.03,,,,condivisa|dimensione-autoriale|biografia,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0146,LAT,,quinquennio,LC,A-13,competenza,Storia letteraria,"Dimensione autoriale: collocare le opere nella produzione e nell'evoluzione dell'autore",LAT.COM.LETT.03,,,,condivisa|dimensione-autoriale|opere,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0147,LAT,,quinquennio,LC,A-13,competenza,Storia letteraria,"Dimensione autoriale: analizzare lo stile (lingua, sintassi, retorica) di un autore",LAT.COM.LETT.03,,,,condivisa|dimensione-autoriale|stile,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0148,LAT,,quinquennio,LC,A-13,competenza,Storia letteraria,"Dimensione autoriale: definire la poetica e la concezione letteraria di un autore",LAT.COM.LETT.03,,,,condivisa|dimensione-autoriale|poetica,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0149,LAT,,quinquennio,LC,A-13,competenza,Storia letteraria,"Dimensione autoriale: riconoscere l'ipertestualita' (rimandi e rapporti con altri autori)",LAT.COM.LETT.03,,,,condivisa|dimensione-autoriale|ipertestualita,analizzare,consapevolezza_espressione_culturali,LAT lett condivise,revisione
+LAT-0150,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Linguistica storica: diacronia del latino e rapporti con l'italiano e le lingue romanze",LAT.COM.SCIA.01,,,,scienze-antichita|linguistica-storica,analizzare,multilinguistica,LAT spettro,revisione
+LAT-0151,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Storia, fonti e metodo storiografico del mondo romano",LAT.COM.SCIA.02,,,,scienze-antichita|storia|fonti,analizzare,consapevolezza_espressione_culturali,LAT spettro,revisione
+LAT-0152,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Archeologia e cultura materiale: reperti, monumenti e siti del mondo romano",LAT.COM.SCIA.03,,,,scienze-antichita|archeologia,analizzare,consapevolezza_espressione_culturali,LAT spettro,revisione
+LAT-0153,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Mitologia e religione: mito, culti e ritualita' romana",LAT.COM.SCIA.04,,,,scienze-antichita|mitologia|religione,analizzare,consapevolezza_espressione_culturali,LAT spettro,revisione
+LAT-0154,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Filosofia antica: epicureismo e stoicismo nei testi latini",LAT.COM.SCIA.05,,,,scienze-antichita|filosofia,analizzare,consapevolezza_espressione_culturali,LAT spettro,revisione
+LAT-0155,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Arte e iconografia del mondo romano",LAT.COM.SCIA.06,,,,scienze-antichita|arte,analizzare,consapevolezza_espressione_culturali,LAT spettro,revisione
+LAT-0156,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Epigrafia e papirologia: le iscrizioni latine come fonti dirette",LAT.COM.SCIA.07,,,,scienze-antichita|epigrafia,comprendere,consapevolezza_espressione_culturali,LAT spettro,revisione
+LAT-0157,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Filologia ed ecdotica: trasmissione dei testi e critica testuale",LAT.COM.SCIA.08,,,,scienze-antichita|filologia|ecdotica,valutare,consapevolezza_espressione_culturali,LAT spettro,revisione
+LAT-0158,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Geografia storica e topografia del mondo romano",LAT.COM.SCIA.09,,,,scienze-antichita|geografia-storica,comprendere,consapevolezza_espressione_culturali,LAT spettro,revisione
+LAT-0159,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Diritto e istituzioni: il diritto romano e le istituzioni della res publica e dell'impero",LAT.COM.SCIA.10,,,,scienze-antichita|diritto|istituzioni,comprendere,cittadinanza,LAT spettro,revisione
+LAT-0160,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Antropologia del mondo antico: familia, mos maiorum, genere, schiavitu'",LAT.COM.SCIA.11,,,,scienze-antichita|antropologia,analizzare,consapevolezza_espressione_culturali,LAT spettro,revisione
+LAT-0161,LAT,,quinquennio,LC,A-13,competenza,Scienze dell'antichita',"Ricezione e tradizione classica (Nachleben): permanenza del latino nella cultura europea",LAT.COM.SCIA.12,,,,scienze-antichita|ricezione,valutare,consapevolezza_espressione_culturali,LAT spettro,revisione
+LAT-0162,LAT,,quinquennio,LC,A-13,competenza,Traduzione e analisi del testo,"Digital Humanities: usare strumenti informatici e IA per lo studio del latino",LAT.COM.TRAD.07,,,,scienze-antichita|digitale|DH,applicare,digitale,LAT spettro,revisione
+LAT-0163,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Plauto - biografia: Sarsina, l'attivita' teatrale e la cronologia",LAT.CON.LETT.01,biografia,LAT-0073,core,Plauto|biografia,,,LAT scheda-autore,revisione
+LAT-0164,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Plauto - stile: comicita' verbale, cantica, metateatro, contaminatio",LAT.CON.LETT.01,stile,LAT-0073,core,Plauto|stile,,,LAT scheda-autore,revisione
+LAT-0165,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Plauto - poetica: la palliata, il servus callidus, il rovesciamento comico",LAT.CON.LETT.01,poetica,LAT-0073,core,Plauto|poetica,,,LAT scheda-autore,revisione
+LAT-0166,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Plauto - ipertestualita': modello di Moliere, Shakespeare e della commedia europea",LAT.CON.LETT.01,ipertestualita,LAT-0073,core,Plauto|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0167,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Terenzio - biografia: l'origine africana e il circolo degli Scipioni",LAT.CON.LETT.01,biografia,LAT-0074,core,Terenzio|biografia,,,LAT scheda-autore,revisione
+LAT-0168,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Terenzio - stile: purezza linguistica, ironia sobria, doppia trama",LAT.CON.LETT.01,stile,LAT-0074,core,Terenzio|stile,,,LAT scheda-autore,revisione
+LAT-0169,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Terenzio - poetica: l'humanitas, l'introspezione, i prologhi polemici",LAT.CON.LETT.01,poetica,LAT-0074,core,Terenzio|poetica,,,LAT scheda-autore,revisione
+LAT-0170,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Terenzio - ipertestualita': modello della commedia umanistica e di Moliere",LAT.CON.LETT.01,ipertestualita,LAT-0074,core,Terenzio|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0171,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Catullo - biografia: Verona, Roma, i neoteroi, Lesbia",LAT.CON.LETT.02,biografia,LAT-0077,core,Catullo|biografia,,,LAT scheda-autore,revisione
+LAT-0172,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Catullo - stile: brevitas, doctrina, lepos, polimetria",LAT.CON.LETT.02,stile,LAT-0077,core,Catullo|stile,,,LAT scheda-autore,revisione
+LAT-0173,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Catullo - poetica: l'otium, l'amore-odio, la poesia d'occasione e la doctrina",LAT.CON.LETT.02,poetica,LAT-0077,core,Catullo|poetica,,,LAT scheda-autore,revisione
+LAT-0174,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Catullo - ipertestualita': il rapporto con Saffo e Callimaco; modello di Marziale e della lirica europea",LAT.CON.LETT.02,ipertestualita,LAT-0077,core,Catullo|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0175,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Lucrezio - biografia: notizie incerte e l'adesione all'epicureismo",LAT.CON.LETT.02,biografia,LAT-0078,core,Lucrezio|biografia,,,LAT scheda-autore,revisione
+LAT-0176,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Lucrezio - stile: la poesia didascalica, l'esametro, le immagini e la potenza visionaria",LAT.CON.LETT.02,stile,LAT-0078,core,Lucrezio|stile,,,LAT scheda-autore,revisione
+LAT-0177,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Lucrezio - poetica: la ragione contro la paura, l'epicureismo, la liberazione",LAT.CON.LETT.02,poetica,LAT-0078,core,Lucrezio|poetica,,,LAT scheda-autore,revisione
+LAT-0178,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Lucrezio - ipertestualita': Empedocle ed Epicuro; influsso su Virgilio e sul pensiero scientifico",LAT.CON.LETT.02,ipertestualita,LAT-0078,core,Lucrezio|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0179,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Cesare - biografia: il politico, il generale, la guerra civile",LAT.CON.LETT.02,biografia,LAT-0079,core,Cesare|biografia,,,LAT scheda-autore,revisione
+LAT-0180,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Cesare - stile: la limpidezza, l'oggettivita' apparente, il commentarius",LAT.CON.LETT.02,stile,LAT-0079,core,Cesare|stile,,,LAT scheda-autore,revisione
+LAT-0181,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Cesare - poetica: l'autocelebrazione e la propaganda nel racconto storico",LAT.CON.LETT.02,poetica,LAT-0079,core,Cesare|poetica,,,LAT scheda-autore,revisione
+LAT-0182,LAT,3,triennio,LC,A-13,contenuto,Storia letteraria,"Cesare - ipertestualita': modello della prosa storica e del resoconto militare",LAT.CON.LETT.02,ipertestualita,LAT-0079,core,Cesare|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0183,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Cicerone - biografia: Arpino, l'homo novus, il consolato, la fine",LAT.CON.LETT.02,biografia,LAT-0081,core,Cicerone|biografia,,,LAT scheda-autore,revisione
+LAT-0184,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Cicerone - stile: la periodizzazione, la concinnitas, l'oratoria",LAT.CON.LETT.02,stile,LAT-0081,core,Cicerone|stile,,,LAT scheda-autore,revisione
+LAT-0185,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Cicerone - poetica: l'oratore ideale, otium e negotium, la filosofia come mediazione",LAT.CON.LETT.02,poetica,LAT-0081,core,Cicerone|poetica,,,LAT scheda-autore,revisione
+LAT-0186,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Cicerone - ipertestualita': modello dell'eloquenza europea e dell'umanesimo (Petrarca)",LAT.CON.LETT.02,ipertestualita,LAT-0081,core,Cicerone|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0187,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Virgilio - biografia: Mantova, il circolo di Mecenate, l'Eneide",LAT.CON.LETT.03,biografia,LAT-0083,core,Virgilio|biografia,,,LAT scheda-autore,revisione
+LAT-0188,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Virgilio - stile: la sublimita', il labor limae, l'esametro, il pathos",LAT.CON.LETT.03,stile,LAT-0083,core,Virgilio|stile,,,LAT scheda-autore,revisione
+LAT-0189,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Virgilio - poetica: il poeta nazionale, la pietas, il dolore del mondo (lacrimae rerum)",LAT.CON.LETT.03,poetica,LAT-0083,core,Virgilio|poetica,,,LAT scheda-autore,revisione
+LAT-0190,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Virgilio - ipertestualita': Omero, Esiodo e Teocrito; modello di Dante e dell'epica europea",LAT.CON.LETT.03,ipertestualita,LAT-0083,core,Virgilio|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0191,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Orazio - biografia: Venosa, Filippi, il rapporto con Mecenate",LAT.CON.LETT.03,biografia,LAT-0084,core,Orazio|biografia,,,LAT scheda-autore,revisione
+LAT-0192,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Orazio - stile: la callida iunctura, la varieta' metrica, l'aurea mediocritas",LAT.CON.LETT.03,stile,LAT-0084,core,Orazio|stile,,,LAT scheda-autore,revisione
+LAT-0193,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Orazio - poetica: il carpe diem, l'autobiografia, la satira e la lirica",LAT.CON.LETT.03,poetica,LAT-0084,core,Orazio|poetica,,,LAT scheda-autore,revisione
+LAT-0194,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Orazio - ipertestualita': Archiloco, Alceo e Saffo; modello della lirica europea",LAT.CON.LETT.03,ipertestualita,LAT-0084,core,Orazio|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0195,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Ovidio - biografia: Sulmona, il successo mondano, l'esilio a Tomi",LAT.CON.LETT.03,biografia,LAT-0087,core,Ovidio|biografia,,,LAT scheda-autore,revisione
+LAT-0196,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Ovidio - stile: la facilita', l'ingegno, il gusto narrativo",LAT.CON.LETT.03,stile,LAT-0087,core,Ovidio|stile,,,LAT scheda-autore,revisione
+LAT-0197,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Ovidio - poetica: l'elegia d'amore, la metamorfosi, il mito",LAT.CON.LETT.03,poetica,LAT-0087,core,Ovidio|poetica,,,LAT scheda-autore,revisione
+LAT-0198,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Ovidio - ipertestualita': gli elegiaci; fonte di Dante, dell'arte e della letteratura europea",LAT.CON.LETT.03,ipertestualita,LAT-0087,core,Ovidio|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0199,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Livio - biografia: Padova e l'eta' augustea",LAT.CON.LETT.03,biografia,LAT-0088,core,Livio|biografia,,,LAT scheda-autore,revisione
+LAT-0200,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Livio - stile: la lactea ubertas, i discorsi, il pathos narrativo",LAT.CON.LETT.03,stile,LAT-0088,core,Livio|stile,,,LAT scheda-autore,revisione
+LAT-0201,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Livio - poetica: la storia come exemplum morale, il mito di Roma",LAT.CON.LETT.03,poetica,LAT-0088,core,Livio|poetica,,,LAT scheda-autore,revisione
+LAT-0202,LAT,4,triennio,LC,A-13,contenuto,Storia letteraria,"Livio - ipertestualita': modello della storiografia e di Machiavelli",LAT.CON.LETT.03,ipertestualita,LAT-0088,core,Livio|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0203,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Seneca - biografia: Cordova, il precettore di Nerone, il suicidio",LAT.CON.LETT.04,biografia,LAT-0089,core,Seneca|biografia,,,LAT scheda-autore,revisione
+LAT-0204,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Seneca - stile: la prosa spezzata, le sententiae, il furor tragico",LAT.CON.LETT.04,stile,LAT-0089,core,Seneca|stile,,,LAT scheda-autore,revisione
+LAT-0205,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Seneca - poetica: lo stoicismo, l'interiorita', il tempo, la tragedia del male",LAT.CON.LETT.04,poetica,LAT-0089,core,Seneca|poetica,,,LAT scheda-autore,revisione
+LAT-0206,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Seneca - ipertestualita': modello del teatro tragico europeo e del moralismo",LAT.CON.LETT.04,ipertestualita,LAT-0089,core,Seneca|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0207,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Petronio - biografia: l'arbiter elegantiae alla corte di Nerone",LAT.CON.LETT.04,biografia,LAT-0091,core,Petronio|biografia,,,LAT scheda-autore,revisione
+LAT-0208,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Petronio - stile: il realismo, la parodia, il sermo vulgaris",LAT.CON.LETT.04,stile,LAT-0091,core,Petronio|stile,,,LAT scheda-autore,revisione
+LAT-0209,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Petronio - poetica: il Satyricon, la varieta', il distacco ironico",LAT.CON.LETT.04,poetica,LAT-0091,core,Petronio|poetica,,,LAT scheda-autore,revisione
+LAT-0210,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Petronio - ipertestualita': anticipatore del romanzo moderno",LAT.CON.LETT.04,ipertestualita,LAT-0091,core,Petronio|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0211,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Tacito - biografia: la carriera politica sotto il principato",LAT.CON.LETT.05,biografia,LAT-0097,core,Tacito|biografia,,,LAT scheda-autore,revisione
+LAT-0212,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Tacito - stile: la brevitas, l'inconcinnitas, il pathos, i ritratti",LAT.CON.LETT.05,stile,LAT-0097,core,Tacito|stile,,,LAT scheda-autore,revisione
+LAT-0213,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Tacito - poetica: il metodo critico, il pessimismo, la liberta' perduta",LAT.CON.LETT.05,poetica,LAT-0097,core,Tacito|poetica,,,LAT scheda-autore,revisione
+LAT-0214,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Tacito - ipertestualita': modello della storiografia politica e di Montesquieu",LAT.CON.LETT.05,ipertestualita,LAT-0097,core,Tacito|ipertestualita,,,LAT scheda-autore,revisione
+LAT-0215,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Agostino - biografia: Tagaste, la conversione, il vescovado di Ippona",LAT.CON.LETT.06,biografia,LAT-0103,core,Agostino|biografia,,,LAT scheda-autore,revisione
+LAT-0216,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Agostino - stile: la prosa interiore, il dialogo con Dio, la retorica cristiana",LAT.CON.LETT.06,stile,LAT-0103,core,Agostino|stile,,,LAT scheda-autore,revisione
+LAT-0217,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Agostino - poetica: la confessione, il tempo, la memoria, la grazia",LAT.CON.LETT.06,poetica,LAT-0103,core,Agostino|poetica,,,LAT scheda-autore,revisione
+LAT-0218,LAT,5,triennio,LC,A-13,contenuto,Storia letteraria,"Agostino - ipertestualita': fondatore dell'autobiografia interiore; Petrarca e la cultura europea",LAT.CON.LETT.06,ipertestualita,LAT-0103,core,Agostino|ipertestualita,,,LAT scheda-autore,revisione

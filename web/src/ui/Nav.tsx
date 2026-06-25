@@ -21,6 +21,7 @@ const SEZIONI: Sezione[] = [
   {
     titolo: "Strumenti",
     viste: [
+      { v: { kind: "archivio" }, label: "Archivio", icon: "📚" },
       { v: { kind: "valutazione" }, label: "Calcolatore voti", icon: "🧮" },
       { v: { kind: "avanzamento" }, label: "Avanzamento", icon: "🚦" },
       { v: { kind: "andamento" }, label: "Andamento", icon: "📉" },

@@ -19,6 +19,7 @@ import { AvanzamentoView } from "./ui/AvanzamentoView";
 import { ValutazioneView } from "./ui/ValutazioneView";
 import { AndamentoView } from "./ui/AndamentoView";
 import { PlannerView } from "./ui/PlannerView";
+import { ArchivioView } from "./ui/ArchivioView";
 import { OggiView } from "./ui/OggiView";
 import { PromemoriaView } from "./ui/PromemoriaView";
 import { RecordPanel } from "./ui/RecordPanel";
@@ -36,6 +37,7 @@ export type View =
   | { kind: "valutazione"; sessioneId?: string }
   | { kind: "andamento" }
   | { kind: "planner" }
+  | { kind: "archivio" }
   | { kind: "promemoria" }
   | { kind: "home" }
   | { kind: "programmazione" }
@@ -85,7 +87,7 @@ export function App() {
   const closeProfile = () => { setShowProfile(false); setSkipped(true); };
 
   // Viste "dense" (griglie/tabelle): usano tutta la larghezza su PC; quelle testuali restano strette.
-  const VISTE_LARGHE = new Set(["oggi", "calendar", "kanban", "timeline", "avanzamento", "valutazione", "andamento", "planner", "programmazione", "entity"]);
+  const VISTE_LARGHE = new Set(["oggi", "calendar", "kanban", "timeline", "avanzamento", "valutazione", "andamento", "planner", "archivio", "programmazione", "entity"]);
   const mainWide = VISTE_LARGHE.has(view.kind);
 
   return (
@@ -128,6 +130,7 @@ export function App() {
           {view.kind === "valutazione" && <ValutazioneView sessioneId={view.sessioneId} onView={setView} />}
           {view.kind === "andamento" && <AndamentoView />}
           {view.kind === "planner" && <PlannerView onView={setView} />}
+          {view.kind === "archivio" && <ArchivioView />}
           {view.kind === "promemoria" && <PromemoriaView onEdit={onEdit} />}
           {view.kind === "home" && (
             <HomeView onSelect={(key) => setView({ kind: "entity", key })} onOpenUda={openUda} />

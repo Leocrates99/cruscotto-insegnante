@@ -5,8 +5,12 @@
   "type": "module",
   "description": "Cruscotto del docente — versione sito local-first (SPA), indipendente da Notion.",
   "scripts": {
+    "gen:archivio": "node scripts/gen-archivio.mjs",
+    "predev": "node scripts/gen-archivio.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/gen-archivio.mjs",
     "build": "tsc --noEmit && vite build",
+    "pretest": "node scripts/gen-archivio.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "icons": "node scripts/gen-icons.mjs"
