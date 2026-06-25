@@ -1,0 +1,8 @@
+id,nome,modello,sequenza_fasi,durata_riferimento_min,metodologie_tipiche,calibrazione,note
+ARR-01,Lezione trasmissiva-dialogata,classico,FAS-01|FAS-02|FAS-03|FAS-04|FAS-05|FAS-06,60,MET-02|MET-01|MET-09,"biennio e triennio","L'arrangiamento di base; sviluppo per esposizione o commento dialogato"
+ARR-02,Lezione euristica (scoperta guidata),scoperta,FAS-01|FAS-02|FAS-08|FAS-03|FAS-05,60,MET-03|MET-23,"adatta a regole e interpretazione","Apertura per problema, scoperta per domande, poi sistematizzazione"
+ARR-03,Classe capovolta (Flipped),flipped,FAS-07|FAS-01|FAS-03|FAS-04|FAS-05,60,MET-17|MET-04,"triennio (richiede autonomia)","Il nuovo si studia a casa; in classe applicazione e analisi guidata"
+ARR-04,EAS - Episodio di Apprendimento Situato,eas,FAS-10|FAS-11|FAS-12,90,MET-12,"micro-percorso con artefatto","Tre momenti: preparatorio, operatorio, ristrutturativo"
+ARR-05,Laboratorio (traduzione/analisi/scrittura),laboratorio,FAS-01|FAS-02|FAS-03|FAS-09|FAS-05,90,MET-09|MET-04|MET-20,"scaffolding in calo dalla terza alla quinta","Apertura-consegna, modellamento, lavoro autonomo, restituzione"
+ARR-06,Cooperativa a mosaico (Jigsaw),cooperativo,FAS-01|FAS-02|FAS-03|FAS-09|FAS-05,90,MET-05|MET-04,"un'epoca o un autore divisi per nuclei","Gruppi-esperti, poi gruppi-base con insegnamento reciproco, restituzione"
+ARR-07,Debate,dibattito,FAS-01|FAS-03|FAS-04|FAS-05,90,MET-08,"triennio","Preparazione e documentazione, dibattito PRO/CONTRO regolato, debriefing"

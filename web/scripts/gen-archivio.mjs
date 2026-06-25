@@ -14,14 +14,20 @@ const read = (f) => readFileSync(join(DATA, f), "utf8");
 
 const model = buildModel(read);
 const problems = validate(model);
-const tot = problems.orfani.length + problems.parent.length + problems.riferimenti.length + problems.residui.length;
+const tot = Object.values(problems).reduce((a, arr) => a + arr.length, 0);
 if (tot > 0) {
   console.error(`\n✗ Archivio: ${tot} violazioni delle invarianti (build interrotto):`);
   for (const [k, arr] of Object.entries(problems)) for (const e of arr.slice(0, 20)) console.error(`  [${k}] ${e}`);
   process.exit(1);
 }
 
-const index = { ...model, indici: buildIndex(model), meta: { conteggi: { obiettivi: model.obiettivi.length, voci: model.voci.length, parallelismi: model.parallelismi.length } } };
+const rep = model.repertori;
+const conteggi = {
+  obiettivi: model.obiettivi.length, voci: model.voci.length, parallelismi: model.parallelismi.length,
+  prerequisiti: rep.prerequisiti.length, metodologie: rep.metodologie.length, fasi: rep.fasi.length,
+  arrangiamenti: rep.arrangiamenti.length, materiali: rep.materiali.length, valutazione: rep.valutazione.length, inclusione: rep.inclusione.length,
+};
+const index = { ...model, indici: buildIndex(model), meta: { conteggi } };
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, JSON.stringify(index));
-console.log(`✓ archivio.json — ${model.obiettivi.length} obiettivi · ${model.voci.length} voci · ${model.parallelismi.length} parallelismi · 4 invarianti ok`);
+console.log(`✓ archivio.json — ${conteggi.obiettivi} obiettivi · ${conteggi.voci} voci · ${conteggi.parallelismi} parallelismi · repertori ${rep.prerequisiti.length}/${rep.metodologie.length}/${rep.fasi.length}/${rep.arrangiamenti.length}/${rep.materiali.length}/${rep.valutazione.length}/${rep.inclusione.length} · 7 invarianti ok`);

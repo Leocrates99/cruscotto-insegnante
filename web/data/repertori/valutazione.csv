@@ -1,0 +1,25 @@
+id,funzione,metodo,forma,descrizione,momento,oggetto,bloom_max,descrittore_dublino,graduata,materie
+VAL-D01,diagnostica,Test d'ingresso,strutturata,"Accerta il livello di partenza all'avvio dell'anno o del modulo",a-monte,conoscenza|abilita,applicare,conoscenza-comprensione,no,ALL
+VAL-D02,diagnostica,Questionario sui prerequisiti,semistrutturata,"Verifica dicotomica (possiede/non possiede) dei prerequisiti della lezione",a-monte,conoscenza,comprendere,conoscenza-comprensione,no,ALL
+VAL-D03,diagnostica,Brainstorming diagnostico,aperta,"Rilevazione delle preconoscenze e delle misconceptions",a-monte,conoscenza,ricordare,conoscenza-comprensione,no,ALL
+VAL-F01,formativa,Domande flash dal posto,aperta,"Interrogazione breve in itinere, non registrata",in-itinere,conoscenza|abilita,comprendere,conoscenza-comprensione,no,ALL
+VAL-F02,formativa,Exit ticket (biglietto d'uscita),semistrutturata,"Breve risposta a fine lezione per sondare la comprensione",in-itinere,conoscenza,comprendere,conoscenza-comprensione,no,ALL
+VAL-F03,formativa,Think-Pair-Share,aperta,"Riflessione individuale, confronto in coppia, condivisione",in-itinere,abilita,analizzare,abilita-comunicative,no,ALL
+VAL-F04,formativa,Quiz formativo (Kahoot/Quizlet),strutturata,"Quiz interattivo a fini di feedback, non graduato",in-itinere,conoscenza,comprendere,conoscenza-comprensione,no,ALL
+VAL-F05,formativa,Osservazione sistematica,osservativa,"Osservazione di processo durante il lavoro (checklist osservativa)",in-itinere,competenza,valutare,capacita-apprendere,no,ALL
+VAL-F06,formativa,Autovalutazione / diario di bordo,aperta,"Lo studente riflette sul proprio apprendimento e metodo",in-itinere,competenza,valutare,capacita-apprendere,no,ALL
+VAL-F07,formativa,Peer feedback (valutazione tra pari),aperta,"Restituzione tra pari su criteri condivisi",in-itinere,competenza,valutare,abilita-comunicative,no,ALL
+VAL-F08,formativa,Correzione collettiva,aperta,"Correzione partecipata di un esercizio o di una versione",in-itinere,abilita,analizzare,comprensione-applicata,no,ALL
+VAL-F09,formativa,Thinking Routine,aperta,"Protocollo che rende visibile il pensiero (See-Think-Wonder)",in-itinere,competenza,analizzare,autonomia-giudizio,no,ALL
+VAL-F10,formativa,Mappa o sintesi rapida,semistrutturata,"Organizzatore grafico prodotto in itinere come controllo",in-itinere,abilita,comprendere,conoscenza-comprensione,no,ALL
+VAL-S01,sommativa,Interrogazione orale,aperta,"Colloquio orale strutturato di fine percorso",a-valle,conoscenza|abilita|competenza,valutare,abilita-comunicative,si,ALL
+VAL-S02,sommativa,Versione / traduzione,aperta,"Traduzione di un brano nuovo, con o senza vocabolario",a-valle,abilita,applicare,comprensione-applicata,si,GRC|LAT
+VAL-S03,sommativa,Analisi del testo (Tip. A),aperta,"Comprensione, analisi e interpretazione di un testo dato",a-valle,abilita|competenza,analizzare,autonomia-giudizio,si,ITA
+VAL-S04,sommativa,Testo argomentativo (Tip. B),aperta,"Produzione argomentativa a partire da un dossier o una tesi",a-valle,competenza,valutare,autonomia-giudizio,si,ITA
+VAL-S05,sommativa,Riflessione su tema d'attualita' (Tip. C),aperta,"Testo espositivo-argomentativo su tema generale",a-valle,competenza,valutare,abilita-comunicative,si,ITA
+VAL-S06,sommativa,Trattazione sintetica,semistrutturata,"Risposta aperta su scaletta o entro un numero di righe",a-valle,conoscenza|abilita,analizzare,conoscenza-comprensione,si,ALL
+VAL-S07,sommativa,Prova strutturata,strutturata,"Scelta multipla, vero/falso, corrispondenza, completamento",a-valle,conoscenza,applicare,conoscenza-comprensione,si,ALL
+VAL-S08,sommativa,Prova semistrutturata,semistrutturata,"Domande a risposta vincolata, analisi guidata",a-valle,abilita,analizzare,comprensione-applicata,si,ALL
+VAL-S09,sommativa,Relazione / saggio breve,aperta,"Elaborato espositivo o argomentativo esteso",a-valle,competenza,creare,abilita-comunicative,si,ITA
+VAL-S10,sommativa,Compito di realta' / prova esperta,mista,"Prestazione autentica valutata con rubrica (in UdA)",a-valle,competenza,creare,autonomia-giudizio,si,ALL
+VAL-S11,sommativa,Prodotto multimediale (UdA),mista,"Artefatto digitale come esito di un percorso per competenze",a-valle,competenza,creare,capacita-apprendere,si,ALL

@@ -1,0 +1,37 @@
+id,materia,scope,target,prerequisito,tipo,orizzonte,obbligatorio,nota
+PRE-G01,GRC,nucleo,SINT,MORF,trasversale,biennio,si,La sintassi presuppone la morfologia consolidata
+PRE-G02,GRC,nucleo,LESS,MORF,trasversale,biennio,no,
+PRE-G03,GRC,nucleo,TRAD,MORF,trasversale,biennio,si,Tradurre presuppone morfologia consolidata
+PRE-G04,GRC,nucleo,TRAD,SINT,trasversale,anno-precedente,si,
+PRE-G05,GRC,nucleo,TRAD,LESS,trasversale,anno-precedente,si,
+PRE-G06,GRC,nucleo,TRAD,METR,trasversale,immediato,no,Solo per i testi poetici (scansione)
+PRE-G07,GRC,nucleo,METR,MORF,trasversale,anno-precedente,no,La scansione presuppone fonologia e quantita'
+PRE-G08,GRC,nucleo,LETT,ANAL,trasversale,anno-precedente,si,Gli strumenti dell'analisi servono la storia letteraria
+PRE-G09,GRC,nucleo,LETT,LETT,sequenziale,anno-precedente,no,L'epoca corrente presuppone la precedente
+PRE-G10,GRC,nucleo,CRIT,LETT,trasversale,anno-precedente,si,
+PRE-G11,GRC,nucleo,CRIT,ANAL,trasversale,anno-precedente,si,
+PRE-G12,GRC,nucleo,SCIA,LETT,trasversale,quinquennio,no,Spettro: competenza consolidata
+PRE-G13,GRC,nucleo,SCIA,CULT,trasversale,quinquennio,no,
+PRE-L01,LAT,nucleo,SINT,MORF,trasversale,biennio,si,La sintassi presuppone la morfologia consolidata
+PRE-L02,LAT,nucleo,LESS,MORF,trasversale,biennio,no,
+PRE-L03,LAT,nucleo,TRAD,MORF,trasversale,biennio,si,Tradurre presuppone morfologia consolidata
+PRE-L04,LAT,nucleo,TRAD,SINT,trasversale,anno-precedente,si,
+PRE-L05,LAT,nucleo,TRAD,LESS,trasversale,anno-precedente,si,
+PRE-L06,LAT,nucleo,TRAD,METR,trasversale,immediato,no,Solo per i testi poetici (scansione)
+PRE-L07,LAT,nucleo,METR,MORF,trasversale,anno-precedente,no,La scansione presuppone fonologia e quantita'
+PRE-L08,LAT,nucleo,LETT,ANAL,trasversale,anno-precedente,si,Gli strumenti dell'analisi servono la storia letteraria
+PRE-L09,LAT,nucleo,LETT,LETT,sequenziale,anno-precedente,no,L'epoca corrente presuppone la precedente
+PRE-L10,LAT,nucleo,CRIT,LETT,trasversale,anno-precedente,si,
+PRE-L11,LAT,nucleo,CRIT,ANAL,trasversale,anno-precedente,si,
+PRE-L12,LAT,nucleo,SCIA,LETT,trasversale,quinquennio,no,Spettro: competenza consolidata
+PRE-L13,LAT,nucleo,SCIA,CULT,trasversale,quinquennio,no,
+PRE-I01,ITA,nucleo,TEST,LING,trasversale,biennio,si,La produzione testuale presuppone l'educazione linguistica
+PRE-I02,ITA,nucleo,ANAL,LING,trasversale,biennio,no,
+PRE-I03,ITA,nucleo,SCRI,LING,trasversale,biennio,si,
+PRE-I04,ITA,nucleo,SCRI,TEST,trasversale,anno-precedente,si,Le tipologie d'Esame presuppongono i tipi testuali
+PRE-I05,ITA,nucleo,SCRI,ANAL,trasversale,anno-precedente,si,L'analisi del testo (Tip. A) presuppone gli strumenti dell'analisi
+PRE-I06,ITA,nucleo,ORAL,LING,trasversale,biennio,no,
+PRE-I07,ITA,nucleo,LETT,ANAL,trasversale,anno-precedente,si,
+PRE-I08,ITA,nucleo,LETT,LETT,sequenziale,anno-precedente,no,L'epoca/corrente corrente presuppone la precedente
+PRE-I09,ITA,nucleo,CRIT,LETT,trasversale,anno-precedente,si,
+PRE-I10,ITA,nucleo,CRIT,ANAL,trasversale,anno-precedente,si,

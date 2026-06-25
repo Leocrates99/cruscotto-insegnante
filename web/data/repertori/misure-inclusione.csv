@@ -1,0 +1,30 @@
+id,ambito,categoria,misura,descrizione,disciplina_o_trasversale,riferimento_normativo,raccordo_valutazione,materie
+INC-C01,DSA,compensativo,Mappe concettuali e schemi,"Organizzatori grafici usabili in studio e in prova",trasversale,L.170/2010; DM 5669/2011,"Ammessi anche in verifica",ALL
+INC-C02,DSA,compensativo,Sintesi vocale (text-to-speech),"Lettura automatica del testo scritto",trasversale,L.170/2010,"Per la decodifica dei testi di prova",ALL
+INC-C03,DSA,compensativo,Audiolibro / libro digitale,"Versione audio o digitale del testo",trasversale,L.170/2010,-,ITA
+INC-C04,DSA,compensativo,"Formulari, tabelle e glossari","Schede di sintesi: paradigmi, declinazioni, coniugazioni, regole",specifica,L.170/2010,"Consultabili durante la prova",GRC|LAT
+INC-C05,DSA,compensativo,Vocabolario / dizionario digitale,"Lessico digitale con ricerca facilitata",specifica,L.170/2010,"Ammesso nelle versioni",GRC|LAT|ITA
+INC-C06,DSA,compensativo,Registrazione della lezione,"Registrazione audio a supporto degli appunti",trasversale,L.170/2010,-,ALL
+INC-C07,DSA,compensativo,Computer con correttore ortografico,"Videoscrittura con controllo ortografico",trasversale,L.170/2010,"Per le prove scritte",ITA
+INC-C08,DSA,compensativo,Testo ad alta leggibilita',"Font, spaziatura e impaginazione facilitati",trasversale,Dir. 27/12/2012,-,ALL
+INC-D01,DSA,dispensativo,Dispensa dalla lettura ad alta voce,"Non si richiede la lettura espressiva davanti alla classe",trasversale,L.170/2010,-,ALL
+INC-D02,DSA,dispensativo,Dispensa dalla scrittura sotto dettatura,"Si evita la scrittura veloce sotto dettatura",trasversale,L.170/2010,-,ALL
+INC-D03,DSA,dispensativo,Dispensa dal ricopiare dalla lavagna,"Si forniscono i materiali gia' trascritti",trasversale,L.170/2010,-,ALL
+INC-D04,DSA,dispensativo,Riduzione quantitativa non qualitativa,"Meno esercizi o brano piu' breve, stesso obiettivo",specifica,L.170/2010,"La prova mantiene il livello, riduce la quantita'",GRC|LAT|ITA
+INC-D05,DSA,dispensativo,Dispensa dallo studio mnemonico,"Si evita la memorizzazione di paradigmi, tabelle, elenchi",specifica,L.170/2010,-,GRC|LAT
+INC-D06,DSA,dispensativo,Dispensa dalla valutazione della forma,"Nella valutazione si privilegia il contenuto sulla correttezza formale",trasversale,L.170/2010,"Priorita' al contenuto rispetto alla forma",ALL
+INC-O01,BES,organizzativo,Tempi aggiuntivi,"Tempo di svolgimento prolungato (di norma fino al 30%)",trasversale,L.170/2010; Dir. 27/12/2012,"Tempi adeguati nelle prove",ALL
+INC-O02,BES,organizzativo,Verifiche programmate,"Interrogazioni e verifiche calendarizzate, non piu' di una al giorno",trasversale,Dir. 27/12/2012,-,ALL
+INC-O03,BES,organizzativo,Posto a sedere favorevole,"Collocazione che riduce le distrazioni e facilita l'attenzione",trasversale,Dir. 27/12/2012,-,ALL
+INC-O04,BES,organizzativo,Tutoring tra pari,"Affiancamento di un compagno tutor",trasversale,Dir. 27/12/2012,-,ALL
+INC-O05,BES,organizzativo,Anticipazione di mappe e materiali,"Materiali e schemi forniti prima della lezione",trasversale,Dir. 27/12/2012,-,ALL
+INC-O06,BES,organizzativo,Frazionamento del compito,"Suddivisione del compito in fasi piu' brevi e gestibili",trasversale,Dir. 27/12/2012,-,ALL
+INC-V01,DSA,valutativo,Prove personalizzate,"Prove calibrate sulle effettive potenzialita', coerenti col PDP",trasversale,L.170/2010,"Coerenti con gli strumenti previsti",ALL
+INC-V02,DSA,valutativo,Uso degli strumenti compensativi in prova,"Gli strumenti compensativi sono ammessi anche in sede di verifica e d'Esame",trasversale,L.170/2010; D.Lgs 62/2017,"Anche all'Esame di Stato",ALL
+INC-V03,BES,valutativo,Valutazione coerente col percorso,"Si valuta tenendo conto del punto di partenza e del progresso",trasversale,Dir. 27/12/2012,-,ALL
+INC-P01,L104,curricolare,Percorso per obiettivi minimi,"Programmazione riconducibile ai programmi ministeriali (titolo legale)",specifica,L.104/1992; D.Lgs 62/2017,"Prove equipollenti agli obiettivi minimi",ALL
+INC-P02,L104,curricolare,Percorso differenziato,"Programmazione non riconducibile ai programmi (attestato dei crediti)",specifica,L.104/1992; D.Lgs 62/2017,"Valutazione riferita al PEI differenziato",ALL
+INC-P03,L104,organizzativo,Ore di sostegno e assistenza,"Docente di sostegno e assistenza alla persona/comunicazione",trasversale,L.104/1992; D.Lgs 66/2017,-,ALL
+INC-P04,L104,compensativo,Ausili e tecnologie assistive,"Strumenti e tecnologie per l'autonomia e l'accesso",trasversale,L.104/1992; D.Lgs 66/2017,-,ALL
+INC-P05,L104,valutativo,Prove equipollenti,"Prove di forma diversa ma di pari valore (anche all'Esame di Stato)",trasversale,L.104/1992; D.Lgs 62/2017,"Equipollenza degli obiettivi",ALL
+INC-B01,BES,curricolare,PDP temporaneo (svantaggio),"Piano deliberato dal Consiglio per svantaggio socio-economico, linguistico, culturale, anche a tempo",trasversale,Dir. 27/12/2012; CM 8/2013,"Personalizzazione motivata e verbalizzata",ALL

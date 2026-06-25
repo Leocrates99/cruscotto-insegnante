@@ -1,0 +1,13 @@
+id,fase,modello,ordine,funzione,perc_monte,dur_min_60,dur_max_60,attivita_docente,attivita_studente,metodologie_tipiche,opzionale
+FAS-01,Apertura / Avvio,generico,1,"Richiamo dei prerequisiti, aggancio motivazionale, esplicitazione degli obiettivi",10,5,8,"Attiva, contestualizza, dichiara gli obiettivi","Richiamano, si orientano, si attivano",MET-07|MET-23|MET-21|MET-02,no
+FAS-02,Sviluppo / Presentazione,generico,2,"Presentazione o scoperta del contenuto nuovo",35,18,25,"Espone o guida la scoperta del nuovo","Ascoltano, elaborano, scoprono",MET-01|MET-02|MET-03|MET-05|MET-13|MET-28,no
+FAS-03,Esercitazione / Applicazione,generico,3,"Lavoro attivo, guidato o cooperativo, sul contenuto",30,15,20,"Assegna i compiti, fornisce scaffolding, monitora","Applicano, traducono, analizzano, producono",MET-04|MET-09|MET-10|MET-20|MET-24|MET-18,no
+FAS-04,Verifica formativa,generico,4,"Controllo in itinere dell'apprendimento, non graduato",10,5,8,"Sonda la comprensione e da' feedback","Mostrano che cosa hanno capito",MET-30|MET-22|MET-08,no
+FAS-05,Chiusura / Sintesi e metacognizione,generico,5,"Ricapitolazione e riflessione sul metodo",10,5,7,"Sintetizza e guida la metacognizione","Ricapitolano e riflettono",MET-22|MET-07|MET-21,no
+FAS-06,Consegna / Compito,generico,6,"Assegnazione del lavoro domestico",5,2,5,"Assegna e chiarisce la consegna","Annotano e chiedono chiarimenti",-,si
+FAS-07,Studio domestico (a monte),flipped,0,"Fruizione del materiale a casa, fuori orario",0,0,0,"Predispone video e materiali","Studiano in autonomia",MET-17|MET-31,si
+FAS-08,Sistematizzazione,euristica,3,"Messa a sistema di quanto scoperto per domande",15,8,12,"Formalizza la regola o la lettura emersa","Fissano e schematizzano",MET-03|MET-01,si
+FAS-09,Restituzione,cooperativo,4,"Condivisione dei prodotti dei gruppi",15,8,12,"Coordina la restituzione","Presentano il lavoro di gruppo",MET-04|MET-05|MET-06,si
+FAS-10,Momento preparatorio (EAS),eas,1,"Stimolo e consegna, logica del problem solving",20,10,15,"Da' lo stimolo e la consegna","Si attivano sul problema",MET-12|MET-10,si
+FAS-11,Momento operatorio (EAS),eas,2,"Produzione e condivisione di un artefatto, learning by doing",50,25,35,"Facilita la produzione","Producono l'artefatto",MET-12|MET-09,si
+FAS-12,Momento ristrutturativo (EAS),eas,3,"Valutazione, correzione delle misconceptions, riflessione",30,15,20,"Conduce il debriefing e la correzione","Riflettono e correggono",MET-12|MET-22,si

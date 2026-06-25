@@ -38,10 +38,24 @@ function toObjects(text: string): Record<string, string>[] {
 const pipe = (s?: string): string[] => (s ? s.split("|").map((x) => x.trim()).filter(Boolean) : []);
 
 const obiettivi = toObjects(read("obiettivi_3d.csv"));
-const voci = ["voci-GRC.csv", "voci-LAT.csv", "voci-ITA.csv"].flatMap((f) => toObjects(read(f)));
+const vociFiles = { GRC: "voci-GRC.csv", LAT: "voci-LAT.csv", ITA: "voci-ITA.csv" } as const;
+const vociByFile = Object.fromEntries(Object.entries(vociFiles).map(([m, f]) => [m, toObjects(read(f))]));
+const voci = Object.values(vociByFile).flat();
 const parallelismi = toObjects(read("voci-parallelismi.csv"));
 const obIds = new Set(obiettivi.map((o) => o.id));
 const vById = new Map(voci.map((v) => [v.id, v]));
+
+const rep = (f: string) => toObjects(read(`repertori/${f}`));
+const prerequisiti = rep("prerequisiti.csv");
+const metodologie = rep("metodologie.csv");
+const fasi = rep("fasi-lezione.csv");
+const arrangiamenti = rep("arrangiamenti-lezione.csv");
+const materiali = rep("materiali.csv");
+const valutazione = rep("valutazione.csv");
+const inclusione = rep("misure-inclusione.csv");
+const pipeRef = (s?: string): string[] => pipe(s).filter((x) => x !== "-");
+const nucleoCodici: Record<string, Set<string>> = {};
+for (const o of obiettivi) { const c = o.id.split(".")[2]; if (c) (nucleoCodici[o.materia] ??= new Set()).add(c); }
 
 describe("Archivio · invarianti di import (rete di sicurezza)", () => {
   it("0 obiettivi orfani: ogni obiettivi_backbone risolve nel backbone", () => {
@@ -65,5 +79,45 @@ describe("Archivio · invarianti di import (rete di sicurezza)", () => {
   it("0 residui verifica/griglia nei blocchi", () => {
     const bad = voci.filter((v) => ["verifica", "griglia", "ed_civica"].includes(v.blocco)).map((v) => v.id);
     expect(bad).toEqual([]);
+  });
+});
+
+describe("Repertori didattici · invarianti di import", () => {
+  const metIds = new Set(metodologie.map((m) => m.id));
+  const fasIds = new Set(fasi.map((f) => f.id));
+
+  it("0 metodologie inesistenti referenziate da fasi/arrangiamenti", () => {
+    const bad = [
+      ...fasi.flatMap((f) => pipeRef(f.metodologie_tipiche).filter((m) => !metIds.has(m)).map((m) => `${f.id} → ${m}`)),
+      ...arrangiamenti.flatMap((a) => pipeRef(a.metodologie_tipiche).filter((m) => !metIds.has(m)).map((m) => `${a.id} → ${m}`)),
+    ];
+    expect(bad).toEqual([]);
+  });
+  it("0 fasi inesistenti in arrangiamenti", () => {
+    const bad = arrangiamenti.flatMap((a) => pipeRef(a.sequenza_fasi).filter((s) => !fasIds.has(s)).map((s) => `${a.id} → ${s}`));
+    expect(bad).toEqual([]);
+  });
+  it("0 regole-prerequisiti con nucleo inesistente (per materia)", () => {
+    const bad = prerequisiti.filter((p) => p.scope === "nucleo").flatMap((p) => {
+      const set = nucleoCodici[p.materia] ?? new Set<string>();
+      const out: string[] = [];
+      if (!set.has(p.target)) out.push(`${p.id} → target ${p.materia}:${p.target}`);
+      if (!set.has(p.prerequisito)) out.push(`${p.id} → prereq ${p.materia}:${p.prerequisito}`);
+      return out;
+    });
+    expect(bad).toEqual([]);
+  });
+});
+
+describe("Archivio · sanità dei conteggi", () => {
+  it("backbone, parallelismi e repertori hanno le cardinalità attese", () => {
+    expect(obiettivi.length).toBe(408);
+    expect(parallelismi.length).toBe(47);
+    expect([prerequisiti.length, metodologie.length, fasi.length, arrangiamenti.length, materiali.length, valutazione.length, inclusione.length])
+      .toEqual([36, 33, 12, 7, 30, 24, 29]);
+  });
+  it("le voci sono la somma dei tre file (nessuna riga persa nell'import)", () => {
+    expect(voci.length).toBe(vociByFile.GRC.length + vociByFile.LAT.length + vociByFile.ITA.length);
+    expect(voci.length).toBeGreaterThanOrEqual(698); // 698 da contratto + estensioni-autore in coda
   });
 });
