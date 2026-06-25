@@ -26,7 +26,8 @@ export interface Arrangiamento { id: string; nome: string; modello: string; sequ
 export interface Materiale { id: string; categoria: string; tipo: string; descrizione: string; supporto: string; funzione: string; accessibilita: string; materie: string[]; note: string }
 export interface Valutazione { id: string; funzione: string; metodo: string; forma: string; descrizione: string; momento: string; oggetto: string[]; bloom_max: string; descrittore_dublino: string; graduata: boolean; materie: string[] }
 export interface MisuraInclusione { id: string; ambito: string; categoria: string; misura: string; descrizione: string; disciplina_o_trasversale: string; riferimento_normativo: string; raccordo_valutazione: string; materie: string[] }
-export interface Repertori { prerequisiti: Prerequisito[]; metodologie: Metodologia[]; fasi: Fase[]; arrangiamenti: Arrangiamento[]; materiali: Materiale[]; valutazione: Valutazione[]; inclusione: MisuraInclusione[] }
+export interface Sdg { id: string; numero: number | null; titolo: string; colore: string; area: string; descrizione: string; keywords: string[] }
+export interface Repertori { prerequisiti: Prerequisito[]; metodologie: Metodologia[]; fasi: Fase[]; arrangiamenti: Arrangiamento[]; materiali: Materiale[]; valutazione: Valutazione[]; inclusione: MisuraInclusione[]; agenda: Sdg[] }
 
 export interface ArchivioIndex {
   obiettivi: ObiettivoBackbone[]; voci: Voce[]; parallelismi: Parallelismo[];
@@ -179,6 +180,8 @@ export const valutazioni = (a: ArchivioIndex, f: { materia?: string; funzione?: 
   a.repertori.valutazione.filter((v) => matchMaterie(v.materie, f.materia) && (!f.funzione || v.funzione === f.funzione) && (f.graduata === undefined || v.graduata === f.graduata));
 export const misureInclusione = (a: ArchivioIndex, f: { materia?: string; ambito?: string; categoria?: string } = {}): MisuraInclusione[] =>
   a.repertori.inclusione.filter((i) => matchMaterie(i.materie, f.materia) && (!f.ambito || i.ambito === f.ambito) && (!f.categoria || i.categoria === f.categoria));
+/** I 17 obiettivi dell'Agenda 2030 (espansione di «Agenda 2030 e sviluppo sostenibile»). */
+export const agenda2030 = (a: ArchivioIndex): Sdg[] => a.repertori.agenda;
 
 // Mappe nucleo: codice (segmento ID backbone) ↔ etichetta leggibile, per materia.
 let _nuc: { codeByLabel: Record<string, Record<string, string>>; labelByCode: Record<string, Record<string, string>> } | null = null;

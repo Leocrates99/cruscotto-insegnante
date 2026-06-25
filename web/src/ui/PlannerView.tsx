@@ -7,7 +7,7 @@ import { useStore } from "../store/useStore";
 import { classiAttive, contiClasse, materieAttive, materieClasseEffettive, scuoleCorrenti, useProfile } from "../store/profile";
 import { annoCorrenteId, classeId } from "../store/links";
 import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia";
-import { antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, misureInclusione as repInclusione, perPeso, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
+import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, misureInclusione as repInclusione, perPeso, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
 import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI, ICON_COMPITI, ICON_EDCIVICA, ICON_METODOLOGIE, ICON_STRUMENTI } from "../data/glossario";
 import { downloadWord } from "../store/reportFineAnno";
 import { getSessione, upsertSessione } from "../store/valutazione";
@@ -513,10 +513,32 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       </div>))}</div>
                   : <DrillCards opts={METODOLOGIE} val={metodologie} onToggle={(m) => setMetodologie(toggleIn(metodologie, m))} desc={(o) => DESCR_METODOLOGIE[o]} icon={(o) => ICON_METODOLOGIE[o]} />)}
                 {stepDefs[idx].key === "edciv" && (
-                  <div className="pl-dgrid">
-                    <DCard icon="🚫" title="Nessun apporto" desc="Lezione standard: non si considera l'Educazione civica." on={edcivSkip} onClick={() => { setEdcivSkip((s) => !s); setEduciv([]); }} />
-                    {EDCIVICA.map((o) => <DCard key={o} icon={ICON_EDCIVICA[o]} title={cap(o)} desc={DESCR_EDCIVICA[o]} on={educiv.includes(o)} onClick={() => { setEduciv(toggleIn(educiv, o)); setEdcivSkip(false); }} />)}
-                  </div>
+                  <>
+                    <div className="pl-dgrid">
+                      <DCard icon="🚫" title="Nessun apporto" desc="Lezione standard: non si considera l'Educazione civica." on={edcivSkip} onClick={() => { setEdcivSkip((s) => !s); setEduciv([]); }} />
+                      {EDCIVICA.map((o) => <DCard key={o} icon={ICON_EDCIVICA[o]} title={cap(o)} desc={DESCR_EDCIVICA[o]} on={educiv.includes(o)} onClick={() => {
+                        const isAgenda = o === "Agenda 2030 e sviluppo sostenibile";
+                        const off = educiv.includes(o);
+                        let next = toggleIn(educiv, o);
+                        if (isAgenda && off) next = next.filter((x) => !x.startsWith("SDG "));
+                        setEduciv(next); setEdcivSkip(false);
+                      }} />)}
+                    </div>
+                    {educiv.includes("Agenda 2030 e sviluppo sostenibile") && arch && agenda2030(arch).length > 0 && (
+                      <div className="pl-sdg-wrap">
+                        <div className="pl-sub">Obiettivi dell'Agenda 2030 <small>{educiv.filter((x) => x.startsWith("SDG ")).length}/17</small> <em>· scegli le missioni pertinenti</em></div>
+                        <div className="pl-sdg-grid">
+                          {agenda2030(arch).map((s) => { const lab = `SDG ${s.numero} · ${s.titolo}`; const on = educiv.includes(lab); return (
+                            <button key={s.id} className={on ? "pl-sdg on" : "pl-sdg"} style={{ background: s.colore }} title={s.descrizione} onClick={() => setEduciv(toggleIn(educiv, lab))}>
+                              {on && <span className="pl-sdg-ck">✓</span>}
+                              <span className="pl-sdg-n">{s.numero}</span>
+                              <span className="pl-sdg-t">{s.titolo}</span>
+                            </button>
+                          ); })}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
                 {stepDefs[idx].key === "raccordi" && <DrillCards opts={raccordiOpts} val={raccordi} onToggle={(m) => setRaccordi(toggleIn(raccordi, m))} desc={(o) => `Aggancio interdisciplinare con ${o}.`} icon={(o) => <span className="pl-sigla mini" style={{ background: materiaColor(o) ?? "var(--ink-muted)" }}>{materiaSigla(o)}</span>} />}
 

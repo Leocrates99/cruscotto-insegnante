@@ -96,7 +96,10 @@ export function buildRepertori(read) {
     disciplina_o_trasversale: i.disciplina_o_trasversale, riferimento_normativo: i.riferimento_normativo,
     raccordo_valutazione: i.raccordo_valutazione, materie: pipe(i.materie),
   }));
-  return { prerequisiti, metodologie, fasi, arrangiamenti, materiali, valutazione, inclusione };
+  const agenda = rd("agenda-2030.csv").map((s) => ({
+    id: s.id, numero: num(s.numero), titolo: s.titolo, colore: s.colore, area: s.area, descrizione: s.descrizione, keywords: pipe(s.keywords),
+  }));
+  return { prerequisiti, metodologie, fasi, arrangiamenti, materiali, valutazione, inclusione, agenda };
 }
 
 const RESIDUI = new Set(["verifica", "griglia", "ed_civica"]);

@@ -53,6 +53,7 @@ const arrangiamenti = rep("arrangiamenti-lezione.csv");
 const materiali = rep("materiali.csv");
 const valutazione = rep("valutazione.csv");
 const inclusione = rep("misure-inclusione.csv");
+const agenda = rep("agenda-2030.csv");
 const pipeRef = (s?: string): string[] => pipe(s).filter((x) => x !== "-");
 const nucleoCodici: Record<string, Set<string>> = {};
 for (const o of obiettivi) { const c = o.id.split(".")[2]; if (c) (nucleoCodici[o.materia] ??= new Set()).add(c); }
@@ -129,5 +130,6 @@ describe("Archivio · sanità dei conteggi", () => {
     expect(c.materiali).toBe(materiali.length);
     expect(c.valutazione).toBe(valutazione.length);
     expect(c.inclusione).toBe(inclusione.length);
+    expect(c.agenda).toBe(agenda.length);
   });
 });
