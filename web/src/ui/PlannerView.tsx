@@ -37,18 +37,18 @@ const CENTRATURA: Record<string, { icona: string; col: string; peso: number; lab
 const centr = (c?: string) => (c ? CENTRATURA[c] : undefined);
 // Arco narrativo della lezione: i momenti in cui si distribuiscono le fasi.
 const MOMENTI: { id: string; label: string; icona: string; desc: string }[] = [
-  { id: "inizio", label: "Inizio", icona: "🚀", desc: "Come apri: crei il clima, richiami i prerequisiti e dici dove si va." },
-  { id: "sviluppo", label: "Sviluppo", icona: "📖", desc: "Il sapere nuovo: spieghi, fai scoprire, mostri come si ragiona." },
-  { id: "apprendimento", label: "Apprendimento", icona: "🛠️", desc: "Si mette in pratica: esercizio, applicazione, gruppi, laboratorio." },
-  { id: "fine", label: "Fine", icona: "🏁", desc: "Come chiudi: si tirano le fila, si verifica e si assegna." },
+  { id: "inizio", label: "Inizio", icona: "🚀", desc: "Apri la lezione: clima, prerequisiti, dove si va." },
+  { id: "sviluppo", label: "Sviluppo", icona: "📖", desc: "Spieghi il nuovo: esponi, fai scoprire, mostri come si ragiona." },
+  { id: "apprendimento", label: "Apprendimento", icona: "🛠️", desc: "Si mette in pratica: esercizio, gruppi, laboratorio." },
+  { id: "fine", label: "Fine", icona: "🏁", desc: "Chiudi: tiri le fila, verifichi, assegni." },
 ];
 const MOM_ORDER = MOMENTI.map((m) => m.id);
 const momIdx = (m?: string) => { const i = m ? MOM_ORDER.indexOf(m) : -1; return i < 0 ? MOM_ORDER.length : i; };
 // Durate-tipo della lezione (drill in cima allo step). `h` = ore → monte = h*60′.
 const DURATE: { h: number; lab: string; icona: string; desc: string }[] = [
-  { h: 1, lab: "1 ora", icona: "🟩", desc: "Lezione singola: una spiegazione e un po' di pratica." },
-  { h: 2, lab: "2 ore", icona: "🟦", desc: "Blocco da due ore: c'è spazio per laboratorio e confronto." },
-  { h: 3, lab: "3 ore", icona: "🟪", desc: "Blocco lungo: progetti, UdA o attività estese." },
+  { h: 1, lab: "1 ora", icona: "🟩", desc: "Una spiegazione e un po' di pratica." },
+  { h: 2, lab: "2 ore", icona: "🟦", desc: "C'è spazio per il laboratorio e il confronto." },
+  { h: 3, lab: "3 ore", icona: "🟪", desc: "Per progetti, UdA o lavori lunghi." },
 ];
 // Icone dei preset-timeline (per modello di arrangiamento).
 const ICON_ARRANGIAMENTO: Record<string, string> = {
@@ -516,7 +516,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
       ...(code && haAbilitaComp ? [{ key: "abilita" as StepKey, titolo: "Abilità e competenze", hint: "Stessa consultazione: ciò che si sa fare e l'agire competente." }] : []),
       ...(code ? [{ key: "prerequisiti" as StepKey, titolo: "Prerequisiti", hint: "Calcolati per prossimità dai contenuti flaggati; modificabili." }] : []),
       { key: "metodologie", titolo: "Metodologie", hint: "La strategia con cui fai apprendere: come organizzi attività, interazione e ruoli per raggiungere gli obiettivi. Scegline una o più, anche combinate." },
-      ...(!isUda ? [{ key: "fasi" as StepKey, titolo: "Fasi e tempi", hint: "La struttura della lezione: barra proporzionale e orari reali, centratura e attività per fase, durate consigliate e bilanciamento sul monte ore." }] : []),
+      ...(!isUda ? [{ key: "fasi" as StepKey, titolo: "Fasi e tempi", hint: "Dai un ritmo alla lezione: scegli la durata, aggiungi le fasi, regola i minuti. In alto vedi quanto tempo resta." }] : []),
       { key: "edciv", titolo: "Educazione civica", hint: "Ampliamento facoltativo: usa «Nessun apporto» per una lezione standard." },
       ...(raccordiOpts.length ? [{ key: "raccordi" as StepKey, titolo: "Raccordi interdisciplinari", hint: indir ? "Le materie dell'indirizzo con cui dialoga." : "Le altre materie con cui dialoga." }] : []),
       { key: "materiali", titolo: "Strumenti e materiali", hint: "Con cosa e dove: strumenti/spazi e i supporti, dal catalogo o creati al volo." },
@@ -655,24 +655,24 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                     <div className="pl-fase-blocco">
                       <div className="pl-sub">🧭 Come vuoi costruirla?</div>
                       <div className="pl-dgrid mini">
-                        {arrRep.length > 0 && <DCard icon="🗂️" title="Parti da un modello" desc="Scegli un impianto già pronto (classica, flipped, debate…) e adattalo." on={presetOpen} onClick={() => { setPresetOpen((o) => !o); setAddFaseOpen(false); }} />}
-                        <DCard icon="🧩" title="Struttura tipo" desc="Hai fretta? Quattro fasi equilibrate, già pronte da ritoccare." onClick={() => struttFasi()} />
+                        {arrRep.length > 0 && <DCard icon="🗂️" title="Parti da un modello" desc="Un impianto già pronto (classica, flipped, debate…) da adattare." on={presetOpen} onClick={() => { setPresetOpen((o) => !o); setAddFaseOpen(false); }} />}
+                        <DCard icon="🧩" title="Struttura tipo" desc="Quattro fasi equilibrate, pronte da ritoccare." onClick={() => struttFasi()} />
                         {arch && repFasi(arch).length > 0
-                          ? <DCard icon="➕" title="Aggiungi una fase" desc="Costruisci tu, un passo per volta, seguendo l'arco della lezione." on={addFaseOpen} onClick={() => { setAddFaseOpen((o) => !o); setFaseMomento(null); setPresetOpen(false); }} />
-                          : <DCard icon="➕" title="Aggiungi una fase" desc="Inserisci una fase vuota da compilare a mano." onClick={() => addFase()} />}
+                          ? <DCard icon="➕" title="Aggiungi una fase" desc="La costruisci tu, un passo per volta, lungo l'arco della lezione." on={addFaseOpen} onClick={() => { setAddFaseOpen((o) => !o); setFaseMomento(null); setPresetOpen(false); }} />
+                          : <DCard icon="➕" title="Aggiungi una fase" desc="Una fase vuota da scrivere a mano." onClick={() => addFase()} />}
                       </div>
                     </div>
 
                     {presetOpen && arrRep.length > 0 && (
                       <div className="pl-fase-add">
-                        <div className="pl-fase-add-hint">Applica una <b>timeline completa</b> già pronta: sostituisce le fasi correnti con la sequenza del modello.</div>
+                        <div className="pl-fase-add-hint">Applichi un <b>impianto intero</b>: le fasi che hai ora lasciano il posto a quelle del modello.</div>
                         <div className="pl-dgrid">{arrRep.map((ar) => <DCard key={ar.id} icon={ICON_ARRANGIAMENTO[ar.modello] ?? "🧭"} title={ar.nome} desc={ar.note} top={<span className="pl-cnt">{ar.sequenza_fasi.length} fasi · {ar.durata_riferimento_min}′</span>} onClick={() => { applicaArrangiamento(ar.id); setPresetOpen(false); }} />)}</div>
                       </div>
                     )}
 
                     {addFaseOpen && arch && (
                       <div className="pl-fase-add">
-                        <div className="pl-fase-add-hint">Scegli il <b>momento</b> dell'arco della lezione, poi la fase. Le fasi si dispongono da sole in ordine: inizio → sviluppo → apprendimento → fine.</div>
+                        <div className="pl-fase-add-hint">Scegli il <b>momento</b>, poi la fase. Si mettono in ordine da sole: inizio, sviluppo, apprendimento, fine.</div>
                         {faseMomento && <nav className="pl-bc"><button className="pl-bc-i" onClick={() => setFaseMomento(null)}>↩ Momenti</button><span className="pl-bc-seg"><span className="pl-bc-sep">▸</span><button className="pl-bc-i">{MOMENTI.find((m) => m.id === faseMomento)?.label}</button></span></nav>}
                         {!faseMomento
                           ? <div className="pl-dgrid">
@@ -695,7 +695,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       <div className="pl-orario-meter" role="img" aria-label={`Assegnati ${fasiMinTot} su ${minPrev} minuti`}>
                         <div className="pl-orario-fill" style={{ width: `${minPrev > 0 ? Math.min(100, (fasiMinTot / minPrev) * 100) : 0}%` }} />
                       </div>
-                      <div className="pl-orario-msg">{fasiMinTot === 0 ? "Imposta la durata e aggiungi le fasi: qui vedi quanto resta del monte ore." : minRim > 0 ? `Restano ${minRim}′ da distribuire` : minRim < 0 ? `Sei oltre di ${-minRim}′: riduci qualche fase o premi «bilancia»` : "In pari — il monte ore è coperto ✓"}</div>
+                      <div className="pl-orario-msg">{fasiMinTot === 0 ? "Scegli la durata e aggiungi le fasi: qui vedi quanti minuti restano." : minRim > 0 ? `Restano ${minRim}′ da dare alle fasi` : minRim < 0 ? `Hai ${-minRim}′ di troppo: togli qualche minuto o premi «bilancia»` : "Tutti i minuti sono distribuiti ✓"}</div>
                     </div>
 
                     {fasiRows.length > 0 && (
@@ -710,7 +710,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                         <div className="pl-centmix-bar" role="img" aria-label={`Centratura: studenti attivi circa ${studAttivi} per cento`}>
                           {fasiRows.filter((f) => (f.minuti || 0) > 0).map((f) => { const c = centr(f.centratura); return <div key={f.id} style={{ flexGrow: f.minuti, background: c?.col ?? "var(--ink-muted)" }} title={`${c?.lab ?? "—"} · ${f.minuti}′`} />; })}
                         </div>
-                        <div className="pl-centmix-lab">⚖ Centratura della lezione · <b>studenti attivi ~{studAttivi}%</b> <span className="muted">— colore per protagonismo (docente → studenti)</span></div>
+                        <div className="pl-centmix-lab">Chi è attivo · <b>studenti ~{studAttivi}% del tempo</b> <span className="muted">— il colore va dal docente agli studenti</span></div>
                       </div>
                     )}
 
@@ -719,14 +719,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                         {fasiRows.map((f, i) => { const s = inizioFase(i); const col = FASE_COLORS[i % FASE_COLORS.length]; const c = centr(f.centratura); const rng = rangeFase(f); const fuori = fuoriRange(f); const hasDett = !!(f.attDoc || f.attStu || rng || f.metodi.length); return (
                           <div key={f.id} id={`pl-fase-${f.id}`} className={faseEvidenzia === f.id ? "pl-fase evidenzia" : "pl-fase"} style={{ borderLeftColor: col }} onDragOver={(e) => e.preventDefault()} onDrop={() => { const from = dragFase.current; if (from != null) spostaFase(from, i); dragFase.current = null; }}>
                             <span className="pl-fase-n" draggable onDragStart={() => { dragFase.current = i; }} onDragEnd={() => { dragFase.current = null; }} title="Trascina per riordinare" style={{ background: col, cursor: "grab" }}>{i + 1}</span>
-                            <span className={fuori ? "pl-fase-step warn" : "pl-fase-step"} title={fuori && rng ? `Durata consigliata ${rng[0]}–${rng[1]}′` : "Aggiusta i minuti: ± 1 al centro, ± 2 e ± 5 ai lati"}>
-                              <button className="st-l" onClick={() => setFase(f.id, { minuti: Math.max(0, (f.minuti || 0) - 5) })} aria-label="Meno 5 minuti">−5</button>
-                              <button className="st-l" onClick={() => setFase(f.id, { minuti: Math.max(0, (f.minuti || 0) - 2) })} aria-label="Meno 2 minuti">−2</button>
-                              <button className="st-1" onClick={() => setFase(f.id, { minuti: Math.max(0, (f.minuti || 0) - 1) })} aria-label="Meno 1 minuto">−</button>
-                              <input type="number" min={0} step={1} value={f.minuti} onChange={(e) => setFase(f.id, { minuti: Math.max(0, Number(e.target.value)) })} /><em>′</em>
-                              <button className="st-1" onClick={() => setFase(f.id, { minuti: (f.minuti || 0) + 1 })} aria-label="Più 1 minuto">+</button>
-                              <button className="st-l" onClick={() => setFase(f.id, { minuti: (f.minuti || 0) + 2 })} aria-label="Più 2 minuti">+2</button>
-                              <button className="st-l" onClick={() => setFase(f.id, { minuti: (f.minuti || 0) + 5 })} aria-label="Più 5 minuti">+5</button>
+                            <span className={fuori ? "pl-fase-slider warn" : "pl-fase-slider"} title={fuori && rng ? `Durata consigliata ${rng[0]}–${rng[1]}′` : "Trascina per i minuti, oppure scrivi il numero"}>
+                              <input type="range" min={0} max={Math.max(minPrev || 60, f.minuti, 60)} step={1} value={f.minuti} onChange={(e) => setFase(f.id, { minuti: Math.max(0, Number(e.target.value)) })} aria-label="Minuti della fase" />
+                              <input type="number" className="pl-fase-minval" min={0} value={f.minuti} onChange={(e) => setFase(f.id, { minuti: Math.max(0, Number(e.target.value)) })} aria-label="Minuti (numero)" /><em>′</em>
                             </span>
                             <div className="pl-fase-body">
                               <div className="pl-fase-row1">

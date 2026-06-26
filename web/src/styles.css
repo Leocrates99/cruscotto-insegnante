@@ -829,6 +829,14 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-fase-step input { width: 2.6rem; text-align: center; border: none; background: var(--cream); color: var(--ink); font-weight: 700; padding: 0.25rem 0.2rem; -moz-appearance: textfield; }
 .pl-fase-step input::-webkit-outer-spin-button, .pl-fase-step input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .pl-fase-step em { padding: 0 0.4rem 0 0.05rem; font-style: normal; color: var(--ink-muted); font-size: 0.78rem; border-right: 1px solid var(--parchment-dark); display: inline-flex; align-items: center; }
+/* Selettore minuti a cursore (slider) — compatto */
+.pl-fase-slider { display: inline-flex; align-items: center; gap: 0.5rem; flex-shrink: 0; align-self: center; }
+.pl-fase-slider input[type="range"] { width: 7rem; accent-color: var(--accent); cursor: pointer; }
+.pl-fase-slider.warn input[type="range"] { accent-color: var(--danger); }
+.pl-fase-minval { width: 2.9rem; text-align: center; font: 700 0.85rem var(--font-ui); border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); color: var(--ink); padding: 0.25rem 0.15rem; -moz-appearance: textfield; }
+.pl-fase-minval::-webkit-outer-spin-button, .pl-fase-minval::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pl-fase-slider.warn .pl-fase-minval { border-color: var(--danger); color: var(--danger); }
+.pl-fase-slider em { font-style: normal; color: var(--ink-muted); font-size: 0.78rem; margin-left: -0.35rem; }
 .pl-fase-met { flex-shrink: 0; font: 600 0.74rem var(--font-ui); padding: 0.28rem 0.6rem; border: 1px solid var(--parchment-dark); border-radius: 99px; background: var(--parchment); color: var(--ink-light); cursor: pointer; }
 .pl-fase-met:hover, .pl-fase-met.on { border-color: var(--accent); color: var(--accent); background: var(--accent-pale); box-shadow: none; transform: none; }
 .pl-fase-sel { font-size: 0.78rem; color: var(--ink-muted); padding-left: 0.2rem; }
