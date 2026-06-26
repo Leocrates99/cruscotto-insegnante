@@ -26,8 +26,9 @@ const conteggi = {
   obiettivi: model.obiettivi.length, voci: model.voci.length, parallelismi: model.parallelismi.length,
   prerequisiti: rep.prerequisiti.length, metodologie: rep.metodologie.length, fasi: rep.fasi.length,
   arrangiamenti: rep.arrangiamenti.length, materiali: rep.materiali.length, valutazione: rep.valutazione.length, inclusione: rep.inclusione.length, agenda: rep.agenda.length,
+  profili: model.rete.profili.length, progetti: model.rete.progetti.length,
 };
 const index = { ...model, indici: buildIndex(model), meta: { conteggi } };
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(OUT, JSON.stringify(index));
-console.log(`✓ archivio.json — ${conteggi.obiettivi} obiettivi · ${conteggi.voci} voci · ${conteggi.parallelismi} parallelismi · repertori ${rep.prerequisiti.length}/${rep.metodologie.length}/${rep.fasi.length}/${rep.arrangiamenti.length}/${rep.materiali.length}/${rep.valutazione.length}/${rep.inclusione.length} · agenda ${rep.agenda.length} · 7 invarianti ok`);
+console.log(`✓ archivio.json — ${conteggi.obiettivi} obiettivi · ${conteggi.voci} voci · ${conteggi.parallelismi} parallelismi · repertori ${rep.prerequisiti.length}/${rep.metodologie.length}/${rep.fasi.length}/${rep.arrangiamenti.length}/${rep.materiali.length}/${rep.valutazione.length}/${rep.inclusione.length} · agenda ${rep.agenda.length} · rete ${conteggi.profili}/${conteggi.progetti} · 9 invarianti ok`);

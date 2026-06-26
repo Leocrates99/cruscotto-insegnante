@@ -28,11 +28,16 @@ export interface Valutazione { id: string; funzione: string; metodo: string; for
 export interface MisuraInclusione { id: string; ambito: string; categoria: string; misura: string; descrizione: string; disciplina_o_trasversale: string; riferimento_normativo: string; raccordo_valutazione: string; materie: string[] }
 export interface Sdg { id: string; numero: number | null; titolo: string; colore: string; icona: string; area: string; descrizione: string; keywords: string[] }
 export interface Repertori { prerequisiti: Prerequisito[]; metodologie: Metodologia[]; fasi: Fase[]; arrangiamenti: Arrangiamento[]; materiali: Materiale[]; valutazione: Valutazione[]; inclusione: MisuraInclusione[]; agenda: Sdg[] }
+// ── Rete dipartimentale (09_): raccordi a 3 livelli ──────────────────────────
+export interface ProfiloDip { id: string; nome: string; dipartimento: string; cluster: string[]; competenze_trasversali: string[]; abilita_trasversali: string[]; conoscenze_trasversali: string[]; raccordi: string[]; fase: string; note: string }
+export interface ProgettoInter { id: string; tipo: string; tema: string; dipartimenti: string[]; materie: string[]; parallelismo_seme: string; profili_coinvolti: string[]; discipline_apporto: string[]; stato: string; note: string }
+export interface Rete { profili: ProfiloDip[]; progetti: ProgettoInter[] }
 
 export interface ArchivioIndex {
   obiettivi: ObiettivoBackbone[]; voci: Voce[]; parallelismi: Parallelismo[];
   faccette: Record<string, unknown>;
   repertori: Repertori;
+  rete: Rete;
   indici: { vociByMateria: Record<string, string[]>; figliByParent: Record<string, string[]>; vociByObiettivo: Record<string, string[]>; parallelismiByRef: Record<string, string[]>; metodologieByFase: Record<string, string[]>; fasiById: Record<string, string>; prerequisitiByNucleo: Record<string, string[]> };
   meta: { conteggi: Record<string, number> };
 }
@@ -163,6 +168,24 @@ export function suggerimenti(a: ArchivioIndex, voceId: string): Suggerimento[] {
     .map((id) => pMap(a).get(id))
     .filter((p): p is Parallelismo => !!p)
     .map((p) => ({ parallelismo: p, collegate: resolveVoci(a, p.riferimenti.filter((r) => r !== voceId)) }));
+}
+
+// ── Rete dipartimentale: raccordi a 3 livelli (L1 profili, L2 progetti) ───────
+export const parallelismoById = (a: ArchivioIndex, id: string): Parallelismo | undefined => pMap(a).get(id);
+/** Profili dipartimentali (L1) il cui cluster include la materia. */
+export const profiliPerMateria = (a: ArchivioIndex, code: string | undefined): ProfiloDip[] =>
+  a.rete.profili.filter((p) => !code || p.cluster.includes(code));
+/** Progetti interdipartimentali (L2) che coinvolgono la materia. */
+export const progettiPerMateria = (a: ArchivioIndex, code: string | undefined): ProgettoInter[] =>
+  a.rete.progetti.filter((g) => !code || g.materie.includes(code));
+export interface ProfiloRisolto { profilo: ProfiloDip; competenze: ObiettivoBackbone[]; raccordi: Parallelismo[] }
+export function profiloRisolto(a: ArchivioIndex, p: ProfiloDip): ProfiloRisolto {
+  const oMap = new Map(a.obiettivi.map((o) => [o.id, o]));
+  return {
+    profilo: p,
+    competenze: p.competenze_trasversali.map((id) => oMap.get(id)).filter((o): o is ObiettivoBackbone => !!o),
+    raccordi: p.raccordi.map((id) => pMap(a).get(id)).filter((x): x is Parallelismo => !!x),
+  };
 }
 
 // ── Repertori didattici (lesson-builder) ─────────────────────────────────────

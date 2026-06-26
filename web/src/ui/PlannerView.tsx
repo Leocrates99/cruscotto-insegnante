@@ -8,7 +8,7 @@ import { classiAttive, contiClasse, materieAttive, materieClasseEffettive, scuol
 import { unitaOraria, useSettings } from "../store/settings";
 import { annoCorrenteId, classeId } from "../store/links";
 import { bloomLabel, materieIndirizzo, useTassonomia } from "../data/tassonomia";
-import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, faseById, fasi as repFasi, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, metodologieDiFase, misureInclusione as repInclusione, prerequisitiDiVoce, useArchivio, valutazioni as repValutazioni, voce, type ArchivioIndex, type Fase, type Metodologia, type PrereqRisolto, type Voce } from "../data/archivio";
+import { agenda2030, antenati, arrangiamenti as repArrangiamenti, espandiArrangiamento, faseById, fasi as repFasi, materiaCodice, materiali as repMateriali, metodologie as repMetodologie, metodologieDiFase, misureInclusione as repInclusione, prerequisitiDiVoce, profiliPerMateria, profiloRisolto, progettiPerMateria, suggerimenti, useArchivio, valutazioni as repValutazioni, voce, type ArchivioIndex, type Fase, type Metodologia, type PrereqRisolto, type ProfiloRisolto, type ProgettoInter, type Suggerimento, type Voce } from "../data/archivio";
 import { findNodo, tassonomiaConoscenze, tassonomiaSkill, type TNodo } from "../data/tassonomia-conoscenze";
 import { DESCR_COMPITI, DESCR_EDCIVICA, DESCR_METODOLOGIE, DESCR_STRUMENTI, ICON_COMPITI, ICON_EDCIVICA, ICON_INC_AMBITO, ICON_INCLUSIONE, ICON_MATERIALI, ICON_METODOLOGIE, ICON_STRUMENTI } from "../data/glossario";
 import { downloadWord } from "../store/reportFineAnno";
@@ -350,6 +350,16 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     return { daAccertare: [...da.values()], consolidate: [...co.values()], contesto: [...ctx.values()] };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [arch, [...selIds].join(",")]);
+  // Raccordi interdisciplinari · rete a 3 livelli (parallelismi dai contenuti, profili L1, progetti L2).
+  const parSugg = useMemo(() => {
+    if (!arch) return [] as Suggerimento[];
+    const seen = new Set<string>(); const out: Suggerimento[] = [];
+    for (const v of selVoci) for (const s of suggerimenti(arch, v.id)) if (!seen.has(s.parallelismo.id)) { seen.add(s.parallelismo.id); out.push(s); }
+    return out;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [arch, [...selIds].join(",")]);
+  const profiliRis = useMemo<ProfiloRisolto[]>(() => (arch && code ? profiliPerMateria(arch, code).map((p) => profiloRisolto(arch, p)) : []), [arch, code]);
+  const progettiL2 = useMemo<ProgettoInter[]>(() => (arch && code ? progettiPerMateria(arch, code) : []), [arch, code]);
   const inserisciPrereq = () => {
     const righe = [...prereqAgg.daAccertare.map((r) => `• ${r.etichetta}${r.regola.obbligatorio ? " — da accertare (micro-verifica)" : ""}`), ...prereqAgg.consolidate.map((r) => `• ${r.etichetta} (competenza consolidata)`)];
     if (righe.length) setPrereq((t) => [...new Set([...t.split("\n").filter(Boolean), ...righe])].join("\n"));
@@ -511,7 +521,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
       { key: "metodologie", titolo: "Metodologie", hint: "La strategia con cui fai apprendere: come organizzi attività, interazione e ruoli per raggiungere gli obiettivi. Scegline una o più, anche combinate." },
       ...(!isUda ? [{ key: "fasi" as StepKey, titolo: "Fasi e tempi", hint: "Dai un ritmo alla lezione: scegli la durata, aggiungi le fasi, regola i minuti. In alto vedi quanto tempo resta." }] : []),
       { key: "edciv", titolo: "Educazione civica", hint: "Ampliamento facoltativo: usa «Nessun apporto» per una lezione standard." },
-      ...(raccordiOpts.length ? [{ key: "raccordi" as StepKey, titolo: "Raccordi interdisciplinari", hint: indir ? "Le materie dell'indirizzo con cui dialoga." : "Le altre materie con cui dialoga." }] : []),
+      ...((raccordiOpts.length || (arch && code)) ? [{ key: "raccordi" as StepKey, titolo: "Raccordi interdisciplinari", hint: "La rete dei raccordi: parallelismi dai contenuti, profili dipartimentali e progetti interdisciplinari." }] : []),
       { key: "materiali", titolo: "Strumenti e materiali", hint: "Con cosa e dove: strumenti/spazi e i supporti, dal catalogo o creati al volo." },
       { key: "inclusione", titolo: "Inclusione", hint: "Misure per la classe e i suoi componenti (modello anonimo, per situazione)." },
       { key: "compiti", titolo: "Compiti e verifiche", hint: "Compiti (con data) e la verifica; possono restare vuoti e completarsi dopo." },
@@ -621,7 +631,29 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                     )}
                   </>
                 )}
-                {stepDefs[idx].key === "raccordi" && <DrillCards opts={raccordiOpts} val={raccordi} onToggle={(m) => setRaccordi(toggleIn(raccordi, m))} desc={() => undefined} icon={(o) => <span className="pl-sigla mini" style={{ background: materiaColor(o) ?? "var(--ink-muted)" }}>{materiaSigla(o)}</span>} />}
+                {stepDefs[idx].key === "raccordi" && (arch && code ? (
+                  <div className="pl-rete">
+                    {parSugg.length > 0 && <>
+                      <div className="pl-sez">🔗 Parallelismi dai contenuti scelti</div>
+                      <div className="pl-dgrid">{parSugg.map(({ parallelismo: p, collegate }) => { const lab = `${cap(p.sotto_tipo)} · ${p.titolo}`; const altre = collegate.slice(0, 4).map((v) => v.testo).join(" · "); return <DCard key={p.id} icon="🔗" title={p.titolo} desc={p.descrizione} top={<span className="pl-cnt">{p.materie.join(" · ")}{altre ? ` → ${altre}` : ""}</span>} on={raccordi.includes(lab)} onClick={() => setRaccordi(toggleIn(raccordi, lab))} />; })}</div>
+                    </>}
+                    {parSugg.length === 0 && <p className="muted">Flagga prima qualche <b>autore/opera</b> nelle conoscenze: qui compaiono i parallelismi suggeriti (stesso genere, tema o topos sulle tre letterature).</p>}
+                    {profiliRis.length > 0 && <>
+                      <div className="pl-sez">🏛️ Profili dipartimentali</div>
+                      <div className="pl-dgrid">{profiliRis.map(({ profilo: p, competenze, raccordi: rc }) => { const lab = `Profilo · ${p.nome}`; return <DCard key={p.id} icon="🏛️" title={p.nome} desc={p.note} top={<span className="pl-cnt">{competenze.length} competenze · {rc.length} raccordi</span>} on={raccordi.includes(lab)} onClick={() => setRaccordi(toggleIn(raccordi, lab))} />; })}</div>
+                    </>}
+                    {progettiL2.length > 0 && <>
+                      <div className="pl-sez">🌐 Progetti interdipartimentali</div>
+                      <div className="pl-dgrid">{progettiL2.map((g) => { const lab = `Progetto · ${g.tema}`; return <DCard key={g.id} icon={g.tipo === "progetto" ? "🚀" : "🌐"} title={g.tema} desc={g.note} top={<span className="pl-cnt">{g.discipline_apporto.map(cap).join(" · ")}</span>} on={raccordi.includes(lab)} onClick={() => setRaccordi(toggleIn(raccordi, lab))} />; })}</div>
+                    </>}
+                    {raccordiOpts.length > 0 && <>
+                      <div className="pl-sez">📎 Altre materie dell'indirizzo</div>
+                      <DrillCards opts={raccordiOpts} val={raccordi} onToggle={(m) => setRaccordi(toggleIn(raccordi, m))} desc={() => undefined} icon={(o) => <span className="pl-sigla mini" style={{ background: materiaColor(o) ?? "var(--ink-muted)" }}>{materiaSigla(o)}</span>} />
+                    </>}
+                  </div>
+                ) : (
+                  <DrillCards opts={raccordiOpts} val={raccordi} onToggle={(m) => setRaccordi(toggleIn(raccordi, m))} desc={() => undefined} icon={(o) => <span className="pl-sigla mini" style={{ background: materiaColor(o) ?? "var(--ink-muted)" }}>{materiaSigla(o)}</span>} />
+                ))}
 
                 {stepDefs[idx].key === "prerequisiti" && (
                   <>

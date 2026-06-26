@@ -1107,6 +1107,9 @@ button.ap-tw:hover { background: var(--accent-pale); border-radius: 5px; box-sha
 .pa-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .pa-gap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; font-size: 0.82rem; margin-top: 0.1rem; }
 
+/* ── Rete dei raccordi (parallelismi · profili · progetti) ──────────────────── */
+.pl-rete { display: flex; flex-direction: column; gap: 0.6rem; }
+
 /* ── Drill di comando della tassonomia (conoscenze, abilità/competenze) ─────── */
 .pl-drill { display: flex; flex-direction: column; gap: 0.75rem; }
 .pl-bc { display: flex; flex-wrap: wrap; align-items: center; gap: 0.1rem; }

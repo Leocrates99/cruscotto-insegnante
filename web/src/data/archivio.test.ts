@@ -54,6 +54,8 @@ const materiali = rep("materiali.csv");
 const valutazione = rep("valutazione.csv");
 const inclusione = rep("misure-inclusione.csv");
 const agenda = rep("agenda-2030.csv");
+const profili = toObjects(read("rete/profili-dipartimentali.csv"));
+const progetti = toObjects(read("rete/progetti-interdipartimentali.csv"));
 const pipeRef = (s?: string): string[] => pipe(s).filter((x) => x !== "-");
 const nucleoCodici: Record<string, Set<string>> = {};
 for (const o of obiettivi) { const c = o.id.split(".")[2]; if (c) (nucleoCodici[o.materia] ??= new Set()).add(c); }
@@ -131,5 +133,29 @@ describe("Archivio · sanità dei conteggi", () => {
     expect(c.valutazione).toBe(valutazione.length);
     expect(c.inclusione).toBe(inclusione.length);
     expect(c.agenda).toBe(agenda.length);
+    expect(c.profili).toBe(profili.length);
+    expect(c.progetti).toBe(progetti.length);
+  });
+});
+
+describe("Archivio · rete dipartimentale (09_)", () => {
+  const parIds = new Set(parallelismi.map((p) => (p as { id: string }).id));
+  const profIds = new Set(profili.map((p) => (p as { id: string }).id));
+  it("0 raccordi/competenze inesistenti nei profili L1", () => {
+    const bad = profili.flatMap((p) => [
+      ...pipe((p as Record<string, string>).raccordi).filter((r) => !parIds.has(r)).map((r) => `${(p as Record<string, string>).id} → ${r}`),
+      ...pipe((p as Record<string, string>).competenze_trasversali).filter((o) => !obIds.has(o)).map((o) => `${(p as Record<string, string>).id} → ${o}`),
+    ]);
+    expect(bad).toEqual([]);
+  });
+  it("0 semi/profili inesistenti nei progetti L2", () => {
+    const bad = progetti.flatMap((g) => {
+      const r = g as Record<string, string>;
+      return [
+        ...(r.parallelismo_seme && !parIds.has(r.parallelismo_seme) ? [`${r.id} → ${r.parallelismo_seme}`] : []),
+        ...pipe(r.profili_coinvolti).filter((pr) => !profIds.has(pr)).map((pr) => `${r.id} → ${pr}`),
+      ];
+    });
+    expect(bad).toEqual([]);
   });
 });

@@ -57,7 +57,27 @@ export function buildModel(read) {
   }));
   let faccette = {};
   try { faccette = JSON.parse(read("tassonomia_3d.json")).faccette ?? {}; } catch { /* opzionale */ }
-  return { obiettivi, voci, parallelismi, faccette, repertori: buildRepertori(read) };
+  return { obiettivi, voci, parallelismi, faccette, repertori: buildRepertori(read), rete: buildRete(read) };
+}
+
+/** La rete dipartimentale (09_): profili L1 + progetti L2 interdipartimentali. */
+export function buildRete(read) {
+  let profili = [], progetti = [];
+  try {
+    profili = toObjects(read("rete/profili-dipartimentali.csv")).map((p) => ({
+      id: p.id, nome: p.nome, dipartimento: p.dipartimento, cluster: pipe(p.cluster),
+      competenze_trasversali: pipe(p.competenze_trasversali), abilita_trasversali: pipe(p.abilita_trasversali),
+      conoscenze_trasversali: pipe(p.conoscenze_trasversali), raccordi: pipe(p.raccordi), fase: p.fase, note: p.note,
+    }));
+  } catch { /* opzionale */ }
+  try {
+    progetti = toObjects(read("rete/progetti-interdipartimentali.csv")).map((g) => ({
+      id: g.id, tipo: g.tipo, tema: g.tema, dipartimenti: pipe(g.dipartimenti), materie: pipe(g.materie),
+      parallelismo_seme: g.parallelismo_seme, profili_coinvolti: pipe(g.profili_coinvolti),
+      discipline_apporto: pipe(g.discipline_apporto), stato: g.stato, note: g.note,
+    }));
+  } catch { /* opzionale */ }
+  return { profili, progetti };
 }
 
 /** I 6 cataloghi del lesson-builder (08_repertori-didattici), pipe già splittate. */
@@ -110,10 +130,10 @@ export function nucleoCodiciByMateria(obiettivi) {
   return m;
 }
 /** Le invarianti del contratto (disciplinari + repertori), per categoria (array vuoti = ok). */
-export function validate({ obiettivi, voci, parallelismi, repertori }) {
+export function validate({ obiettivi, voci, parallelismi, repertori, rete }) {
   const obIds = new Set(obiettivi.map((o) => o.id));
   const vById = new Map(voci.map((v) => [v.id, v]));
-  const orfani = [], parent = [], riferimenti = [], residui = [], metodologie = [], fasi = [], prerequisiti = [];
+  const orfani = [], parent = [], riferimenti = [], residui = [], metodologie = [], fasi = [], prerequisiti = [], reteRaccordi = [], reteProgetti = [];
   for (const v of voci) for (const ob of v.obiettivi_backbone) if (!obIds.has(ob)) orfani.push(`${v.id} → ${ob}`);
   for (const v of voci) if (v.parent) { const p = vById.get(v.parent); if (!p) parent.push(`${v.id} → ${v.parent} (inesistente)`); else if (p.materia !== v.materia) parent.push(`${v.id} → ${v.parent} (altra materia)`); }
   for (const par of parallelismi) for (const r of par.riferimenti) { const v = vById.get(r); if (!v) riferimenti.push(`${par.id} → ${r} (inesistente)`); else if (v.blocco !== "contenuto") riferimenti.push(`${par.id} → ${r} (blocco=${v.blocco})`); }
@@ -133,7 +153,19 @@ export function validate({ obiettivi, voci, parallelismi, repertori }) {
       if (!set.has(p.prerequisito)) prerequisiti.push(`${p.id} → prerequisito ${p.materia}:${p.prerequisito} (nucleo inesistente)`);
     }
   }
-  return { orfani, parent, riferimenti, residui, metodologie, fasi, prerequisiti };
+  if (rete) {
+    const parIds = new Set(parallelismi.map((p) => p.id));
+    const profIds = new Set(rete.profili.map((p) => p.id));
+    for (const p of rete.profili) {
+      for (const r of p.raccordi) if (!parIds.has(r)) reteRaccordi.push(`${p.id} → ${r} (parallelismo inesistente)`);
+      for (const c of p.competenze_trasversali) if (!obIds.has(c)) reteRaccordi.push(`${p.id} → ${c} (obiettivo inesistente)`);
+    }
+    for (const g of rete.progetti) {
+      if (g.parallelismo_seme && !parIds.has(g.parallelismo_seme)) reteProgetti.push(`${g.id} → ${g.parallelismo_seme} (parallelismo seme inesistente)`);
+      for (const pr of g.profili_coinvolti) if (!profIds.has(pr)) reteProgetti.push(`${g.id} → ${pr} (profilo inesistente)`);
+    }
+  }
+  return { orfani, parent, riferimenti, residui, metodologie, fasi, prerequisiti, reteRaccordi, reteProgetti };
 }
 
 /** Indici denormalizzati per il client (disciplinari + repertori). */
