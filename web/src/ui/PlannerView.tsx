@@ -57,7 +57,6 @@ const ICON_ARRANGIAMENTO: Record<string, string> = {
 };
 
 const COMPITO_TIPI = ["esercizio in classe", "esercitazione guidata", "compito per casa", "verifica formativa"];
-const MAT_TIPI = ["esercizio", "scheda", "traccia", "versione", "presentazione", "mappa concettuale"];
 const CONO = new Set(["conoscenza", "contenuto"]);
 const ROM: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4, V: 5 };
 
@@ -216,8 +215,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [inclusione, setInclusione] = useState("");
   const [verificaF, setVerificaF] = useState("");
   const [compiti, setCompiti] = useState<CompitoRow[]>([]);
-  const [matSel, setMatSel] = useState<string[]>([]);
-  const [nuovoMat, setNuovoMat] = useState<{ titolo: string; tipo: string }>({ titolo: "", tipo: "esercizio" });
+  const [materiali, setMateriali] = useState<string[]>([]);
+  const [nuovoMat, setNuovoMat] = useState("");
   const [competenza, setCompetenza] = useState("");
   const [prodotto, setProdotto] = useState("");
   const [compitoRealta, setCompitoRealta] = useState("");
@@ -256,7 +255,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const resetTutto = () => {
     setSelIds(new Set()); setCatCono([]); setCatAC([]); setStepIdx(0); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
     setFasiRows([]); setFaseDett(null); setAddFaseOpen(false); setPresetOpen(false); setFaseMomento(null); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
-    setCompiti([]); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
+    setCompiti([]); setMateriali([]); setNuovoMat(""); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
     setShowVerifica(false); setVerificaSessId(null);
   };
   const cambiaMateria = (m: string) => { setMateria(m); setCatCono([]); setCatAC([]); setSelIds(new Set()); setStepIdx(0); };
@@ -390,19 +389,12 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const setCompito = (id: string, patch: Partial<CompitoRow>) => setCompiti((c) => c.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   const removeCompito = (id: string) => setCompiti((c) => c.filter((x) => x.id !== id));
 
-  const materialiDisp = records("materiali").filter((m) => !materia || !m["Materia"] || m["Materia"] === materia);
-  const creaDaCatalogo = (m: { tipo: string; categoria: string }) => {
-    const id = newId();
-    upsert("materiali", { id, Titolo: m.tipo, Tipo: m.categoria, Materia: materia, Ciclo: ciclo } as Rec);
-    setMatSel((s) => [...s, id]);
-  };
-  const creaMateriale = () => {
-    const t = nuovoMat.titolo.trim();
+  // Materiali = etichette selezionate (come gli strumenti): flag coerente, niente record duplicati.
+  const aggiungiMatLibero = () => {
+    const t = nuovoMat.trim();
     if (!t) return;
-    const id = newId();
-    upsert("materiali", { id, Titolo: t, Tipo: nuovoMat.tipo, Materia: materia, Ciclo: ciclo } as Rec);
-    setMatSel((s) => [...s, id]);
-    setNuovoMat({ titolo: "", tipo: nuovoMat.tipo });
+    setMateriali((s) => (s.includes(t) ? s : [...s, t]));
+    setNuovoMat("");
   };
   const compitiText = () => compiti.filter((c) => c.testo.trim()).map((c) => `• [${c.tipo}] ${c.testo.trim()}${c.data ? ` (entro ${fmtIt(c.data)})` : ""}`).join("\n");
   const compitiDaCal = compiti.filter((c) => c.data && c.testo.trim());
@@ -425,7 +417,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     titolo: titoloEff, tipoLabel, materia, classe: isUda ? "" : classe, scuola: scuolaNome ?? "",
     quando: isUda ? `${fmtIt(data)} – ${fmtIt(dataFine)}${nLezioni ? ` · ${nLezioni} lezioni` : ""}` : `${fmtIt(data)} · ${durata} ore`,
     conoscenze: righe("con", conoscenze), abilita: righe("ab", abilita), competenze: righe("com", competenzeTxt),
-    metodologie: metodologie.map(cap), strumenti: strumenti.map(cap), educiv: educivView, raccordi,
+    metodologie: metodologie.map(cap), strumenti: strumenti.map(cap), materiali: materiali.map(cap), educiv: educivView, raccordi,
     compiti: compiti.filter((c) => c.testo.trim()).map((c) => `[${cap(c.tipo)}] ${c.testo.trim()}${c.data ? ` (entro ${fmtIt(c.data)})` : ""}`),
     compitiCal: compitiDaCal.map((c) => `${fmtIt(c.data)} · ${cap(c.tipo)}: ${c.testo.trim()}`),
     prereq, fasi: fasiText(), inclusione, verificaF: verificaF ? cap(verificaF) : "", competenza, prodotto, compitoRealta,
@@ -449,6 +441,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
       par("Fasi e tempi", r.fasi),
       sec("Metodologie", r.metodologie),
       sec("Strumenti e spazi", r.strumenti),
+      sec("Materiali e supporti", r.materiali),
       sec("Educazione civica", r.educiv),
       sec("Raccordi interdisciplinari", r.raccordi),
       sec("Compiti ed esercizi", r.compiti),
@@ -466,7 +459,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     const cId = classe ? classeId(classe) : undefined;
     const didattica: Rec = {
       id: "", Prerequisiti: prereq, Conoscenze: derivato("con", conoscenze), "Abilità": derivato("ab", abilita), Competenze: derivato("com", competenzeTxt),
-      Metodologie: metodologie, "Strumenti e spazi": strumenti, "Compiti ed esercizi": compitiText(),
+      Metodologie: metodologie, "Strumenti e spazi": strumenti, "Materiali e supporti": materiali, "Compiti ed esercizi": compitiText(),
       "Educazione civica": educiv, "Raccordi interdisciplinari": raccordi, "Inclusione (misure)": inclusione,
       ...(verificaF ? { "Verifica formativa": verificaF } : {}),
     };
@@ -490,7 +483,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
       upsert("uda", {
         ...didattica, id: udaId, Titolo: tit, "Competenza attesa": competenza, "Prodotto atteso": prodotto, "Compito di realtà": compitoRealta,
         Ciclo: ciclo, Stato: "Calendarizzata", "Data inizio": data, "Data fine": dataFine, Obiettivi: obIds,
-        ...(lezIds.length ? { Lezioni: lezIds } : {}), ...(matSel.length ? { Materiali: matSel } : {}),
+        ...(lezIds.length ? { Lezioni: lezIds } : {}),
       } as Rec);
       linkVerifica(udaId, "uda");
       setMsg(`✓ UdA salvata in archivio${lezIds.length ? ` e ${lezIds.length} lezioni calendarizzate` : ""}: ${tit}`);
@@ -501,7 +494,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
         Titolo: tipo === "laboratorio" ? `[Laboratorio] ${tit}` : tit,
         Materia: materia, "Data prevista": data, "Durata (ore)": durata, Stato: "Calendarizzata",
         "Obiettivi della lezione": selVoci.map((v) => `• ${v.testo}`).join("\n"),
-        Fasi: fasiText(), "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}), ...(matSel.length ? { Materiali: matSel } : {}),
+        Fasi: fasiText(), "Anno scolastico": [annoCorrenteId()], ...(cId ? { Classe: [cId] } : {}),
       } as Rec);
       linkVerifica(lezId, "lezione");
       setMsg(`✓ ${tipoLabel} salvata in archivio e calendarizzata: ${tit}`);
@@ -589,7 +582,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                   : stepDefs[idx].key === "metodologie" ? (metodologie.length || "") + ""
                   : stepDefs[idx].key === "fasi" ? (fasiRows.length || "") + ""
                   : stepDefs[idx].key === "edciv" ? (edcivSkip ? "✓" : (educiv.length || "") + "") : stepDefs[idx].key === "raccordi" ? (raccordi.length || "") + ""
-                  : stepDefs[idx].key === "materiali" ? ((strumenti.length + matSel.length) || "") + "" : stepDefs[idx].key === "inclusione" ? (inclusione.trim() ? "✓" : "")
+                  : stepDefs[idx].key === "materiali" ? ((strumenti.length + materiali.length) || "") + "" : stepDefs[idx].key === "inclusione" ? (inclusione.trim() ? "✓" : "")
                   : stepDefs[idx].key === "compiti" ? (compiti.length || "") + "" : undefined}>
 
                 {stepDefs[idx].key === "conoscenze" && (code
@@ -750,7 +743,10 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                   </div>
                 )}
 
-                {stepDefs[idx].key === "materiali" && (
+                {stepDefs[idx].key === "materiali" && (() => {
+                  const catTipi = new Set(matRep.map((m) => m.tipo));
+                  const customMat = materiali.filter((l) => !catTipi.has(l));
+                  return (
                   <div className="pl-mat">
                     <div className="pl-sez">🧰 Strumenti e spazi</div>
                     <DrillCards opts={STRUMENTI} val={strumenti} onToggle={(m) => setStrumenti(toggleIn(strumenti, m))} desc={(o) => DESCR_STRUMENTI[o]} icon={(o) => ICON_STRUMENTI[o]} />
@@ -758,18 +754,20 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       <div className="pl-sez">📦 Materiali e supporti</div>
                       {[...new Set(matRep.map((m) => m.categoria))].map((cat) => (
                         <div key={cat}><div className="pl-sub">{ICON_MATERIALI[cat] ?? "📦"} {cap(cat)} <small>{matRep.filter((m) => m.categoria === cat).length}</small></div>
-                          <div className="pl-dgrid">{matRep.filter((m) => m.categoria === cat).map((m) => <DCard key={m.id} icon={ICON_MATERIALI[m.categoria] ?? "📦"} title={m.tipo} desc={m.descrizione} onClick={() => creaDaCatalogo(m)} />)}</div>
+                          <div className="pl-dgrid">{matRep.filter((m) => m.categoria === cat).map((m) => <DCard key={m.id} icon={ICON_MATERIALI[m.categoria] ?? "📦"} title={m.tipo} desc={m.descrizione} on={materiali.includes(m.tipo)} onClick={() => setMateriali(toggleIn(materiali, m.tipo))} />)}</div>
                         </div>
                       ))}
                     </>}
-                    {materialiDisp.length > 0 && <><div className="pl-sub">I tuoi materiali collegati</div><div className="pl-menu">{materialiDisp.map((m) => <button key={m.id} className={matSel.includes(m.id) ? "pl-mbtn on" : "pl-mbtn"} onClick={() => setMatSel((a) => toggleIn(a, m.id))}><span className="pl-mb-tick">{matSel.includes(m.id) ? "✓" : "+"}</span>{String(m["Titolo"] ?? "—")}</button>)}</div></>}
+                    {customMat.length > 0 && <>
+                      <div className="pl-sub">📎 Aggiunti da te</div>
+                      <div className="pl-dgrid">{customMat.map((l) => <DCard key={l} icon="📎" title={l} on onClick={() => setMateriali(toggleIn(materiali, l))} />)}</div>
+                    </>}
                     <div className="pl-mat-add">
-                      <input type="text" value={nuovoMat.titolo} placeholder="Nuovo materiale (titolo)…" onChange={(e) => setNuovoMat((s) => ({ ...s, titolo: e.target.value }))} onKeyDown={(e) => { if (e.key === "Enter") creaMateriale(); }} />
-                      <select value={nuovoMat.tipo} onChange={(e) => setNuovoMat((s) => ({ ...s, tipo: e.target.value }))}>{MAT_TIPI.map((t) => <option key={t} value={t}>{cap(t)}</option>)}</select>
-                      <button onClick={creaMateriale}>+ Crea e collega</button>
+                      <input type="text" value={nuovoMat} placeholder="Aggiungi un materiale tuo (titolo)…" onChange={(e) => setNuovoMat(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") aggiungiMatLibero(); }} />
+                      <button onClick={aggiungiMatLibero}>+ Aggiungi</button>
                     </div>
                   </div>
-                )}
+                ); })()}
 
                 {stepDefs[idx].key === "inclusione" && (
                   <>
@@ -879,6 +877,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                         {!isUda && <OvList t="Fasi e tempi" xs={r.fasi.split("\n").filter(Boolean)} />}
                         <OvTags t="Metodologie" xs={r.metodologie} />
                         <OvTags t="Strumenti e spazi" xs={r.strumenti} />
+                        <OvTags t="Materiali e supporti" xs={r.materiali} />
                         <OvTags t="Educazione civica" xs={r.educiv} />
                         <OvTags t="Raccordi" xs={r.raccordi} />
                         <OvList t="Compiti ed esercizi" xs={r.compiti} />
