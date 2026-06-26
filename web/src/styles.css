@@ -1102,6 +1102,11 @@ button.ap-tw:hover { background: var(--accent-pale); border-radius: 5px; box-sha
 .pl-sigla.mini { min-width: 2.2rem; height: 1.6rem; font-size: 0.72rem; padding: 0 0.35rem; }
 .pl-dcard-d { font-size: 0.8rem; color: var(--ink-muted); line-height: 1.35; }
 
+/* ── Programmazione annuale (bussola): testata + gap analysis ───────────────── */
+.pa { display: flex; flex-direction: column; gap: 0.9rem; }
+.pa-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.pa-gap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; font-size: 0.82rem; margin-top: 0.1rem; }
+
 /* ── Drill di comando della tassonomia (conoscenze, abilità/competenze) ─────── */
 .pl-drill { display: flex; flex-direction: column; gap: 0.75rem; }
 .pl-bc { display: flex; flex-wrap: wrap; align-items: center; gap: 0.1rem; }

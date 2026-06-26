@@ -12,6 +12,8 @@ import { HomeView } from "./ui/HomeView";
 import { EntityTable } from "./ui/EntityTable";
 import { UdaDetail } from "./ui/UdaDetail";
 import { ProgrammazioneView } from "./ui/ProgrammazioneView";
+import { ProgrammazioneAnnualeView } from "./ui/ProgrammazioneAnnualeView";
+import { bussoleConfermate } from "./store/programmazione";
 import { CalendarView } from "./ui/CalendarView";
 import { KanbanView } from "./ui/KanbanView";
 import { TimelineView } from "./ui/TimelineView";
@@ -41,6 +43,7 @@ export type View =
   | { kind: "promemoria" }
   | { kind: "home" }
   | { kind: "programmazione" }
+  | { kind: "progrAnnuale" }
   | { kind: "entity"; key: DbKey }
   | { kind: "uda"; id: string };
 
@@ -79,6 +82,8 @@ export function App() {
   const annoCorr = annoCorrente();
   const oggiMd = (() => { const d = new Date(); return (d.getMonth() + 1) * 100 + d.getDate(); })();
   const setupDovuto = profile.onboarded && oggiMd >= 825 && oggiMd <= 915 && profile.assettoConfermato !== annoCorr;
+  // Inizio anno (1 set – 31 ott): ricorda gli adempimenti — programmazione annuale e UdA — finché non se ne conferma almeno una.
+  const adempimentiDovuti = profile.onboarded && oggiMd >= 901 && oggiMd <= 1031 && bussoleConfermate(annoCorr).length === 0;
   // Fine anno (giugno): suggerisci di esportare il resoconto della programmazione svolta.
   const exportSuggerito = hasData && oggiMd >= 601 && oggiMd <= 630;
 
@@ -87,7 +92,7 @@ export function App() {
   const closeProfile = () => { setShowProfile(false); setSkipped(true); };
 
   // Viste "dense" (griglie/tabelle): usano tutta la larghezza su PC; quelle testuali restano strette.
-  const VISTE_LARGHE = new Set(["oggi", "calendar", "kanban", "timeline", "avanzamento", "valutazione", "andamento", "planner", "archivio", "programmazione", "entity"]);
+  const VISTE_LARGHE = new Set(["oggi", "calendar", "kanban", "timeline", "avanzamento", "valutazione", "andamento", "planner", "archivio", "programmazione", "progrAnnuale", "entity"]);
   const mainWide = VISTE_LARGHE.has(view.kind);
 
   return (
@@ -106,6 +111,15 @@ export function App() {
           <span>📌 Inizio anno: imposta o conferma il tuo orario e le tue classi per l'{annoCorr}. Si fa una volta sola.</span>
           <span className="bb-actions">
             <button className="primary" onClick={() => setShowProfile(true)}>Apri il profilo</button>
+          </span>
+        </div>
+      )}
+      {adempimentiDovuti && (
+        <div className="setup-banner">
+          <span>🧭 Inizio anno: compila la <b>programmazione annuale</b> delle classi e pianifica le <b>UdA</b> dell'{annoCorr}.</span>
+          <span className="bb-actions">
+            <button className="primary" onClick={() => setView({ kind: "progrAnnuale" })}>Programmazione</button>
+            <button onClick={() => setView({ kind: "planner" })}>UdA</button>
           </span>
         </div>
       )}
@@ -136,6 +150,7 @@ export function App() {
             <HomeView onSelect={(key) => setView({ kind: "entity", key })} onOpenUda={openUda} />
           )}
           {view.kind === "programmazione" && <ProgrammazioneView />}
+          {view.kind === "progrAnnuale" && <ProgrammazioneAnnualeView onView={setView} />}
           {view.kind === "entity" && <EntityTable dbKey={view.key} onEdit={onEdit} onOpenUda={openUda} />}
           {view.kind === "uda" && (
             <UdaDetail id={view.id} onBack={() => setView({ kind: "entity", key: "uda" })} onEdit={onEdit} />

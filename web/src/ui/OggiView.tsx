@@ -11,6 +11,7 @@ import { useValutazione, annoCorrente } from "../store/valutazione";
 import { reminderItems } from "../compute/events";
 import { lessonStato, classeDiLezione } from "../compute/progress";
 import { materiaColor, classeColor } from "./materia";
+import { DCard } from "./PlannerView";
 
 const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const colorStyle = (c?: string) => (c ? { color: c, borderColor: c } : undefined);
@@ -74,6 +75,9 @@ export function OggiView({
   const anno = annoCorrente();
   const scuola = scuoleCorrenti(profile)[0];
   const profiloVuoto = !profile.onboarded || (profile.materie.length === 0 && profile.classi.length === 0);
+  // Adempimenti d'inizio anno (1 set – 31 ott): programmazione annuale e UdA.
+  const oggiMd = (now.getMonth() + 1) * 100 + now.getDate();
+  const inizioAnno = !profiloVuoto && oggiMd >= 901 && oggiMd <= 1031;
 
   // Lezioni di oggi: orario ricorrente del giorno + lezioni datate oggi.
   const bandOrder = new Map(settings.timeBands.map((b, i) => [b.label, i]));
@@ -117,6 +121,17 @@ export function OggiView({
       </div>
 
       {profiloVuoto && <ColdStart onOpenProfile={onOpenProfile} onView={onView} />}
+
+      {inizioAnno && (
+        <article className="oggi-coldstart">
+          <h2>🧭 Adempimenti d'inizio anno</h2>
+          <p className="muted">All'avvio dell'anno: traccia la programmazione annuale delle classi e progetta le UdA. Si compilano una volta e fanno da bussola.</p>
+          <div className="pl-dgrid">
+            <DCard icon="🧭" title="Programmazione annuale" desc="La bussola dell'anno: contenuti, competenze e copertura del quadro nazionale." onClick={() => onView({ kind: "progrAnnuale" })} />
+            <DCard icon="🧩" title="Unità di Apprendimento" desc="Progetta un'UdA: dalla competenza-traguardo al compito autentico." onClick={() => onView({ kind: "planner" })} />
+          </div>
+        </article>
+      )}
 
       <div className="oggi-azioni">
         <button className="primary" onClick={() => onView({ kind: "planner" })}>🧠 Pianifica</button>

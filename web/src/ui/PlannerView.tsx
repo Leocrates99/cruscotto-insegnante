@@ -115,7 +115,7 @@ function Step({ n, tot, titolo, hint, badge, children }: { n: number; tot: numbe
     </section>
   );
 }
-function DCard({ icon, top, title, desc, on, onClick, accent }: { icon?: ReactNode; top?: ReactNode; title: string; desc?: string; on?: boolean; onClick: () => void; accent?: string }) {
+export function DCard({ icon, top, title, desc, on, onClick, accent }: { icon?: ReactNode; top?: ReactNode; title: string; desc?: string; on?: boolean; onClick: () => void; accent?: string }) {
   return (
     <button className={on ? "pl-dcard on" : "pl-dcard"} onClick={onClick}>
       {on !== undefined && <span className="pl-dcard-check">{on ? "✓" : "+"}</span>}
@@ -134,7 +134,7 @@ const labelDi = (roots: TNodo[], path: string[]): string => findNodo(roots, path
  * categorie → foglia. La foglia "ad albero" usa AlberoConoscenze (epoche/correnti →
  * autori), le altre mostrano le voci come card a testo intero (mai troncate).
  */
-function DrillTax({ roots, path, setPath, a, selez, onTree, onVoce }: {
+export function DrillTax({ roots, path, setPath, a, selez, onTree, onVoce }: {
   roots: TNodo[]; path: string[]; setPath: (p: string[]) => void; a: ArchivioIndex; selez: Set<string>;
   onTree: (v: Voce) => void; onVoce: (v: Voce) => void;
 }) {
