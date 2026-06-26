@@ -212,7 +212,8 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [educiv, setEduciv] = useState<string[]>([]);
   const [edcivSkip, setEdcivSkip] = useState(false);
   const [raccordi, setRaccordi] = useState<string[]>([]);
-  const [inclusione, setInclusione] = useState("");
+  const [incSel, setIncSel] = useState<string[]>([]);
+  const [nuovaInc, setNuovaInc] = useState("");
   const [verificaF, setVerificaF] = useState("");
   const [compiti, setCompiti] = useState<CompitoRow[]>([]);
   const [materiali, setMateriali] = useState<string[]>([]);
@@ -254,7 +255,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
   const resetTutto = () => {
     setSelIds(new Set()); setCatCono([]); setCatAC([]); setStepIdx(0); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
-    setFasiRows([]); setFaseDett(null); setAddFaseOpen(false); setPresetOpen(false); setFaseMomento(null); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
+    setFasiRows([]); setFaseDett(null); setAddFaseOpen(false); setPresetOpen(false); setFaseMomento(null); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setIncSel([]); setNuovaInc(""); setVerificaF("");
     setCompiti([]); setMateriali([]); setNuovoMat(""); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
     setShowVerifica(false); setVerificaSessId(null);
   };
@@ -357,15 +358,14 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const matRep = arch && code ? repMateriali(arch, { materia: code }) : [];
   const verRep = arch && code ? repValutazioni(arch, { graduata: false }).map((v) => v.metodo) : [];
   const verOptions = verRep.length ? [...new Set(verRep)] : VERIFICHE_F;
+  const aggiungiIncLibero = () => { const t = nuovaInc.trim(); if (!t) return; setIncSel((s) => (s.includes(t) ? s : [...s, t])); setNuovaInc(""); };
   const suggInclusione = () => {
     const c = classe ? contiClasse(classe, profile) : { tot: 0, l104: 0, bes: 0, dsa: 0 };
-    const parts: string[] = [];
-    if (c.dsa) parts.push(`${c.dsa} DSA`);
-    if (c.bes) parts.push(`${c.bes} BES`);
-    if (c.l104) parts.push(`${c.l104} con L.104`);
-    setInclusione(parts.length
-      ? `Per ${parts.join(", ")}: misure compensative (mappe, schemi, formulari, dizionario digitale, tempi aggiuntivi) e dispensative (riduzione del carico); per la L.104 secondo PEI.`
-      : "Nessun alunno con BES/DSA/L.104 segnalato in anagrafica: si adottano comunque strategie inclusive di classe.");
+    const add: string[] = [];
+    if (c.dsa || c.bes) { add.push("Misure compensative: mappe, schemi, formulari, dizionario digitale, tempi aggiuntivi"); add.push("Misure dispensative: riduzione del carico di lavoro"); }
+    if (c.l104) add.push("Interventi individualizzati secondo il PEI");
+    if (!add.length) add.push("Strategie inclusive di classe (anche senza BES/DSA/L.104 in anagrafica)");
+    setIncSel((s) => [...new Set([...s, ...add])]);
   };
 
   const obiettiviDaVoci = (): string[] => {
@@ -420,7 +420,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     metodologie: metodologie.map(cap), strumenti: strumenti.map(cap), materiali: materiali.map(cap), educiv: educivView, raccordi,
     compiti: compiti.filter((c) => c.testo.trim()).map((c) => `[${cap(c.tipo)}] ${c.testo.trim()}${c.data ? ` (entro ${fmtIt(c.data)})` : ""}`),
     compitiCal: compitiDaCal.map((c) => `${fmtIt(c.data)} · ${cap(c.tipo)}: ${c.testo.trim()}`),
-    prereq, fasi: fasiText(), inclusione, verificaF: verificaF ? cap(verificaF) : "", competenza, prodotto, compitoRealta,
+    prereq, fasi: fasiText(), inclusione: incSel, verificaF: verificaF ? cap(verificaF) : "", competenza, prodotto, compitoRealta,
   });
 
   const esportaWord = () => {
@@ -446,7 +446,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
       sec("Raccordi interdisciplinari", r.raccordi),
       sec("Compiti ed esercizi", r.compiti),
       sec("Compiti da calendarizzare", r.compitiCal),
-      par("Inclusione (misure)", r.inclusione),
+      sec("Inclusione (misure)", r.inclusione),
       r.verificaF ? `<h2>Verifica formativa</h2><p>${escH(r.verificaF)}</p>` : "",
     ].filter(Boolean).join("\n");
     const fname = `${tipoLabel}_${materia}${classe ? "_" + classe : ""}_${data}`.replace(/[^\w-]+/g, "-");
@@ -460,7 +460,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
     const didattica: Rec = {
       id: "", Prerequisiti: prereq, Conoscenze: derivato("con", conoscenze), "Abilità": derivato("ab", abilita), Competenze: derivato("com", competenzeTxt),
       Metodologie: metodologie, "Strumenti e spazi": strumenti, "Materiali e supporti": materiali, "Compiti ed esercizi": compitiText(),
-      "Educazione civica": educiv, "Raccordi interdisciplinari": raccordi, "Inclusione (misure)": inclusione,
+      "Educazione civica": educiv, "Raccordi interdisciplinari": raccordi, "Inclusione (misure)": incSel.join("\n"),
       ...(verificaF ? { "Verifica formativa": verificaF } : {}),
     };
     // Compiti con data → scadenze calendarizzate.
@@ -582,7 +582,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                   : stepDefs[idx].key === "metodologie" ? (metodologie.length || "") + ""
                   : stepDefs[idx].key === "fasi" ? (fasiRows.length || "") + ""
                   : stepDefs[idx].key === "edciv" ? (edcivSkip ? "✓" : (educiv.length || "") + "") : stepDefs[idx].key === "raccordi" ? (raccordi.length || "") + ""
-                  : stepDefs[idx].key === "materiali" ? ((strumenti.length + materiali.length) || "") + "" : stepDefs[idx].key === "inclusione" ? (inclusione.trim() ? "✓" : "")
+                  : stepDefs[idx].key === "materiali" ? ((strumenti.length + materiali.length) || "") + "" : stepDefs[idx].key === "inclusione" ? ((incSel.length || "") + "")
                   : stepDefs[idx].key === "compiti" ? (compiti.length || "") + "" : undefined}>
 
                 {stepDefs[idx].key === "conoscenze" && (code
@@ -769,7 +769,11 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                   </div>
                 ); })()}
 
-                {stepDefs[idx].key === "inclusione" && (
+                {stepDefs[idx].key === "inclusione" && (() => {
+                  const catLabel = (m: { ambito: string; categoria: string; misura: string }) => `[${m.ambito}/${m.categoria}] ${m.misura}`;
+                  const catLabels = new Set(inclRep.map(catLabel));
+                  const customInc = incSel.filter((l) => !catLabels.has(l));
+                  return (
                   <>
                     {(() => {
                       const c = classe ? contiClasse(classe, profile) : { tot: 0, l104: 0, bes: 0, dsa: 0 };
@@ -783,14 +787,21 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                         <div className="pl-sez">{ICON_INC_AMBITO[amb] ?? "🧩"} {amb} <small>{inclRep.filter((m) => m.ambito === amb).length}</small></div>
                         {[...new Set(inclRep.filter((m) => m.ambito === amb).map((m) => m.categoria))].map((cat) => (
                           <div key={cat}><div className="pl-sub">{ICON_INCLUSIONE[cat] ?? "•"} {cap(cat)}</div>
-                            <div className="pl-dgrid">{inclRep.filter((m) => m.ambito === amb && m.categoria === cat).map((m) => <DCard key={m.id} icon={ICON_INCLUSIONE[m.categoria]} title={m.misura} desc={m.descrizione} onClick={() => setInclusione((t) => [...new Set([...t.split("\n").filter(Boolean), `• [${m.ambito}/${m.categoria}] ${m.misura}`])].join("\n"))} />)}</div>
+                            <div className="pl-dgrid">{inclRep.filter((m) => m.ambito === amb && m.categoria === cat).map((m) => <DCard key={m.id} icon={ICON_INCLUSIONE[m.categoria]} title={m.misura} desc={m.descrizione} on={incSel.includes(catLabel(m))} onClick={() => setIncSel(toggleIn(incSel, catLabel(m)))} />)}</div>
                           </div>
                         ))}
                       </div>
                     ))}
-                    <label className="field"><span>Misure (testo)</span><textarea rows={3} value={inclusione} onChange={(e) => setInclusione(e.target.value)} placeholder="Misure compensative/dispensative (modello anonimo, per situazione)…" /></label>
+                    {customInc.length > 0 && <>
+                      <div className="pl-sub">📎 Aggiunte da te</div>
+                      <div className="pl-dgrid">{customInc.map((l) => <DCard key={l} icon="♿" title={l} on onClick={() => setIncSel(toggleIn(incSel, l))} />)}</div>
+                    </>}
+                    <div className="pl-mat-add">
+                      <input type="text" value={nuovaInc} placeholder="Aggiungi una misura tua (modello anonimo, per situazione)…" onChange={(e) => setNuovaInc(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") aggiungiIncLibero(); }} />
+                      <button onClick={aggiungiIncLibero}>+ Aggiungi</button>
+                    </div>
                   </>
-                )}
+                ); })()}
 
                 {stepDefs[idx].key === "compiti" && (
                   <>
@@ -882,7 +893,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                         <OvTags t="Raccordi" xs={r.raccordi} />
                         <OvList t="Compiti ed esercizi" xs={r.compiti} />
                         <OvList t="📅 Compiti da calendarizzare" xs={r.compitiCal} />
-                        <OvList t="Inclusione (misure)" xs={r.inclusione.split("\n").filter(Boolean).map((s) => s.replace(/^•\s*/, ""))} />
+                        <OvList t="Inclusione (misure)" xs={r.inclusione} />
                         <OvTags t="Verifica" xs={[r.verificaF, verificaSessId ? "Sommativa pianificata" : ""].filter(Boolean)} />
                       </div>
                     </div>
