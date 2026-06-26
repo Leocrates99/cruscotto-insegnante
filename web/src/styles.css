@@ -779,6 +779,22 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-fasi-head .spacer { flex: 1; }
 .pl-fasi-ok { color: var(--success); font-weight: 700; }
 .pl-fasi-over { color: var(--danger); font-weight: 700; }
+/* Widget "Orario calibrato": meter monte ore vs assegnati + bilanciamento */
+.pl-orario { border: 1px solid var(--parchment-dark); border-radius: var(--radius); background: var(--cream); padding: 0.65rem 0.8rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.pl-orario-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.pl-orario-head .spacer { flex: 1; }
+.pl-orario-tit { font: 700 0.9rem "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--ink); }
+.pl-orario-read { font: 600 0.85rem var(--font-ui); color: var(--ink-light); font-variant-numeric: tabular-nums; }
+.pl-orario-read b { font-size: 1.25rem; color: var(--ink); }
+.pl-orario.over .pl-orario-read b { color: var(--danger); }
+.pl-orario.ok .pl-orario-read b { color: var(--success); }
+.pl-orario-meter { height: 12px; border-radius: 99px; background: var(--parchment-dark); overflow: hidden; }
+.pl-orario-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width var(--transition); }
+.pl-orario.ok .pl-orario-fill { background: var(--success); }
+.pl-orario.over .pl-orario-fill { background: var(--danger); }
+.pl-orario-msg { font: 600 0.8rem var(--font-ui); color: var(--ink-light); }
+.pl-orario.over .pl-orario-msg { color: var(--danger); }
+.pl-orario.ok .pl-orario-msg { color: var(--success); }
 .pl-fasi-list { display: flex; flex-direction: column; gap: 0.5rem; }
 .pl-fase { border: 1px solid var(--parchment-dark); border-left: 5px solid var(--accent); border-radius: var(--radius); background: var(--parchment); padding: 0.55rem 0.7rem; display: flex; flex-direction: row; align-items: center; gap: 0.75rem; }
 .pl-fase-body { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; }
@@ -816,7 +832,7 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-fase-met { flex-shrink: 0; font: 600 0.74rem var(--font-ui); padding: 0.28rem 0.6rem; border: 1px solid var(--parchment-dark); border-radius: 99px; background: var(--parchment); color: var(--ink-light); cursor: pointer; }
 .pl-fase-met:hover, .pl-fase-met.on { border-color: var(--accent); color: var(--accent); background: var(--accent-pale); box-shadow: none; transform: none; }
 .pl-fase-sel { font-size: 0.78rem; color: var(--ink-muted); padding-left: 0.2rem; }
-.pl-fase-titolo { flex: 1; min-width: 0; font: 700 0.95rem var(--font-display); color: var(--ink); padding: 0.25rem 0; }
+.pl-fase-titolo { flex: 1 1 auto; min-width: 8rem; font: 700 0.98rem "Helvetica Neue", Helvetica, Arial, sans-serif; letter-spacing: 0.01em; color: var(--ink); padding: 0.25rem 0; }
 .pl-fase-nota { width: 100%; resize: vertical; min-height: 2.3rem; font: 0.84rem var(--font-ui); line-height: 1.4; padding: 0.4rem 0.55rem; border: 1px dashed var(--parchment-dark); border-radius: var(--radius); background: var(--cream); color: var(--ink); }
 .pl-fase-nota:focus { border-style: solid; border-color: var(--accent); outline: none; }
 .pl-fase-nota::placeholder { color: var(--ink-muted); font-style: italic; }
@@ -836,6 +852,7 @@ button.link { background: none; border: none; color: var(--accent); cursor: poin
 .pl-fase-role { display: inline-block; font: 700 0.66rem var(--font-ui); padding: 0.05rem 0.4rem; border-radius: 6px; margin-right: 0.4rem; color: #fff; }
 .pl-fase-role.doc { background: #1800ac; }
 .pl-fase-role.stu { background: #2f7d5a; }
+.pl-fase-role.met { background: #7c3aed; }
 .pl-centmix { display: flex; flex-direction: column; gap: 0.25rem; margin: -0.2rem 0 0.5rem; }
 .pl-centmix-bar { display: flex; height: 10px; border-radius: 99px; overflow: hidden; gap: 1px; }
 .pl-centmix-bar > div { min-width: 0; }

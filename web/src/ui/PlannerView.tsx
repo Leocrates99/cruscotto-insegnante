@@ -202,7 +202,6 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
   const [abilita, setAbilita] = useState("");
   const [competenzeTxt, setCompetenzeTxt] = useState("");
   const [fasiRows, setFasiRows] = useState<FaseRow[]>([]);
-  const [faseMetodi, setFaseMetodi] = useState<string | null>(null);
   const [faseDett, setFaseDett] = useState<string | null>(null);
   const [faseEvidenzia, setFaseEvidenzia] = useState<string | null>(null);
   const [addFaseOpen, setAddFaseOpen] = useState(false);
@@ -256,7 +255,7 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
 
   const resetTutto = () => {
     setSelIds(new Set()); setCatCono([]); setCatAC([]); setStepIdx(0); setTitolo(""); setPrereq(""); setConoscenze(""); setAbilita(""); setCompetenzeTxt("");
-    setFasiRows([]); setFaseMetodi(null); setFaseDett(null); setAddFaseOpen(false); setPresetOpen(false); setFaseMomento(null); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
+    setFasiRows([]); setFaseDett(null); setAddFaseOpen(false); setPresetOpen(false); setFaseMomento(null); setMetodologie([]); setStrumenti([]); setEduciv([]); setEdcivSkip(false); setRaccordi([]); setInclusione(""); setVerificaF("");
     setCompiti([]); setMatSel([]); setCompetenza(""); setProdotto(""); setCompitoRealta(""); setNLezioni(0);
     setShowVerifica(false); setVerificaSessId(null);
   };
@@ -686,12 +685,17 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       </div>
                     )}
 
-                    <div className="pl-fasi-head">
-                      <span>Monte ore <b>{minPrev}′</b></span>
-                      <span>· assegnati <b>{fasiMinTot}′</b></span>
-                      <span className={minRim < 0 ? "pl-fasi-over" : "pl-fasi-ok"}>{minRim >= 0 ? `${minRim}′ liberi` : `${-minRim}′ in eccesso`}</span>
-                      <span className="spacer" />
-                      {fasiRows.length > 0 && minPrev > 0 && minRim !== 0 && <button className="link" onClick={bilanciaFasi} title="Riscala le durate proporzionalmente fino a coprire il monte ore">⚖ bilancia</button>}
+                    <div className={"pl-orario" + (minRim < 0 ? " over" : minRim === 0 && fasiMinTot > 0 ? " ok" : "")}>
+                      <div className="pl-orario-head">
+                        <span className="pl-orario-tit">⏱ Orario calibrato</span>
+                        <span className="pl-orario-read"><b>{fasiMinTot}′</b> <span className="muted">/ {minPrev}′ monte ore</span></span>
+                        <span className="spacer" />
+                        {fasiRows.length > 0 && minPrev > 0 && minRim !== 0 && <button className="pl-fase-addbtn" onClick={bilanciaFasi} title="Riscala le durate proporzionalmente fino a coprire il monte ore">⚖ bilancia</button>}
+                      </div>
+                      <div className="pl-orario-meter" role="img" aria-label={`Assegnati ${fasiMinTot} su ${minPrev} minuti`}>
+                        <div className="pl-orario-fill" style={{ width: `${minPrev > 0 ? Math.min(100, (fasiMinTot / minPrev) * 100) : 0}%` }} />
+                      </div>
+                      <div className="pl-orario-msg">{fasiMinTot === 0 ? "Imposta la durata e aggiungi le fasi: qui vedi quanto resta del monte ore." : minRim > 0 ? `Restano ${minRim}′ da distribuire` : minRim < 0 ? `Sei oltre di ${-minRim}′: riduci qualche fase o premi «bilancia»` : "In pari — il monte ore è coperto ✓"}</div>
                     </div>
 
                     {fasiRows.length > 0 && (
@@ -710,9 +714,9 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                       </div>
                     )}
 
-                    {fasiRows.length === 0 ? <p className="muted">Applica un <b>preset timeline</b> oppure <b>aggiungi le fasi</b> per momento: per ciascuna scegli durata e metodi.</p> : (
+                    {fasiRows.length === 0 ? <p className="muted">Parti da un <b>modello</b> oppure <b>aggiungi le fasi</b> per momento, poi regola i minuti di ciascuna.</p> : (
                       <div className="pl-fasi-list">
-                        {fasiRows.map((f, i) => { const s = inizioFase(i); const col = FASE_COLORS[i % FASE_COLORS.length]; const c = centr(f.centratura); const rng = rangeFase(f); const fuori = fuoriRange(f); const hasDett = !!(f.attDoc || f.attStu || rng); return (
+                        {fasiRows.map((f, i) => { const s = inizioFase(i); const col = FASE_COLORS[i % FASE_COLORS.length]; const c = centr(f.centratura); const rng = rangeFase(f); const fuori = fuoriRange(f); const hasDett = !!(f.attDoc || f.attStu || rng || f.metodi.length); return (
                           <div key={f.id} id={`pl-fase-${f.id}`} className={faseEvidenzia === f.id ? "pl-fase evidenzia" : "pl-fase"} style={{ borderLeftColor: col }} onDragOver={(e) => e.preventDefault()} onDrop={() => { const from = dragFase.current; if (from != null) spostaFase(from, i); dragFase.current = null; }}>
                             <span className="pl-fase-n" draggable onDragStart={() => { dragFase.current = i; }} onDragEnd={() => { dragFase.current = null; }} title="Trascina per riordinare" style={{ background: col, cursor: "grab" }}>{i + 1}</span>
                             <span className={fuori ? "pl-fase-step warn" : "pl-fase-step"} title={fuori && rng ? `Durata consigliata ${rng[0]}–${rng[1]}′` : "Aggiusta i minuti: ± 1 al centro, ± 2 e ± 5 ai lati"}>
@@ -729,22 +733,20 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                                 {f.fonte
                                   ? <span className="pl-fase-titolo" title="Fase dal catalogo: il titolo è fisso">{f.nome}</span>
                                   : <input className="pl-fase-nome" type="text" value={f.nome} placeholder={`Fase ${i + 1}`} onChange={(e) => setFase(f.id, { nome: e.target.value })} />}
+                                {c && <span className="pl-fase-cen" style={{ background: c.col }} title={`Centratura: ${c.lab}`}>{c.icona} {c.lab}</span>}
                                 <span className="pl-fase-ora" title="Posizione nell'arco della lezione (minuti dall'inizio)">min {s}–{s + (f.minuti || 0)}</span>
                                 <span className="spacer" />
                                 <span className="pl-fase-rik"><button onClick={() => spostaFase(i, i - 1)} disabled={i === 0} aria-label="Sposta su">▲</button><button onClick={() => spostaFase(i, i + 1)} disabled={i === fasiRows.length - 1} aria-label="Sposta giù">▼</button></span>
-                                <button className={faseMetodi === f.id ? "pl-fase-met on" : "pl-fase-met"} onClick={() => setFaseMetodi(faseMetodi === f.id ? null : f.id)}>metodi · {f.metodi.length} ▾</button>
                                 {hasDett && <button className={faseDett === f.id ? "pl-fase-met on" : "pl-fase-met"} onClick={() => setFaseDett(faseDett === f.id ? null : f.id)}>dettagli ▾</button>}
                                 <button className="danger" onClick={() => removeFase(f.id)} aria-label="Rimuovi">✕</button>
                               </div>
-                              {(c || f.funzione) && <div className="pl-fase-fn">{c && <span className="pl-fase-cen" style={{ background: c.col }} title={`Centratura: ${c.lab}`}>{c.icona} {c.lab}</span>}{f.funzione}</div>}
                               <textarea className="pl-fase-nota" rows={2} value={f.nota ?? ""} placeholder="Cosa farai, in concreto, in questa fase… (es. testo, esercizio, consegna)" onChange={(e) => setFase(f.id, { nota: e.target.value })} />
                               {faseDett === f.id && <div className="pl-fase-dett">
                                 {rng && <div className="pl-fase-dr">⏱ Durata consigliata <b>{rng[0]}–{rng[1]}′</b> <span className="muted">(per {minPrev}′ di lezione)</span>{fuori && <span className="pl-fase-fuori"> · attuale {f.minuti}′ fuori range</span>}</div>}
                                 {f.attDoc && <div className="pl-fase-att"><span className="pl-fase-role doc">🗣️ Docente</span>{f.attDoc}</div>}
                                 {f.attStu && <div className="pl-fase-att"><span className="pl-fase-role stu">🙋 Studenti</span>{f.attStu}</div>}
+                                {f.metodi.length > 0 && <div className="pl-fase-att"><span className="pl-fase-role met">🧭 Metodi</span>{f.metodi.map((m) => cap(m)).join(" · ")}</div>}
                               </div>}
-                              {f.metodi.length > 0 && faseMetodi !== f.id && <div className="pl-fase-sel">{f.metodi.map((m) => cap(m)).join(" · ")}</div>}
-                              {faseMetodi === f.id && <div className="pl-fase-metodi">{metNomi.map((m) => <button key={m} className={f.metodi.includes(m) ? "pl-mbtn xs on" : "pl-mbtn xs"} onClick={() => setFase(f.id, { metodi: toggleIn(f.metodi, m) })}>{cap(m)}</button>)}</div>}
                             </div>
                           </div>
                         ); })}
