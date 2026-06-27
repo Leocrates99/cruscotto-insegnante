@@ -95,14 +95,18 @@ export function OggiView({
           </article>
 
           <div className="oggi-side">
-            <button className="oggi-cta oggi-cta--primary" onClick={() => onView({ kind: "planner" })}>
+            <button className="oggi-cta oggi-cta--lg oggi-cta--primary" onClick={() => onView({ kind: "planner" })}>
               <span className="oggi-cta-ic" aria-hidden="true">🧠</span>
-              <span className="oggi-cta-tx"><b>Pianifica un'attività</b><small>Lezione, laboratorio o UdA — dal contenuto al calendario.</small></span>
+              <span className="oggi-cta-tx">
+                <span className="oggi-cta-kick">Azione principale</span>
+                <b>Pianifica un'attività</b>
+                <small>Lezione, laboratorio o UdA — dal contenuto al calendario.</small>
+              </span>
               <span className="oggi-cta-go" aria-hidden="true">→</span>
             </button>
-            <button className="oggi-cta oggi-cta--ghost" onClick={() => onView({ kind: "valutazione" })}>
+            <button className="oggi-cta oggi-cta--sm oggi-cta--ghost" onClick={() => onView({ kind: "valutazione" })}>
               <span className="oggi-cta-ic" aria-hidden="true">🧮</span>
-              <span className="oggi-cta-tx"><b>Correggi le verifiche</b><small>Calcolatore voti: sessioni da correggere e medie.</small></span>
+              <span className="oggi-cta-tx"><b>Correggi le verifiche</b><small>Calcolatore voti e medie di classe.</small></span>
               <span className="oggi-cta-go" aria-hidden="true">→</span>
             </button>
 
