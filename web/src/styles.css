@@ -340,7 +340,10 @@ td .check { color: var(--success); font-weight: 700; }
 
 .tg-wrap { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; border: 1px solid var(--parchment-dark); border-radius: var(--radius-lg); background: var(--cream); overflow: hidden; box-shadow: var(--shadow-sm); }
 .tg-grid { display: grid; }
-.tg-head { flex-shrink: 0; }
+/* Tutte e tre le fasce (testata, giornata, corpo) riservano lo stesso spazio per
+   la scrollbar: così le colonne restano allineate all'asse orario anche quando
+   il corpo scorre. */
+.tg-head { flex-shrink: 0; overflow-y: auto; scrollbar-gutter: stable; }
 .tg-dayhead { padding: 0.45rem 0.4rem; text-align: center; font-size: 0.82rem; color: var(--ink-muted); border-bottom: 1px solid var(--parchment-dark); border-left: 1px solid var(--parchment-dark); }
 .tg-dh-wd { text-transform: capitalize; }
 .tg-dayhead b { color: var(--ink); font-size: 0.92rem; }
@@ -348,31 +351,43 @@ td .check { color: var(--success); font-weight: 700; }
 .tg-dayhead.today b { color: var(--accent); }
 .tg-corner { border-bottom: 1px solid var(--parchment-dark); }
 
-.tg-allday { flex-shrink: 0; border-bottom: 1px solid var(--parchment-dark); }
+.tg-allday { flex-shrink: 0; border-bottom: 1px solid var(--parchment-dark); overflow-y: auto; scrollbar-gutter: stable; }
 .tg-axis-label { font-size: 0.58rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.03em; padding: 0.3rem; display: flex; align-items: center; justify-content: center; text-align: center; }
 .tg-allday-cell { min-height: 26px; max-height: 92px; overflow-y: auto; padding: 3px; border-left: 1px solid var(--parchment-dark); display: flex; flex-direction: column; gap: 3px; cursor: pointer; }
 .tg-allday-cell.over { background: var(--accent-pale); }
 
 /* Corpo: giornata 06:00–21:00 proporzionale e SCORREVOLE (ore comode, niente
    compressione). Asse orario a sinistra, blocchi posizionati per orario reale. */
-.tg-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; }
+.tg-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; display: grid; }
 .tg-axis { position: relative; border-right: 1px solid var(--parchment-dark); background: var(--parchment); }
 .tg-hour { position: absolute; right: 6px; font: 600 0.74rem var(--font-ui); color: var(--ink-muted); transform: translateY(-50%); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
-.tg-col { position: relative; border-left: 1px solid var(--parchment-dark); cursor: pointer; }
+.tg-col { position: relative; border-left: 1px solid var(--parchment-dark); cursor: pointer; container-type: inline-size; container-name: cal; }
 .tg-col.today { background: color-mix(in srgb, var(--accent) 4%, transparent); }
 .tg-hline { position: absolute; left: 0; right: 0; border-top: 1px solid var(--rule); opacity: 0.5; }
 
 /* Slot dell'orario: pieno del colore della materia, posizionato all'ora reale.
-   Gerarchia: a sinistra ora (grande) + classe (identica), centrate; a destra
-   la materia (sopra, piccola) e il titolo della lezione (grande, sotto). */
-.tg-slot { position: absolute; left: 3px; right: 3px; z-index: 2; border: none; border-radius: 6px; padding: 4px 9px; overflow: hidden; display: flex; flex-direction: row; align-items: stretch; gap: 9px; text-align: left; box-shadow: var(--shadow-sm); cursor: pointer; }
+   Gerarchia: a sinistra ora + classe, a destra materia (sopra) e titolo (sotto).
+   ADATTIVO al riquadro: la colonna (cal) detta la larghezza, lo slot (slot)
+   l'altezza; in settimana/mese i riquadri sono stretti → tutto si compatta e va
+   a capo con ellissi, niente sforamenti. */
+.tg-slot { container-type: size; container-name: slot; position: absolute; left: 3px; right: 3px; z-index: 2; border: none; border-radius: 6px; padding: 3px 6px; overflow: hidden; display: flex; flex-direction: row; align-items: stretch; gap: 6px; text-align: left; box-shadow: var(--shadow-sm); cursor: pointer; }
 .tg-slot:hover { transform: none; box-shadow: var(--shadow); filter: brightness(0.97); }
-.tg-slot-side { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 0 0 auto; gap: 2px; padding-right: 9px; border-right: 1px solid rgba(255,255,255,0.32); }
-.tg-slot-ora { font: 800 1.2rem var(--font-ui); line-height: 1; font-variant-numeric: tabular-nums; }
-.tg-slot-cls { font: 800 1.2rem var(--font-ui); line-height: 1; white-space: nowrap; }
+.tg-slot-side { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 0 0 auto; gap: 1px; padding-right: 6px; border-right: 1px solid rgba(255,255,255,0.32); }
+.tg-slot-ora { font: 800 0.86rem var(--font-ui); line-height: 1; font-variant-numeric: tabular-nums; }
+.tg-slot-cls { font: 800 0.86rem var(--font-ui); line-height: 1; white-space: nowrap; }
 .tg-slot-main { display: flex; flex-direction: column; justify-content: center; flex: 1 1 auto; min-width: 0; gap: 1px; }
-.tg-slot-mat { font: 700 0.66rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tg-slot-tit { font: 700 1.02rem var(--font-ui); line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tg-slot-mat { display: none; font: 700 0.62rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tg-slot-tit { font: 700 0.82rem var(--font-ui); line-height: 1.12; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+/* Riquadro abbastanza alto: titolo su due righe. */
+@container slot (min-height: 46px) { .tg-slot-tit { -webkit-line-clamp: 2; } }
+/* Riquadro largo (giorno / home): tutto più grande e materia sopra il titolo. */
+@container cal (min-width: 230px) {
+  .tg-slot { gap: 9px; padding: 4px 9px; }
+  .tg-slot-side { padding-right: 9px; gap: 2px; }
+  .tg-slot-ora, .tg-slot-cls { font-size: 1.2rem; }
+  .tg-slot-tit { font-size: 1.02rem; }
+  .tg-slot-mat { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+}
 
 /* Evento con orario (riunioni, scadenze…): chip posizionata all'ora. */
 .tg-ev { position: absolute; left: 3px; right: 3px; z-index: 3; border: 1px solid var(--parchment-dark); border-radius: 5px; padding: 0.12rem 0.4rem; font-size: 0.72rem; font-weight: 600; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: grab; box-shadow: var(--shadow-sm); }
