@@ -361,7 +361,7 @@ td .check { color: var(--success); font-weight: 700; }
 .tg-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; display: grid; }
 .tg-axis { position: relative; border-right: 1px solid var(--parchment-dark); background: var(--parchment); }
 .tg-hour { position: absolute; right: 6px; font: 600 0.74rem var(--font-ui); color: var(--ink-muted); transform: translateY(-50%); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
-.tg-col { position: relative; border-left: 1px solid var(--parchment-dark); cursor: pointer; container-type: inline-size; container-name: cal; }
+.tg-col { position: relative; border-left: 1px solid var(--parchment-dark); cursor: pointer; }
 .tg-col.today { background: color-mix(in srgb, var(--accent) 4%, transparent); }
 .tg-hline { position: absolute; left: 0; right: 0; border-top: 1px solid var(--rule); opacity: 0.5; }
 
@@ -370,23 +370,25 @@ td .check { color: var(--success); font-weight: 700; }
    ADATTIVO al riquadro: la colonna (cal) detta la larghezza, lo slot (slot)
    l'altezza; in settimana/mese i riquadri sono stretti → tutto si compatta e va
    a capo con ellissi, niente sforamenti. */
-.tg-slot { container-type: size; container-name: slot; position: absolute; left: 3px; right: 3px; z-index: 2; border: none; border-radius: 6px; padding: 3px 6px; overflow: hidden; display: flex; flex-direction: row; align-items: stretch; gap: 6px; text-align: left; box-shadow: var(--shadow-sm); cursor: pointer; }
+.tg-slot { container-type: size; container-name: slot; position: absolute; left: 3px; right: 3px; z-index: 2; border: none; border-radius: 6px; padding: 3px 8px; overflow: hidden; display: flex; flex-direction: row; align-items: stretch; gap: 8px; text-align: left; box-shadow: var(--shadow-sm); cursor: pointer; }
 .tg-slot:hover { transform: none; box-shadow: var(--shadow); filter: brightness(0.97); }
-.tg-slot-side { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 0 0 auto; gap: 1px; padding-right: 6px; border-right: 1px solid rgba(255,255,255,0.32); }
-.tg-slot-ora { font: 800 0.86rem var(--font-ui); line-height: 1; font-variant-numeric: tabular-nums; }
-.tg-slot-cls { font: 800 0.86rem var(--font-ui); line-height: 1; white-space: nowrap; }
+.tg-slot-side { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 0 0 auto; min-width: 0; max-width: 45%; gap: 1px; padding-right: 8px; border-right: 1px solid rgba(255,255,255,0.32); }
+.tg-slot-ora { font: 800 0.9rem var(--font-ui); line-height: 1; font-variant-numeric: tabular-nums; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tg-slot-cls { font: 800 0.9rem var(--font-ui); line-height: 1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tg-slot-main { display: flex; flex-direction: column; justify-content: center; flex: 1 1 auto; min-width: 0; gap: 1px; }
 .tg-slot-mat { display: none; font: 700 0.62rem var(--font-ui); text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tg-slot-tit { font: 700 0.82rem var(--font-ui); line-height: 1.12; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-/* Riquadro abbastanza alto: titolo su due righe. */
-@container slot (min-height: 46px) { .tg-slot-tit { -webkit-line-clamp: 2; } }
-/* Riquadro largo (giorno / home): tutto più grande e materia sopra il titolo. */
-@container cal (min-width: 230px) {
-  .tg-slot { gap: 9px; padding: 4px 9px; }
-  .tg-slot-side { padding-right: 9px; gap: 2px; }
+/* Titolo: SEMPRE una riga con ellissi pulita → non si taglia mai a metà né sfora,
+   in nessun riquadro (giorno/settimana/mese). Niente -webkit-box (che da figlio
+   flex degenera in flow-root e fa fallire il line-clamp → testo tagliato). */
+.tg-slot-tit { font: 700 0.82rem var(--font-ui); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Riquadro largo (giorno / home): ora, classe e titolo più grandi. */
+@container slot (min-width: 220px) {
   .tg-slot-ora, .tg-slot-cls { font-size: 1.2rem; }
   .tg-slot-tit { font-size: 1.02rem; }
-  .tg-slot-mat { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+}
+/* Riquadro largo E alto: mostra anche la materia (una riga, ellissi) sul titolo. */
+@container slot (min-width: 220px) and (min-height: 54px) {
+  .tg-slot-mat { display: block; }
 }
 
 /* Evento con orario (riunioni, scadenze…): chip posizionata all'ora. */
