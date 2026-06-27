@@ -358,13 +358,22 @@ export function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { d
                       ...(ov.classe ? { Classe: [classeId(ov.classe)] } : {}),
                     });
                   };
+                  const titolo = lez && lez["Titolo"] ? (lez["Titolo"] as string) : "";
+                  const oraNum = (b.label.match(/\d+/) || [])[0];
+                  const oraLabel = oraNum ? `${oraNum}ª` : b.start;
                   return (
-                    <button key={bi} className="tg-slot" style={{ top: yOf(a) + 1, height: Math.max(30, yOf(z) - yOf(a) - 2), background: bg, color: fg }} onClick={open} title={`${[ov.materia, ov.classe].filter(Boolean).join(" · ")} · ${b.start}–${b.end}${lez ? " · " + (lez["Titolo"] as string) : ""}`}>
-                      <span className="tg-slot-head">
-                        <span>{b.label} · {b.start}</span>
+                    <button key={bi} className="tg-slot" style={{ top: yOf(a) + 1, height: Math.max(30, yOf(z) - yOf(a) - 2), background: bg, color: fg }} onClick={open} title={`${[ov.materia, ov.classe].filter(Boolean).join(" · ")} · ${b.start}–${b.end}${titolo ? " · " + titolo : ""}`}>
+                      <span className="tg-slot-side">
+                        <span className="tg-slot-ora">{oraLabel}</span>
                         {ov.classe && <span className="tg-slot-cls">{ov.classe}</span>}
                       </span>
-                      <span className="tg-slot-mat">{lez && lez["Titolo"] ? (lez["Titolo"] as string) : ov.materia}</span>
+                      <span className="tg-slot-main">
+                        {titolo ? (
+                          <><span className="tg-slot-mat">{ov.materia}</span><span className="tg-slot-tit">{titolo}</span></>
+                        ) : (
+                          <span className="tg-slot-tit">{ov.materia}</span>
+                        )}
+                      </span>
                     </button>
                   );
                 })}

@@ -63,7 +63,8 @@ export function OggiView({
   for (const s of val.sessioni) { if (!/^\d{4}-\d{2}-\d{2}/.test(s.data)) continue; const k = s.data.slice(0, 10); const a = sessByDay.get(k) ?? []; a.push({ id: s.id, titolo: s.titolo }); sessByDay.set(k, a); }
   const openSessione = (id: string) => onView({ kind: "valutazione", sessioneId: id });
 
-  const { scadute, imminenti } = reminderItems(14);
+  // Tutte le scadenze ancora attive (scadute + future), non solo i prossimi giorni.
+  const { scadute, imminenti } = reminderItems(365);
   const nScad = scadute.length + imminenti.length;
 
   return (
@@ -98,44 +99,47 @@ export function OggiView({
             <button className="oggi-cta oggi-cta--lg oggi-cta--primary" onClick={() => onView({ kind: "planner" })}>
               <span className="oggi-cta-ic" aria-hidden="true">🧠</span>
               <span className="oggi-cta-tx">
-                <span className="oggi-cta-kick">Azione principale</span>
                 <b>Pianifica un'attività</b>
-                <small>Lezione, laboratorio o UdA — dal contenuto al calendario.</small>
+                <small>Crea una lezione, un laboratorio o un'UdA e portala fino al calendario.</small>
               </span>
               <span className="oggi-cta-go" aria-hidden="true">→</span>
             </button>
             <button className="oggi-cta oggi-cta--sm oggi-cta--ghost" onClick={() => onView({ kind: "valutazione" })}>
               <span className="oggi-cta-ic" aria-hidden="true">🧮</span>
-              <span className="oggi-cta-tx"><b>Correggi le verifiche</b><small>Calcolatore voti e medie di classe.</small></span>
+              <span className="oggi-cta-tx"><b>Correggi le verifiche</b><small>Inserisci i voti delle prove e calcola le medie di ogni alunno e classe.</small></span>
               <span className="oggi-cta-go" aria-hidden="true">→</span>
             </button>
 
             <article className="oggi-card oggi-scad">
-              <h2>⏰ Scadenze {nScad > 0 && <span className="badge">{nScad}</span>}</h2>
-              {nScad === 0 && <p className="muted">Nessuna scadenza nei prossimi 14 giorni.</p>}
-              {scadute.length > 0 && (
-                <ul className="oggi-list">
-                  {scadute.map((r) => (
-                    <li key={r.rec.id} className="oggi-scaduta">
-                      <button className="linklike" onClick={() => onEdit("scadenze", r.rec)}>{r.title}</button>
-                      <span className="oggi-when warn">{relDays(r.giorni)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {imminenti.length > 0 && (
-                <ul className="oggi-list">
-                  {imminenti.map((r) => (
-                    <li key={r.rec.id}>
-                      <button className="linklike" onClick={() => onEdit("scadenze", r.rec)}>{r.title}</button>
-                      <span className="oggi-when">{relDays(r.giorni)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <div className="oggi-scad-head">
+                <h2>⏰ Scadenze {nScad > 0 && <span className="badge">{nScad}</span>}</h2>
+              </div>
+              <div className="oggi-scad-body">
+                {nScad === 0 && <p className="muted">Nessuna scadenza attiva. Tutto in regola.</p>}
+                {scadute.length > 0 && (
+                  <ul className="oggi-list">
+                    {scadute.map((r) => (
+                      <li key={r.rec.id} className="oggi-scaduta">
+                        <button className="linklike" onClick={() => onEdit("scadenze", r.rec)}>{r.title}</button>
+                        <span className="oggi-when warn">{relDays(r.giorni)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {imminenti.length > 0 && (
+                  <ul className="oggi-list">
+                    {imminenti.map((r) => (
+                      <li key={r.rec.id}>
+                        <button className="linklike" onClick={() => onEdit("scadenze", r.rec)}>{r.title}</button>
+                        <span className="oggi-when">{relDays(r.giorni)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <div className="oggi-scad-foot">
+                <button className="linklike oggi-scad-new" onClick={() => onEdit("scadenze", undefined, { Data: oggiIso })}>＋ Nuova scadenza</button>
                 {nScad > 0 && <button className="linklike" onClick={() => onView({ kind: "promemoria" })}>Tutti i promemoria →</button>}
-                <button className="linklike" onClick={() => onEdit("scadenze", undefined, { Data: oggiIso })}>＋ Nuova scadenza</button>
               </div>
             </article>
           </div>
