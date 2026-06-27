@@ -39,7 +39,7 @@ export type View =
   | { kind: "valutazione"; sessioneId?: string }
   | { kind: "andamento" }
   | { kind: "planner" }
-  | { kind: "archivio" }
+  | { kind: "archivio"; tab?: "db" | "piani" }
   | { kind: "promemoria" }
   | { kind: "home" }
   | { kind: "programmazione" }
@@ -144,7 +144,7 @@ export function App() {
           {view.kind === "valutazione" && <ValutazioneView sessioneId={view.sessioneId} onView={setView} />}
           {view.kind === "andamento" && <AndamentoView />}
           {view.kind === "planner" && <PlannerView onView={setView} />}
-          {view.kind === "archivio" && <ArchivioView onView={setView} />}
+          {view.kind === "archivio" && <ArchivioView key={view.tab ?? "db"} onView={setView} tab={view.tab} />}
           {view.kind === "promemoria" && <PromemoriaView onEdit={onEdit} />}
           {view.kind === "home" && (
             <HomeView onSelect={(key) => setView({ kind: "entity", key })} onOpenUda={openUda} />

@@ -10,10 +10,10 @@ const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const fmtIt = (d: string) => { const [y, m, g] = String(d).split("-"); return g ? `${g}/${m}/${y}` : String(d); };
 
 /** Archivio: il database didattico ad albero + le pianificazioni salvate dal docente. */
-export function ArchivioView({ onView }: { onView: (v: View) => void }) {
+export function ArchivioView({ onView, tab }: { onView: (v: View) => void; tab?: "db" | "piani" }) {
   const a = useArchivio();
   useStore();
-  const [vista, setVista] = useState<"db" | "piani">("db");
+  const [vista, setVista] = useState<"db" | "piani">(tab ?? "db");
   const [materia, setMateria] = useState("");
   const [selez, setSelez] = useState<Set<string>>(new Set());
   const [dett, setDett] = useState<Voce | null>(null);
@@ -101,6 +101,7 @@ function asArr(v: unknown): string[] { return Array.isArray(v) ? v.map((x) => St
 
 function Pianificazioni({ onView }: { onView: (v: View) => void }) {
   const [aperto, setAperto] = useState<string | null>(null);
+  const [filtro, setFiltro] = useState<"Tutte" | "Lezione" | "UdA" | "Laboratorio">("Tutte");
   type P = { id: string; tipo: string; r: Record<string, unknown>; data: string };
   const piani: P[] = [
     ...records("uda").map((r) => ({ id: r.id, tipo: "UdA", r, data: String(r["Data inizio"] ?? "") })),
@@ -113,9 +114,16 @@ function Pianificazioni({ onView }: { onView: (v: View) => void }) {
   const blocchi: [string, string][] = [["Conoscenze", "Conoscenze"], ["Abilità", "Abilità"], ["Competenze", "Competenze"], ["Fasi", "Fasi"], ["Compiti ed esercizi", "Compiti ed esercizi"], ["Prerequisiti", "Prerequisiti"], ["Inclusione (misure)", "Inclusione"]];
   const tagFields: [string, string][] = [["Metodologie", "Metodologie"], ["Strumenti e spazi", "Strumenti e spazi"], ["Educazione civica", "Educazione civica"], ["Raccordi interdisciplinari", "Raccordi"]];
 
+  const conta = (t: string) => (t === "Tutte" ? piani.length : piani.filter((p) => p.tipo === t).length);
+  const visti = filtro === "Tutte" ? piani : piani.filter((p) => p.tipo === filtro);
   return (
-    <div className="pian-list">
-      {piani.map((p) => {
+    <>
+      <div className="seg pian-filtri">
+        {(["Tutte", "Lezione", "UdA", "Laboratorio"] as const).map((t) => <button key={t} className={filtro === t ? "active" : ""} onClick={() => setFiltro(t)}>{t} <small>{conta(t)}</small></button>)}
+      </div>
+      {visti.length === 0 ? <p className="muted">Nessuna pianificazione di questo tipo.</p> : (
+      <div className="pian-list">
+      {visti.map((p) => {
         const r = p.r;
         const cls = asArr(r["Classe"]).map(classeLabel).filter(Boolean).join(", ");
         const open = aperto === p.id;
@@ -143,6 +151,8 @@ function Pianificazioni({ onView }: { onView: (v: View) => void }) {
           </div>
         );
       })}
-    </div>
+      </div>
+      )}
+    </>
   );
 }

@@ -36,7 +36,7 @@ const SEZIONI: Sezione[] = [
       { v: { kind: "promemoria" }, label: "Promemoria", icon: "📌" },
     ],
   },
-  { titolo: "Pianificazione", viste: [{ v: { kind: "progrAnnuale" }, label: "Programmazione annuale", icon: "🧭" }], entita: ["uda", "lezioni", "obiettivi", "verifiche"] },
+  { titolo: "Pianificazione", viste: [{ v: { kind: "progrAnnuale" }, label: "Programmazione annuale", icon: "🧭" }, { v: { kind: "archivio", tab: "piani" }, label: "Le mie pianificazioni", icon: "📂" }] },
   { titolo: "Risorse", entita: ["materiali", "sapere"] },
   { titolo: "Organizzazione", entita: ["scadenze", "progetti", "task", "riunioni", "osservazioni", "idee"] },
   { titolo: "Sviluppo", entita: ["formazione", "letture"] },
@@ -57,7 +57,11 @@ export function Nav({
   useStore();
   const promCount = reminderCount();
   const go = (v: View) => { onChange(v); onNavigate(); };
-  const viewActive = (v: View) => v.kind === view.kind && v.kind !== "entity";
+  const viewActive = (v: View) => {
+    if (v.kind !== view.kind || v.kind === "entity") return false;
+    if (v.kind === "archivio" && view.kind === "archivio") return (v.tab ?? "db") === (view.tab ?? "db");
+    return true;
+  };
 
   return (
     <nav className={open ? "nav open" : "nav"}>
