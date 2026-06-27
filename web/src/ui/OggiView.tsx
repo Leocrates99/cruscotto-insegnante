@@ -91,15 +91,20 @@ export function OggiView({
       {!profiloVuoto && (
         <div className="oggi-2col">
           <article className="oggi-cal">
-            <h2>📅 La tua giornata</h2>
             <TimeGrid days={[now]} byDay={byDay} sessByDay={sessByDay} onEdit={onEdit} onOpenSessione={openSessione} />
           </article>
 
           <div className="oggi-side">
-            <div className="oggi-cmd">
-              <DCard icon="🧠" title="Pianifica un'attività" desc="Lezione, laboratorio o UdA: dal contenuto fino al calendario." onClick={() => onView({ kind: "planner" })} />
-              <DCard icon="🧮" title="Correggi le verifiche" desc="Apri il calcolatore: sessioni da correggere e medie di classe." onClick={() => onView({ kind: "valutazione" })} />
-            </div>
+            <button className="oggi-cta oggi-cta--primary" onClick={() => onView({ kind: "planner" })}>
+              <span className="oggi-cta-ic" aria-hidden="true">🧠</span>
+              <span className="oggi-cta-tx"><b>Pianifica un'attività</b><small>Lezione, laboratorio o UdA — dal contenuto al calendario.</small></span>
+              <span className="oggi-cta-go" aria-hidden="true">→</span>
+            </button>
+            <button className="oggi-cta oggi-cta--ghost" onClick={() => onView({ kind: "valutazione" })}>
+              <span className="oggi-cta-ic" aria-hidden="true">🧮</span>
+              <span className="oggi-cta-tx"><b>Correggi le verifiche</b><small>Calcolatore voti: sessioni da correggere e medie.</small></span>
+              <span className="oggi-cta-go" aria-hidden="true">→</span>
+            </button>
 
             <article className="oggi-card oggi-scad">
               <h2>⏰ Scadenze {nScad > 0 && <span className="badge">{nScad}</span>}</h2>
