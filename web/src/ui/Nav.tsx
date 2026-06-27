@@ -36,7 +36,7 @@ const SEZIONI: Sezione[] = [
       { v: { kind: "promemoria" }, label: "Promemoria", icon: "📌" },
     ],
   },
-  { titolo: "Pianificazione", viste: [{ v: { kind: "progrAnnuale" }, label: "Programmazione annuale", icon: "🧭" }], entita: ["programmazione", "uda", "lezioni", "obiettivi", "verifiche"] },
+  { titolo: "Pianificazione", viste: [{ v: { kind: "progrAnnuale" }, label: "Programmazione annuale", icon: "🧭" }], entita: ["uda", "lezioni", "obiettivi", "verifiche"] },
   { titolo: "Risorse", entita: ["materiali", "sapere"] },
   { titolo: "Organizzazione", entita: ["scadenze", "progetti", "task", "riunioni", "osservazioni", "idee"] },
   { titolo: "Sviluppo", entita: ["formazione", "letture"] },

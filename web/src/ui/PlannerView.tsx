@@ -673,12 +673,12 @@ export function PlannerView({ onView }: { onView: (v: View) => void }) {
                 {stepDefs[idx].key === "fasi" && (
                   <div className="pl-fasi">
                     <div className="pl-fase-blocco">
-                      <div className="pl-sub">⏳ Quanto dura la lezione? <small>un'ora qui vale {unitaOra}′ (dal tuo orario)</small></div>
+                      <div className="pl-sez">⏳ Quanto dura la lezione? <small>un'ora qui vale {unitaOra}′ (dal tuo orario)</small></div>
                       <div className="pl-dgrid mini">{DURATE.map((d) => <DCard key={d.h} icon={d.icona} title={d.lab} top={<span className="pl-cnt">{Math.round(d.h * unitaOra)}′</span>} desc={d.desc} on={durata === d.h} onClick={() => setDurata(d.h)} />)}</div>
                     </div>
 
                     <div className="pl-fase-blocco">
-                      <div className="pl-sub">🧭 Come vuoi costruirla?</div>
+                      <div className="pl-sez">🧭 Come vuoi costruirla?</div>
                       <div className="pl-dgrid mini">
                         {arrRep.length > 0 && <DCard icon="🗂️" title="Parti da un modello" desc="Un impianto già pronto (classica, flipped, debate…) da adattare." on={presetOpen} onClick={() => { setPresetOpen((o) => !o); setAddFaseOpen(false); }} />}
                         <DCard icon="🧩" title="Struttura tipo" desc="Quattro fasi equilibrate, pronte da ritoccare." onClick={() => struttFasi()} />
