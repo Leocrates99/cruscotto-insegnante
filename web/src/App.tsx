@@ -95,8 +95,11 @@ export function App() {
   const VISTE_LARGHE = new Set(["oggi", "calendar", "kanban", "timeline", "avanzamento", "valutazione", "andamento", "planner", "archivio", "programmazione", "progrAnnuale", "entity"]);
   const mainWide = VISTE_LARGHE.has(view.kind);
 
+  // Home/landing: niente sidebar fissa; il menu resta raggiungibile via ☰ (overlay).
+  const homeMode = view.kind === "oggi";
+
   return (
-    <div className={editing ? "app panel-open" : "app"}>
+    <div className={`app${editing ? " panel-open" : ""}${homeMode ? " home" : ""}`}>
       <Toolbar onToggleNav={() => setNavOpen((o) => !o)} onOpenProfile={() => setShowProfile(true)} onOpenBackup={() => setShowBackup(true)} onOpenExport={() => setShowExport(true)} />
       {exportSuggerito && (
         <div className="setup-banner">
