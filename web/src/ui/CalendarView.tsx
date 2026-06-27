@@ -203,7 +203,7 @@ function MonthGrid({ anchor, byDay, sessByDay, onEdit, onOpenSessione }: { ancho
   );
 }
 
-function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { days: Date[]; byDay: Map<string, CalEvent[]>; sessByDay: Map<string, SessChip[]>; onEdit: Edit; onOpenSessione: OpenSess }) {
+export function TimeGrid({ days, byDay, sessByDay, onEdit, onOpenSessione }: { days: Date[]; byDay: Map<string, CalEvent[]>; sessByDay: Map<string, SessChip[]>; onEdit: Edit; onOpenSessione: OpenSess }) {
   const [dragEv, setDragEv] = useState<CalEvent | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const profile = useProfile();
